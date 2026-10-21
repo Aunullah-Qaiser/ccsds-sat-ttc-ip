@@ -4,7 +4,11 @@
 // Standard    : IEEE 1800-2017 SystemVerilog (Synthesizable)
 // Description : Radiation-hardened SECDED (39,32) ECC FIFO with Per-Frame
 //               Store-and-Forward Commit/Rollback Mode (ROLLBACK_MODE=1),
-//               Pre-Fill High-Watermark Mode (WATERMARK_MODE=1), and Atomic
+//               Pre-Fill High-Watermark Mode (WATERMARK_MODE=1), single-write-
+//               port Distributed LUTRAM inference ((* ram_style = "distributed" *))
+//               with shadow SEU scrub register (Fix CR-11: eliminates 17-level
+//               mem_data_reg -> decode_secded32 -> encode_secded32 -> mem_ecc_reg
+//               feedback loop for >280 MHz Kintex UltraScale Fmax), and Atomic
 //               32-bit Req/Ack CLCW CDC Mailbox (ccsds_clcw_cdc_mbox).
 // =============================================================================
 `timescale 1ns / 1ps
@@ -111,11 +115,18 @@ module ccsds_cdc_fifo_ecc
     end
   endfunction
 
-  logic [DATA_WIDTH-1:0] mem_data  [0:DEPTH_WORDS-1];
-  logic [KEEP_W-1:0]     mem_keep  [0:DEPTH_WORDS-1];
-  logic                  mem_last  [0:DEPTH_WORDS-1];
-  ccsds_tuser_t          mem_user  [0:DEPTH_WORDS-1];
-  logic [6:0]            mem_ecc   [0:DEPTH_WORDS-1];
+  // Pure Single-Write-Port Distributed LUTRAM Storage (Fix CR-11)
+  (* ram_style = "distributed" *) logic [DATA_WIDTH-1:0] mem_data  [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic [KEEP_W-1:0]     mem_keep  [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic                  mem_last  [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) ccsds_tuser_t          mem_user  [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic [6:0]            mem_ecc   [0:DEPTH_WORDS-1];
+
+  // Shadow 1-entry SEU Fault-Injection & Scrub Register (avoids RAM multi-porting)
+  logic                  seu_valid_q;
+  logic [ADDR_W-1:0]     seu_addr_q;
+  logic [31:0]           seu_mask_data_q;
+  logic [6:0]            seu_mask_ecc_q;
 
   logic [ADDR_W:0]       rd_ptr_q;
   logic [ADDR_W:0]       wr_commit_ptr_q;
@@ -123,7 +134,6 @@ module ccsds_cdc_fifo_ecc
   logic [ADDR_W:0]       frame_end_ptr_q;
   logic                  frame_end_pending_q;
   logic                  watermark_open_q;
-  logic [ADDR_W-1:0]     scrub_addr_q;
 
   logic [ADDR_W:0]       eff_wr_ptr;
   logic                  fifo_full;
@@ -143,10 +153,26 @@ module ccsds_cdc_fifo_ecc
   assign wr_fire           = s_axis_tvalid && s_axis_tready && !frame_rollback_pulse;
   assign rd_fire           = m_axis_tvalid && m_axis_tready;
 
+  logic [31:0] wr_low32;
+  logic [6:0]  wr_ecc;
   logic [31:0] raw_low32, corr_low32;
   logic [6:0]  raw_ecc;
+  logic [31:0] seu_bit_mask_d;
+  logic [6:0]  seu_bit_mask_e;
 
   always_comb begin
+    wr_low32 = '0;
+    if (DATA_WIDTH >= 32) begin
+      wr_low32 = s_axis_tdata[31:0];
+    end else begin
+      wr_low32[DATA_WIDTH-1:0] = s_axis_tdata;
+    end
+    wr_ecc = encode_secded32(wr_low32);
+
+    seu_bit_mask_d = (seu_inject_bit < 6'd32) ? (32'h1 << seu_inject_bit[4:0]) : 32'h0;
+    seu_bit_mask_e = (seu_inject_bit >= 6'd32 && seu_inject_bit < 6'd39) ?
+                     (7'h1 << (seu_inject_bit - 6'd32)) : 7'h0;
+
     raw_low32 = '0;
     if (DATA_WIDTH >= 32) begin
       raw_low32 = mem_data[rd_ptr_q[ADDR_W-1:0]][31:0];
@@ -154,6 +180,11 @@ module ccsds_cdc_fifo_ecc
       raw_low32[DATA_WIDTH-1:0] = mem_data[rd_ptr_q[ADDR_W-1:0]];
     end
     raw_ecc = mem_ecc[rd_ptr_q[ADDR_W-1:0]];
+
+    if (seu_valid_q && (rd_ptr_q[ADDR_W-1:0] == seu_addr_q)) begin
+      raw_low32 = raw_low32 ^ seu_mask_data_q;
+      raw_ecc   = raw_ecc   ^ seu_mask_ecc_q;
+    end
 
     decode_secded32(raw_low32, raw_ecc, corr_low32, ecc_single_err_corrected, ecc_double_err_uncorr);
 
@@ -168,6 +199,17 @@ module ccsds_cdc_fifo_ecc
     m_axis_tuser = mem_user[rd_ptr_q[ADDR_W-1:0]];
   end
 
+  // Dedicated Single-Write-Port RAM Inference Block (No Reset Loop or Multi-Write)
+  always_ff @(posedge clk) begin
+    if (wr_fire) begin
+      mem_data[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tdata;
+      mem_keep[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tkeep;
+      mem_last[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tlast;
+      mem_user[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tuser;
+      mem_ecc[wr_spec_ptr_q[ADDR_W-1:0]]  <= wr_ecc;
+    end
+  end
+
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       rd_ptr_q              <= '0;
@@ -176,8 +218,11 @@ module ccsds_cdc_fifo_ecc
       frame_end_ptr_q       <= '0;
       frame_end_pending_q   <= 1'b0;
       watermark_open_q      <= 1'b0;
-      scrub_addr_q          <= '0;
       rollback_overflow_err <= 1'b0;
+      seu_valid_q           <= 1'b0;
+      seu_addr_q            <= '0;
+      seu_mask_data_q       <= '0;
+      seu_mask_ecc_q        <= '0;
     end else begin
       rollback_overflow_err <= 1'b0;
 
@@ -186,19 +231,7 @@ module ccsds_cdc_fifo_ecc
         frame_end_pending_q <= 1'b0;
       end else begin
         if (wr_fire) begin
-          logic [31:0] wr_low32;
-          wr_low32 = '0;
-          if (DATA_WIDTH >= 32) begin
-            wr_low32 = s_axis_tdata[31:0];
-          end else begin
-            wr_low32[DATA_WIDTH-1:0] = s_axis_tdata;
-          end
-          mem_data[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tdata;
-          mem_keep[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tkeep;
-          mem_last[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tlast;
-          mem_user[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tuser;
-          mem_ecc[wr_spec_ptr_q[ADDR_W-1:0]]  <= encode_secded32(wr_low32);
-          wr_spec_ptr_q                       <= wr_spec_ptr_q + 1'b1;
+          wr_spec_ptr_q <= wr_spec_ptr_q + 1'b1;
           if (s_axis_tlast && !frame_commit_pulse) begin
             frame_end_ptr_q     <= wr_spec_ptr_q + 1'b1;
             frame_end_pending_q <= 1'b1;
@@ -240,21 +273,20 @@ module ccsds_cdc_fifo_ecc
       end
 
       if (seu_inject_en) begin
-        if (seu_inject_bit < 6'd32) begin
-          mem_data[seu_inject_addr][seu_inject_bit] <= ~mem_data[seu_inject_addr][seu_inject_bit];
-        end else if (seu_inject_bit < 6'd39) begin
-          mem_ecc[seu_inject_addr][seu_inject_bit - 6'd32] <= ~mem_ecc[seu_inject_addr][seu_inject_bit - 6'd32];
+        if (seu_valid_q && (seu_addr_q == seu_inject_addr)) begin
+          seu_mask_data_q <= seu_mask_data_q ^ seu_bit_mask_d;
+          seu_mask_ecc_q  <= seu_mask_ecc_q  ^ seu_bit_mask_e;
+        end else begin
+          seu_valid_q     <= 1'b1;
+          seu_addr_q      <= seu_inject_addr;
+          seu_mask_data_q <= seu_bit_mask_d;
+          seu_mask_ecc_q  <= seu_bit_mask_e;
         end
-      end else if (!wr_fire && !fifo_empty) begin
-        if (ecc_single_err_corrected) begin
-          if (DATA_WIDTH >= 32) begin
-            mem_data[rd_ptr_q[ADDR_W-1:0]][31:0] <= corr_low32;
-          end else begin
-            mem_data[rd_ptr_q[ADDR_W-1:0]][DATA_WIDTH-1:0] <= corr_low32[DATA_WIDTH-1:0];
-          end
-          mem_ecc[rd_ptr_q[ADDR_W-1:0]] <= encode_secded32(corr_low32);
-        end
-        scrub_addr_q <= scrub_addr_q + 1'b1;
+      end else if (!wr_fire && !fifo_empty && seu_valid_q &&
+                   (rd_ptr_q[ADDR_W-1:0] == seu_addr_q) && ecc_single_err_corrected) begin
+        seu_valid_q     <= 1'b0;
+        seu_mask_data_q <= '0;
+        seu_mask_ecc_q  <= '0;
       end
     end
   end

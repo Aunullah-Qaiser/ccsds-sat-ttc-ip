@@ -12,7 +12,7 @@
 # ==============================================================================
 
 SIM   ?= xsim
-STAGE ?= 7
+STAGE ?= 8
 
 RTL_SRCS := \
 	rtl/ccsds_pkg.sv \
@@ -42,6 +42,7 @@ RTL_SRCS := \
 	rtl/ccsds_fop1_engine.sv \
 	rtl/ccsds_tm_aos_deframer.sv \
 	rtl/ccsds_dl_rs255_223_dec.sv \
+	rtl/ccsds_channel_impairment_model.sv \
 	rtl/ccsds_sat_ttc_top.sv
 
 TB_STAGE2 := tb/tb_stage2_primitives.sv
@@ -50,6 +51,7 @@ TB_STAGE4 := tb/tb_stage4_multiprotocol.sv
 TB_STAGE5 := tb/tb_stage5_fec_hcpd.sv
 TB_STAGE6 := tb/tb_stage6_full_system.sv
 TB_STAGE7 := tb/tb_stage7_hw_egse_loopback.sv
+TB_STAGE8 := tb/tb_stage8_all_protocols_channel_loopback.sv
 
 ifeq ($(STAGE),2)
   TB_TOP := tb_stage2_primitives
@@ -69,6 +71,9 @@ else ifeq ($(STAGE),6)
 else ifeq ($(STAGE),7)
   TB_TOP := tb_stage7_hw_egse_loopback
   TB_SRC := $(TB_STAGE7)
+else ifeq ($(STAGE),8)
+  TB_TOP := tb_stage8_all_protocols_channel_loopback
+  TB_SRC := $(TB_STAGE8)
 endif
 
 .PHONY: all audit regression lint sim waveform-diff channel-sweep sta clean
@@ -79,7 +84,7 @@ audit:
 	python3 scripts/sv_rtl_audit.py
 
 regression:
-	python3 scripts/run_regression_suite.py --stage 7
+	python3 scripts/run_regression_suite.py --stage 8
 
 lint:
 	verilator --lint-only -Wall -Wno-BLKSEQ -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \

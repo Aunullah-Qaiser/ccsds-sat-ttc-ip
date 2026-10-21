@@ -1,0 +1,31 @@
+$date
+  2026-10-18
+$end
+$version
+  CCSDS-SAT-TTC-IP Stage 7 Hardware EGSE Loopback Co-Sim
+$end
+$timescale 1ns $end
+$scope module tb_stage7_hw_egse_loopback $end
+$var wire 1 ! clk $end
+$var wire 8 # fop1_vs [7:0] $end
+$var wire 8 $ fop1_nnr [7:0] $end
+$var wire 1 % fop1_retransmit_pulse $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+b00000000 #
+b00000000 $
+0%
+#10
+1!
+b00000110 #
+b00000101 $
+1%
+#20
+0!
+b00011110 #
+b00011110 $
+0%
+#30
+1!

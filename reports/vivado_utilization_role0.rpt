@@ -1,0 +1,47 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
+| Date         : Thu Oct 22 02:04:16 2026
+| Host         : Sagittarius running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file reports/vivado_utilization_role0.rpt
+| Design       : ccsds_sat_ttc_top
+| Device       : xc7z010iclg225-1L
+| Speed File   : -1L
+| Design State : Optimized
+---------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|        Instance        |               Module               | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| ccsds_sat_ttc_top      |                              (top) |      58515 |      58515 |       0 |    0 | 40224 |      0 |      0 |          0 |
+|   (ccsds_sat_ttc_top)  |                              (top) |         10 |         10 |       0 |    0 |    50 |      0 |      0 |          0 |
+|   u_asm_corr           |               ccsds_asm_correlator |        162 |        162 |       0 |    0 |    73 |      0 |      0 |          0 |
+|   u_bch_dec            |                  ccsds_bch6356_dec |        538 |        538 |       0 |    0 |   142 |      0 |      0 |          0 |
+|   u_csr                |                 ccsds_axi_lite_csr |        881 |        881 |       0 |    0 |   439 |      0 |      0 |          0 |
+|   u_dl_framer          |           ccsds_tm_aos_uslp_framer |        512 |        512 |       0 |    0 |   407 |      0 |      0 |          0 |
+|   u_farm1              |                    ccsds_farm1_tmr |        474 |        474 |       0 |    0 |   341 |      0 |      0 |          0 |
+|   u_hcpd               |                    ccsds_hcpd_ctrl |        105 |        105 |       0 |    0 |   141 |      0 |      0 |          0 |
+|   u_phy_modem          |                    ccsds_phy_modem |         12 |         12 |       0 |    0 |    35 |      0 |      0 |          0 |
+|   u_pn_ranging         |                   ccsds_pn_ranging |        200 |        200 |       0 |    0 |   119 |      0 |      0 |          0 |
+|   u_prox1_plcw         |              ccsds_prox1_plcw_ctrl |         31 |         31 |       0 |    0 |    35 |      0 |      0 |          0 |
+|   u_reassembler        |              ccsds_pkt_reassembler |        116 |        116 |       0 |    0 |   125 |      0 |      0 |          0 |
+|   u_rs_enc             |             ccsds_dl_rs255_223_enc |        694 |        694 |       0 |    0 |  2079 |      0 |      0 |          0 |
+|   u_rx_commit_cdc_fifo |                 ccsds_cdc_fifo_ecc |      19045 |      19045 |       0 |    0 |  7786 |      0 |      0 |          0 |
+|   u_sdls               |                  ccsds_sdls_engine |       1512 |       1512 |       0 |    0 |  2673 |      0 |      0 |          0 |
+|   u_short_ldpc_dec     |            ccsds_ul_short_ldpc_dec |        457 |        457 |       0 |    0 |   232 |      0 |      0 |          0 |
+|   u_turbo_ldpc_enc     |            ccsds_dl_turbo_ldpc_enc |        143 |        143 |       0 |    0 |   282 |      0 |      0 |          0 |
+|   u_tx_hwm_cdc_fifo    | ccsds_cdc_fifo_ecc__parameterized0 |      20107 |      20107 |       0 |    0 |  8389 |      0 |      0 |          0 |
+|   u_ul_deframer        |             ccsds_tc_uslp_deframer |        638 |        638 |       0 |    0 |   296 |      0 |      0 |          0 |
+|   u_vc_arb             |               ccsds_vc_arbiter_mux |      12886 |      12886 |       0 |    0 | 16580 |      0 |      0 |          0 |
++------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+
+

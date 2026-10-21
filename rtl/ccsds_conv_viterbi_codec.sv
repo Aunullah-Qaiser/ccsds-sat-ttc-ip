@@ -9,8 +9,10 @@
 //                 - Generator polynomials: G1 = 7'b1111001 (171o),
 //                   G2 = 7'b1011011 (133o) with configurable C2 symbol inversion
 //                   (c2_invert_en=1 for TM/AOS per 131.0-B-5; 0 for Prox-1).
-//                 - 64-state parallel ACS unit with 35-stage (5*K) survivor
-//                   traceback register and minimum-metric state selection.
+//                 - 64-state parallel ACS unit with Register-Exchange 35-bit
+//                   survivor history registers and flat common-threshold metric
+//                   rescaling (Fix CR-14: eliminates 35-stage serial pointer-
+//                   chasing traceback mux chain and 64-way min_pm subtractor).
 // =============================================================================
 `timescale 1ns / 1ps
 
@@ -105,11 +107,11 @@ module ccsds_conv_viterbi_codec
   end
 
   // ---------------------------------------------------------------------------
-  // 2. 64-State Soft-LLR Add-Compare-Select (ACS) Viterbi Decoder
+  // 2. 64-State Soft-LLR ACS Viterbi Decoder (Register-Exchange Architecture)
   // ---------------------------------------------------------------------------
-  logic [9:0]  pm_q [0:63];
-  logic [63:0] surv_mem_q [0:TRACEBACK_DEPTH-1];
-  logic [5:0]  fill_cnt_q;
+  logic [9:0]                 pm_q        [0:63];
+  logic [TRACEBACK_DEPTH-1:0] path_hist_q [0:63];
+  logic [5:0]                 fill_cnt_q;
 
   function automatic logic [9:0] branch_dist(
     input logic signed [3:0] llr1,
@@ -124,14 +126,55 @@ module ccsds_conv_viterbi_codec
     return 10'(unsigned'(d1 + d2));
   endfunction
 
+  logic signed [3:0]          llr2_eff;
+  logic [63:0]                pm_ge64_vec;
+  logic [9:0]                 rescale_sub;
+  logic [9:0]                 nxt_pm        [0:63];
+  logic [TRACEBACK_DEPTH-1:0] nxt_path_hist [0:63];
+
+  always_comb begin
+    llr2_eff = c2_invert_en ? (-rx_sym_c2_llr_in) : rx_sym_c2_llr_in;
+
+    // Flat common-threshold rescaling computed from registered pm_q[s][9:6]
+    for (int s = 0; s < 64; s++) begin
+      pm_ge64_vec[s] = |pm_q[s][9:6];
+    end
+    rescale_sub = (&pm_ge64_vec) ? 10'd64 : 10'd0;
+
+    for (int nxt_s = 0; nxt_s < 64; nxt_s++) begin
+      logic        u_bit;
+      logic [5:0]  prev_s0;
+      logic [5:0]  prev_s1;
+      logic [9:0]  bm0, bm1, m0, m1;
+
+      u_bit   = nxt_s[5];
+      prev_s0 = {nxt_s[4:0], 1'b0};
+      prev_s1 = {nxt_s[4:0], 1'b1};
+
+      bm0 = branch_dist(rx_sym_c1_llr_in, llr2_eff, calc_c1(u_bit, prev_s0), calc_c2(u_bit, prev_s0, 1'b0));
+      bm1 = branch_dist(rx_sym_c1_llr_in, llr2_eff, calc_c1(u_bit, prev_s1), calc_c2(u_bit, prev_s1, 1'b0));
+
+      m0 = (pm_q[prev_s0] - rescale_sub) + bm0;
+      m1 = (pm_q[prev_s1] - rescale_sub) + bm1;
+
+      if (m0 <= m1) begin
+        nxt_pm[nxt_s]        = (m0 > 10'd800) ? 10'd800 : m0;
+        nxt_path_hist[nxt_s] = {path_hist_q[prev_s0][TRACEBACK_DEPTH-2:0], u_bit};
+      end else begin
+        nxt_pm[nxt_s]        = (m1 > 10'd800) ? 10'd800 : m1;
+        nxt_path_hist[nxt_s] = {path_hist_q[prev_s1][TRACEBACK_DEPTH-2:0], u_bit};
+      end
+    end
+  end
+
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       pm_q[0] <= 10'd0;
       for (int s = 1; s < 64; s++) begin
         pm_q[s] <= 10'd256;
       end
-      for (int t = 0; t < TRACEBACK_DEPTH; t++) begin
-        surv_mem_q[t] <= 64'd0;
+      for (int s = 0; s < 64; s++) begin
+        path_hist_q[s] <= '0;
       end
       fill_cnt_q       <= 6'd0;
       rx_dec_bit_out   <= 1'b0;
@@ -139,71 +182,13 @@ module ccsds_conv_viterbi_codec
     end else begin
       rx_dec_valid_out <= 1'b0;
       if (rx_sym_valid_in) begin
-        logic signed [3:0] llr2_eff;
-        logic [9:0]        nxt_pm [0:63];
-        logic [63:0]       nxt_surv;
-        logic [9:0]        min_pm;
-        logic [5:0]        tb_state;
-
-        llr2_eff = c2_invert_en ? (-rx_sym_c2_llr_in) : rx_sym_c2_llr_in;
-        min_pm   = 10'h3FF;
-
-        for (int nxt_s = 0; nxt_s < 64; nxt_s++) begin
-          logic        u_bit;
-          logic [5:0]  prev_s0;
-          logic [5:0]  prev_s1;
-          logic [9:0]  bm0, bm1, m0, m1;
-
-          u_bit   = nxt_s[5];
-          prev_s0 = {nxt_s[4:0], 1'b0};
-          prev_s1 = {nxt_s[4:0], 1'b1};
-
-          bm0 = branch_dist(rx_sym_c1_llr_in, llr2_eff, calc_c1(u_bit, prev_s0), calc_c2(u_bit, prev_s0, 1'b0));
-          bm1 = branch_dist(rx_sym_c1_llr_in, llr2_eff, calc_c1(u_bit, prev_s1), calc_c2(u_bit, prev_s1, 1'b0));
-
-          m0 = pm_q[prev_s0] + bm0;
-          m1 = pm_q[prev_s1] + bm1;
-
-          if (m0 <= m1) begin
-            nxt_pm[nxt_s]   = m0;
-            nxt_surv[nxt_s] = 1'b0;
-          end else begin
-            nxt_pm[nxt_s]   = m1;
-            nxt_surv[nxt_s] = 1'b1;
-          end
-
-          if (nxt_pm[nxt_s] < min_pm) begin
-            min_pm = nxt_pm[nxt_s];
-          end
-        end
-
         for (int s = 0; s < 64; s++) begin
-          pm_q[s] <= nxt_pm[s] - min_pm;
-        end
-
-        surv_mem_q[0] <= nxt_surv;
-        for (int t = 1; t < TRACEBACK_DEPTH; t++) begin
-          surv_mem_q[t] <= surv_mem_q[t-1];
-        end
-
-        // Traceback from best state (or state 0) over TRACEBACK_DEPTH stages
-        tb_state = 6'd0;
-        for (int s = 1; s < 64; s++) begin
-          if (nxt_pm[s] < nxt_pm[tb_state]) begin
-            tb_state = 6'(s);
-          end
-        end
-
-        // Step 0 uses current-cycle nxt_surv before stepping through registered surv_mem_q
-        tb_state = {tb_state[4:0], nxt_surv[tb_state]};
-        for (int t = 0; t < TRACEBACK_DEPTH - 2; t++) begin
-          logic lsb_prev;
-          lsb_prev = surv_mem_q[t][tb_state];
-          tb_state = {tb_state[4:0], lsb_prev};
+          pm_q[s]        <= nxt_pm[s];
+          path_hist_q[s] <= nxt_path_hist[s];
         end
 
         if (fill_cnt_q == 6'(TRACEBACK_DEPTH - 1)) begin
-          rx_dec_bit_out   <= tb_state[5];
+          rx_dec_bit_out   <= nxt_path_hist[0][TRACEBACK_DEPTH-1];
           rx_dec_valid_out <= 1'b1;
         end else begin
           fill_cnt_q <= fill_cnt_q + 6'd1;

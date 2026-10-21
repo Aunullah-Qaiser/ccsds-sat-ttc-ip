@@ -28,7 +28,7 @@
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
       "sdls_aes_gcm_256_verified": true,
-      "elapsed_sec": 2.432
+      "elapsed_sec": 3.193
     },
     "stage2": {
       "rtl_files_audited": [
@@ -81,14 +81,14 @@
       "sv_static_audit_0_errors_0_warnings": true,
       "cpp20_cosim_stdout": "[CPP20-COSIM-S2] Passed 10,000 CRC-16/32 tkeep fuzz packets, 1,000 TM/TC LFSR frames, 19,500 1-bit & 500 2-bit SECDED trials, 1,000 AOS FHEC headers, and Per-Frame Rollback FIFO isolation",
       "vcd_waveform_generated": "stage2_primitives_sim.vcd",
-      "vcd_size_bytes": 6054,
+      "vcd_size_bytes": 6563,
       "crc16_crc32_tkeep_fuzz_packets": 10000,
       "lfsr_tm_tc_sparse_tkeep_frames": 1000,
       "secded_1bit_correction_trials": 19500,
       "secded_2bit_detection_trials": 500,
       "aos_fhec_gf16_headers_verified": 1000,
       "rollback_fifo_multiframe_isolation_verified": true,
-      "elapsed_sec": 6.746
+      "elapsed_sec": 4.563
     },
     "stage3": {
       "rtl_files_audited_count": 36,
@@ -144,7 +144,7 @@
       "vcd_waveform_generated": "stage3_vertical_slice_sim.vcd",
       "closed_loop_fop1_farm1_clcw_rs_cadu_pass": true,
       "telecommands_delivered_in_order": 16,
-      "elapsed_sec": 4.425
+      "elapsed_sec": 1.605
     },
     "stage4": {
       "rtl_files_audited": 36,
@@ -152,12 +152,12 @@
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage4_cosim_stdout": "[CPP20-STAGE4-COSIM] PASS: 45000 AOS FHEC trials, 32 CSR TMR SEU scrubs (SVA-CSR-4), Prox-1 PLCW (V(R)=42), Space Pkt Reassembler (APID=0x701 & 0x7FF Idle stripped)",
       "vcd_waveform_file": "stage4_multiprotocol_sim.vcd",
-      "vcd_waveform_bytes": 920,
+      "vcd_waveform_bytes": 1101,
       "aos_fhec_frames_verified": 8,
       "prox1_crc32_frames_verified": 50,
       "uslp_truncated_frames_verified": 50,
       "uslp_extended_variable_frames_verified": 50,
-      "elapsed_sec": 5.059
+      "elapsed_sec": 1.608
     },
     "stage5": {
       "rtl_files_audited": 36,
@@ -165,12 +165,12 @@
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage5_cosim_stdout": "[CPP20-STAGE5-COSIM] PASS: 64000 Conv/Viterbi noisy bits corrected (0 errors), 500 Short-LDPC blocks converged, HCPD TMR SEU healed=7 (SVA-HCPD-5)",
       "vcd_waveform_file": "stage5_fec_hcpd_sim.vcd",
-      "vcd_waveform_bytes": 1641,
+      "vcd_waveform_bytes": 2014,
       "conv_k7_and_short_ldpc_golden_match": true,
       "viterbi_noisy_bits_corrected": 64000,
       "short_ldpc_noisy_blocks_converged": 500,
       "hcpd_tmr_seu_verified": true,
-      "elapsed_sec": 5.024
+      "elapsed_sec": 1.409
     },
     "stage6": {
       "rtl_files_audited": 36,
@@ -178,7 +178,7 @@
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage6_cosim_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
       "vcd_generated": true,
-      "elapsed_sec": 4.511
+      "elapsed_sec": 1.154
     },
     "stage7": {
       "rtl_files_audited": 36,
@@ -186,7 +186,7 @@
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage7_cosim_stdout": "[CPP20-STAGE7-COSIM] Verified Hardware EGSE (ROLE_MODE=1) <-> Spacecraft (ROLE_MODE=0) Loopback: 30/30 FOP-1<->FARM-1 Go-Back-N ARQ Frames, 1,000 BCH(63,56) CLTU Blocks, TM/AOS CUC OBT & CLCW Extraction, RS(255,223) Syndrome Decode & VCD",
       "vcd_generated": true,
-      "elapsed_sec": 4.04
+      "elapsed_sec": 1.142
     },
     "stage8": {
       "rtl_and_tb_files_audited": 36,
@@ -217,7 +217,7 @@
         "clk_tx_sym_50mhz_nom": 312.5,
         "clk_tc_safe_16mhz_nom": 268.8
       },
-      "elapsed_sec": 8.511
+      "elapsed_sec": 6.553
     }
   }
 }

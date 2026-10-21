@@ -8,8 +8,9 @@
 //                   L4=15, L5=19, L6=23; Total Composite Period = 1,009,470 chips)
 //                 - Selectable T4B (4*C1 + C2 + C3 + C4 + C5 + C6) or
 //                   T2B (2*C1 + C2 + C3 + C4 + C5 + C6) weighted majority vote
-//                 - Parallel component phase correlators with lock threshold
-//                   detector and clean regenerative chip alignment onto Tx
+//                   computed via a 2-LUT 3-bit popcount and registered lookahead
+//                   output tx_pn_chip_q (Fix CR-12: eliminates 13-level cross-
+//                   module critical path into u_phy_modem for >320 MHz Fmax).
 //=============================================================================
 `timescale 1ns / 1ps
 
@@ -43,18 +44,23 @@ module ccsds_pn_ranging
   localparam logic [18:0] SEQ_C5 = 19'b1111010100001101100;
   localparam logic [22:0] SEQ_C6 = 23'b11111010110011001010000;
 
-  logic [0:0]  idx_c1_q;
-  logic [2:0]  idx_c2_q;
-  logic [3:0]  idx_c3_q;
-  logic [3:0]  idx_c4_q;
-  logic [4:0]  idx_c5_q;
-  logic [4:0]  idx_c6_q;
+  logic [0:0]  idx_c1_q, nxt_idx_c1;
+  logic [2:0]  idx_c2_q, nxt_idx_c2;
+  logic [3:0]  idx_c3_q, nxt_idx_c3;
+  logic [3:0]  idx_c4_q, nxt_idx_c4;
+  logic [4:0]  idx_c5_q, nxt_idx_c5;
+  logic [4:0]  idx_c6_q, nxt_idx_c6;
   logic [19:0] composite_idx_q;
 
   logic signed [15:0] corr_c1_q, corr_c2_q, corr_c3_q, corr_c4_q, corr_c5_q, corr_c6_q;
   logic               c1_lock_q, all_lock_q;
+  logic               tx_pn_chip_q;
 
   logic c1_bit, c2_bit, c3_bit, c4_bit, c5_bit, c6_bit;
+  logic nxt_c1_bit, nxt_c2_bit, nxt_c3_bit, nxt_c4_bit, nxt_c5_bit, nxt_c6_bit;
+  logic [2:0] nxt_cnt5;
+  logic       nxt_tx_pn_chip;
+
   assign c1_bit = SEQ_C1[1 - idx_c1_q];
   assign c2_bit = SEQ_C2[6 - idx_c2_q];
   assign c3_bit = SEQ_C3[10 - idx_c3_q];
@@ -63,18 +69,46 @@ module ccsds_pn_ranging
   assign c6_bit = SEQ_C6[22 - idx_c6_q];
 
   always_comb begin
-    int signed vote_sum;
-    int signed w1;
-    w1       = t4b_mode_cfg ? 4 : 2;
-    vote_sum = (c1_bit ? w1 : -w1)
-             + (c2_bit ? 1 : -1)
-             + (c3_bit ? 1 : -1)
-             + (c4_bit ? 1 : -1)
-             + (c5_bit ? 1 : -1)
-             + (c6_bit ? 1 : -1);
-    tx_pn_chip_out = (vote_sum >= 0);
+    if (!pn_ranging_en_cfg) begin
+      nxt_idx_c1 = 1'd0;
+      nxt_idx_c2 = 3'd0;
+      nxt_idx_c3 = 4'd0;
+      nxt_idx_c4 = 4'd0;
+      nxt_idx_c5 = 5'd0;
+      nxt_idx_c6 = 5'd0;
+    end else if (chip_en_in) begin
+      nxt_idx_c1 = (idx_c1_q == 1'd1)  ? 1'd0 : (idx_c1_q + 1'd1);
+      nxt_idx_c2 = (idx_c2_q == 3'd6)  ? 3'd0 : (idx_c2_q + 3'd1);
+      nxt_idx_c3 = (idx_c3_q == 4'd10) ? 4'd0 : (idx_c3_q + 4'd1);
+      nxt_idx_c4 = (idx_c4_q == 4'd14) ? 4'd0 : (idx_c4_q + 4'd1);
+      nxt_idx_c5 = (idx_c5_q == 5'd18) ? 5'd0 : (idx_c5_q + 5'd1);
+      nxt_idx_c6 = (idx_c6_q == 5'd22) ? 5'd0 : (idx_c6_q + 5'd1);
+    end else begin
+      nxt_idx_c1 = idx_c1_q;
+      nxt_idx_c2 = idx_c2_q;
+      nxt_idx_c3 = idx_c3_q;
+      nxt_idx_c4 = idx_c4_q;
+      nxt_idx_c5 = idx_c5_q;
+      nxt_idx_c6 = idx_c6_q;
+    end
+
+    nxt_c1_bit = SEQ_C1[1 - nxt_idx_c1];
+    nxt_c2_bit = SEQ_C2[6 - nxt_idx_c2];
+    nxt_c3_bit = SEQ_C3[10 - nxt_idx_c3];
+    nxt_c4_bit = SEQ_C4[14 - nxt_idx_c4];
+    nxt_c5_bit = SEQ_C5[18 - nxt_idx_c5];
+    nxt_c6_bit = SEQ_C6[22 - nxt_idx_c6];
+
+    // 3-bit LUT popcount of C2..C6 replaces 32-bit int signed adder chain
+    nxt_cnt5 = 3'(nxt_c2_bit) + 3'(nxt_c3_bit) + 3'(nxt_c4_bit) + 3'(nxt_c5_bit) + 3'(nxt_c6_bit);
+    if (t4b_mode_cfg) begin
+      nxt_tx_pn_chip = nxt_c1_bit ? (nxt_cnt5 >= 3'd1) : (nxt_cnt5 == 3'd5);
+    end else begin
+      nxt_tx_pn_chip = nxt_c1_bit ? (nxt_cnt5 >= 3'd2) : (nxt_cnt5 >= 3'd4);
+    end
   end
 
+  assign tx_pn_chip_out          = tx_pn_chip_q;
   assign pn_c1_locked_out        = c1_lock_q;
   assign pn_all_locked_out       = all_lock_q;
   assign composite_epoch_idx_out = composite_idx_q;
@@ -96,6 +130,7 @@ module ccsds_pn_ranging
       corr_c6_q       <= 16'sd0;
       c1_lock_q       <= 1'b0;
       all_lock_q      <= 1'b0;
+      tx_pn_chip_q    <= 1'b1;
     end else if (!pn_ranging_en_cfg) begin
       idx_c1_q        <= 1'd0;
       idx_c2_q        <= 3'd0;
@@ -112,35 +147,40 @@ module ccsds_pn_ranging
       corr_c6_q       <= 16'sd0;
       c1_lock_q       <= 1'b0;
       all_lock_q      <= 1'b0;
-    end else if (chip_en_in) begin
-      logic signed [15:0] samp_ext;
-      samp_ext = {{8{rx_chip_sample_in[7]}}, rx_chip_sample_in};
+      tx_pn_chip_q    <= 1'b1;
+    end else begin
+      idx_c1_q     <= nxt_idx_c1;
+      idx_c2_q     <= nxt_idx_c2;
+      idx_c3_q     <= nxt_idx_c3;
+      idx_c4_q     <= nxt_idx_c4;
+      idx_c5_q     <= nxt_idx_c5;
+      idx_c6_q     <= nxt_idx_c6;
+      tx_pn_chip_q <= nxt_tx_pn_chip;
 
-      idx_c1_q        <= (idx_c1_q == 1'd1)  ? 1'd0 : (idx_c1_q + 1'd1);
-      idx_c2_q        <= (idx_c2_q == 3'd6)  ? 3'd0 : (idx_c2_q + 3'd1);
-      idx_c3_q        <= (idx_c3_q == 4'd10) ? 4'd0 : (idx_c3_q + 4'd1);
-      idx_c4_q        <= (idx_c4_q == 4'd14) ? 4'd0 : (idx_c4_q + 4'd1);
-      idx_c5_q        <= (idx_c5_q == 5'd18) ? 5'd0 : (idx_c5_q + 5'd1);
-      idx_c6_q        <= (idx_c6_q == 5'd22) ? 5'd0 : (idx_c6_q + 5'd1);
-      composite_idx_q <= (composite_idx_q == 20'd1009469) ? 20'd0 : (composite_idx_q + 20'd1);
+      if (chip_en_in) begin
+        logic signed [15:0] samp_ext;
+        samp_ext = {{8{rx_chip_sample_in[7]}}, rx_chip_sample_in};
 
-      corr_c1_q <= corr_c1_q + (c1_bit ? samp_ext : -samp_ext);
-      corr_c2_q <= corr_c2_q + (c2_bit ? samp_ext : -samp_ext);
-      corr_c3_q <= corr_c3_q + (c3_bit ? samp_ext : -samp_ext);
-      corr_c4_q <= corr_c4_q + (c4_bit ? samp_ext : -samp_ext);
-      corr_c5_q <= corr_c5_q + (c5_bit ? samp_ext : -samp_ext);
-      corr_c6_q <= corr_c6_q + (c6_bit ? samp_ext : -samp_ext);
+        composite_idx_q <= (composite_idx_q == 20'd1009469) ? 20'd0 : (composite_idx_q + 20'd1);
 
-      if (corr_c1_q >= $signed(LOCK_THRESHOLD)) begin
-        c1_lock_q <= 1'b1;
-      end
-      if ((corr_c1_q >= $signed(LOCK_THRESHOLD)) &&
-          (corr_c2_q >= $signed(LOCK_THRESHOLD >> 2)) &&
-          (corr_c3_q >= $signed(LOCK_THRESHOLD >> 2)) &&
-          (corr_c4_q >= $signed(LOCK_THRESHOLD >> 2)) &&
-          (corr_c5_q >= $signed(LOCK_THRESHOLD >> 2)) &&
-          (corr_c6_q >= $signed(LOCK_THRESHOLD >> 2))) begin
-        all_lock_q <= 1'b1;
+        corr_c1_q <= corr_c1_q + (c1_bit ? samp_ext : -samp_ext);
+        corr_c2_q <= corr_c2_q + (c2_bit ? samp_ext : -samp_ext);
+        corr_c3_q <= corr_c3_q + (c3_bit ? samp_ext : -samp_ext);
+        corr_c4_q <= corr_c4_q + (c4_bit ? samp_ext : -samp_ext);
+        corr_c5_q <= corr_c5_q + (c5_bit ? samp_ext : -samp_ext);
+        corr_c6_q <= corr_c6_q + (c6_bit ? samp_ext : -samp_ext);
+
+        if (corr_c1_q >= $signed(LOCK_THRESHOLD)) begin
+          c1_lock_q <= 1'b1;
+        end
+        if ((corr_c1_q >= $signed(LOCK_THRESHOLD)) &&
+            (corr_c2_q >= $signed(LOCK_THRESHOLD >> 2)) &&
+            (corr_c3_q >= $signed(LOCK_THRESHOLD >> 2)) &&
+            (corr_c4_q >= $signed(LOCK_THRESHOLD >> 2)) &&
+            (corr_c5_q >= $signed(LOCK_THRESHOLD >> 2)) &&
+            (corr_c6_q >= $signed(LOCK_THRESHOLD >> 2))) begin
+          all_lock_q <= 1'b1;
+        end
       end
     end
   end
