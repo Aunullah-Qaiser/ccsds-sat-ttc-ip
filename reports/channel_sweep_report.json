@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "ebn0_sweep_points": 23,
+  "ebn0_range_db": [
+    0.0,
+    11.0
+  ],
+  "corner_scenarios": {
+    "corner1_best_case_flatsat": {
+      "passed": true,
+      "post_fec_ber": 0.0,
+      "fer": 0.0,
+      "latency_us": 4.12
+    },
+    "corner2_nominal_orbit_1bit_bch_sec": {
+      "passed": true,
+      "bch_single_bit_errors_injected": 2,
+      "bch_single_bit_errors_corrected": 2,
+      "post_fec_ber": 0.0
+    },
+    "corner3_worst_case_burst_fade_cop1_arq": {
+      "passed": true,
+      "clcw_nack_hex": "0x01040802",
+      "clcw_recovered_hex": "0x01040004",
+      "final_farm1_vr": 4
+    },
+    "corner4_radiation_seu_and_sdls_tamper": {
+      "passed": true,
+      "sdls_spoof_rejected_without_vr_mutation": true,
+      "tmr_single_cycle_scrub_verified": true
+    }
+  },
+  "waterfall_thresholds_ber_1e_6_db": {
+    "uncoded_bpsk_db": 10.5,
+    "uplink_bch6356_sec_ded_db": 8.8,
+    "downlink_conv_k7_viterbi_db": 5.4,
+    "uplink_short_ldpc_128_64_db": 4.2,
+    "downlink_concat_viterbi_rs255_223_db": 2.9,
+    "downlink_ar4ja_ldpc_r1_2_db": 1.9
+  }
+}

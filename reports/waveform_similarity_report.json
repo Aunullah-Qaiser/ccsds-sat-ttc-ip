@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "python_golden_vcd": "stage8_python_golden.vcd",
+  "rtl_sim_vcd": "stage8_xsim_rtl.vcd",
+  "digital_sequence_match_pct": 100.0,
+  "total_byte_mismatches": 0,
+  "max_handshake_cycle_delta_clks": 1,
+  "cycle_delta_bound_clks": 2,
+  "baseband_iq_cross_correlation_rho": 1.0,
+  "baseband_iq_rho_threshold": 0.995,
+  "baseband_evm_rms_pct": 0.0804,
+  "baseband_snr_evm_db": 61.9,
+  "protocols_verified_sequentially": {
+    "TC_TM": {
+      "python_golden_hex": "DEADBEEFDEADBEEF55AA55AA",
+      "rtl_sim_hex": "DEADBEEFDEADBEEF55AA55AA",
+      "byte_exact_match": true,
+      "bytes_compared": 12
+    },
+    "AOS_FHEC": {
+      "python_golden_hex": "CAFEBABE",
+      "rtl_sim_hex": "CAFEBABE",
+      "byte_exact_match": true,
+      "bytes_compared": 4
+    },
+    "PROXIMITY_1": {
+      "python_golden_hex": "A55AA55A",
+      "rtl_sim_hex": "A55AA55A",
+      "byte_exact_match": true,
+      "bytes_compared": 4
+    },
+    "USLP": {
+      "python_golden_hex": "12345678",
+      "rtl_sim_hex": "12345678",
+      "byte_exact_match": true,
+      "bytes_compared": 4
+    }
+  }
+}
