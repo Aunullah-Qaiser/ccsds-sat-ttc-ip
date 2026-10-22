@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Thu Oct 22 02:04:54 2026
+| Date         : Thu Oct 22 19:42:39 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_timing -from [get_clocks clk_tc_safe] -to [get_clocks clk_tc_safe] -max_paths 5 -nworst 1 -file reports/vivado_crit_path_clk_tc_safe_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -11,16 +11,16 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 
 Timing Report
 
-Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
-  Source:                 u_bch_dec/cb_shift_q_reg[38]/C
+Slack (VIOLATED) :        -5.099ns  (required time - arrival time)
+  Source:                 u_farm1/v_r_tmr_reg[1][7][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            u_bch_dec/tx_info_buf_q_reg[34]/D
+  Destination:            u_farm1/clcw_scheduled_out_reg[lockout]/D
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             clk_tc_safe
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            4.000ns  (clk_tc_safe rise@4.000ns - clk_tc_safe rise@0.000ns)
-  Data Path Delay:        9.125ns  (logic 1.901ns (20.833%)  route 7.224ns (79.167%))
-  Logic Levels:           10  (LUT3=1 LUT5=1 LUT6=8)
+  Data Path Delay:        8.927ns  (logic 3.544ns (39.700%)  route 5.383ns (60.300%))
+  Logic Levels:           12  (CARRY4=3 LUT2=1 LUT3=1 LUT4=1 LUT5=1 LUT6=4 MUXF7=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.924 - 4.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -37,58 +37,65 @@ Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.973     0.973    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/cb_shift_q_reg[38]/C
+                         net (fo=3971, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_bch_dec/cb_shift_q_reg[38]/Q
-                         net (fo=11, unplaced)        0.787     2.256    u_bch_dec/cb_candidate[39]
-                         LUT3 (Prop_lut3_I0_O)        0.295     2.551 r  u_bch_dec/bch_single_err_pulse_i_58/O
-                         net (fo=6, unplaced)         0.934     3.485    u_bch_dec/bch_single_err_pulse_i_58_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.609 r  u_bch_dec/bch_single_err_pulse_i_31/O
-                         net (fo=3, unplaced)         0.437     4.046    u_bch_dec/bch_single_err_pulse_i_31_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     4.170 r  u_bch_dec/tx_info_buf_q[55]_i_8/O
-                         net (fo=32, unplaced)        1.182     5.352    u_bch_dec/tx_info_buf_q[55]_i_8_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.476 r  u_bch_dec/tx_info_buf_q[15]_i_68/O
-                         net (fo=1, unplaced)         0.419     5.895    u_bch_dec/tx_info_buf_q[15]_i_68_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     6.019 r  u_bch_dec/tx_info_buf_q[15]_i_39/O
-                         net (fo=1, unplaced)         0.902     6.921    u_bch_dec/tx_info_buf_q[15]_i_39_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     7.045 r  u_bch_dec/tx_info_buf_q[15]_i_23/O
-                         net (fo=80, unplaced)        1.205     8.250    u_bch_dec/tx_info_buf_q[15]_i_23_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     8.374 r  u_bch_dec/tx_info_buf_q[34]_i_5/O
-                         net (fo=2, unplaced)         0.460     8.834    u_bch_dec/tx_info_buf_q[34]_i_5_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.118     8.952 r  u_bch_dec/tx_info_buf_q[34]_i_4/O
-                         net (fo=1, unplaced)         0.449     9.401    u_bch_dec/tx_info_buf_q[34]_i_4_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     9.525 r  u_bch_dec/tx_info_buf_q[34]_i_2/O
-                         net (fo=1, unplaced)         0.449     9.974    u_bch_dec/corrected_info56[26]
-                         LUT6 (Prop_lut6_I4_O)        0.124    10.098 r  u_bch_dec/tx_info_buf_q[34]_i_1/O
-                         net (fo=1, unplaced)         0.000    10.098    u_bch_dec/tx_info_buf_q[34]_i_1_n_0
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[34]/D
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
+                         net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
+                         net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     5.362 r  u_ul_deframer/farm_accept_pulse_reg_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000     5.362    u_ul_deframer/farm_accept_pulse_reg_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329     5.691 f  u_ul_deframer/farm_accept_pulse_reg_i_9/O[3]
+                         net (fo=7, unplaced)         0.653     6.344    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT4 (Prop_lut4_I2_O)        0.300     6.644 r  u_csr/state_tmr[2][1][1]_i_47/O
+                         net (fo=1, unplaced)         0.000     6.644    u_csr/state_tmr[2][1][1]_i_47_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.411     7.055 f  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
+                         net (fo=1, unplaced)         0.918     7.973    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.097 f  u_ul_deframer/state_tmr[2][1][1]_i_13/O
+                         net (fo=3, unplaced)         0.467     8.564    u_farm1/p_36_out
+                         LUT6 (Prop_lut6_I1_O)        0.124     8.688 f  u_farm1/state_tmr[2][1][0]_i_4/O
+                         net (fo=1, unplaced)         0.449     9.137    u_ul_deframer/nxt_st[0]
+                         LUT6 (Prop_lut6_I4_O)        0.124     9.261 f  u_ul_deframer/state_tmr[2][1][0]_i_2/O
+                         net (fo=26, unplaced)        0.515     9.776    u_ul_deframer/u_farm1/st_val[0]
+                         LUT5 (Prop_lut5_I1_O)        0.124     9.900 r  u_ul_deframer/clcw_scheduled_out[lockout]_i_1/O
+                         net (fo=1, unplaced)         0.000     9.900    u_farm1/clcw_scheduled_out_reg[lockout]_0
+                         FDCE                                         r  u_farm1/clcw_scheduled_out_reg[lockout]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.924     4.924    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[34]/C
+                         net (fo=3971, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/clcw_scheduled_out_reg[lockout]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
-                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_bch_dec/tx_info_buf_q_reg[34]
+                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_farm1/clcw_scheduled_out_reg[lockout]
   -------------------------------------------------------------------
                          required time                          4.801    
-                         arrival time                         -10.098    
+                         arrival time                          -9.900    
   -------------------------------------------------------------------
-                         slack                                 -5.297    
+                         slack                                 -5.099    
 
-Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
-  Source:                 u_bch_dec/cb_shift_q_reg[38]/C
+Slack (VIOLATED) :        -5.099ns  (required time - arrival time)
+  Source:                 u_farm1/v_r_tmr_reg[1][7][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            u_bch_dec/tx_info_buf_q_reg[35]/D
+  Destination:            u_farm1/clcw_scheduled_out_reg[wait_flag]/D
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             clk_tc_safe
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            4.000ns  (clk_tc_safe rise@4.000ns - clk_tc_safe rise@0.000ns)
-  Data Path Delay:        9.125ns  (logic 1.901ns (20.833%)  route 7.224ns (79.167%))
-  Logic Levels:           10  (LUT3=1 LUT5=1 LUT6=8)
+  Data Path Delay:        8.927ns  (logic 3.544ns (39.700%)  route 5.383ns (60.300%))
+  Logic Levels:           12  (CARRY4=3 LUT2=1 LUT3=1 LUT4=1 LUT6=5 MUXF7=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.924 - 4.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -105,58 +112,65 @@ Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.973     0.973    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/cb_shift_q_reg[38]/C
+                         net (fo=3971, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_bch_dec/cb_shift_q_reg[38]/Q
-                         net (fo=11, unplaced)        0.787     2.256    u_bch_dec/cb_candidate[39]
-                         LUT3 (Prop_lut3_I0_O)        0.295     2.551 r  u_bch_dec/bch_single_err_pulse_i_58/O
-                         net (fo=6, unplaced)         0.934     3.485    u_bch_dec/bch_single_err_pulse_i_58_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.609 r  u_bch_dec/bch_single_err_pulse_i_31/O
-                         net (fo=3, unplaced)         0.437     4.046    u_bch_dec/bch_single_err_pulse_i_31_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     4.170 r  u_bch_dec/tx_info_buf_q[55]_i_8/O
-                         net (fo=32, unplaced)        1.182     5.352    u_bch_dec/tx_info_buf_q[55]_i_8_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.476 r  u_bch_dec/tx_info_buf_q[15]_i_68/O
-                         net (fo=1, unplaced)         0.419     5.895    u_bch_dec/tx_info_buf_q[15]_i_68_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     6.019 r  u_bch_dec/tx_info_buf_q[15]_i_39/O
-                         net (fo=1, unplaced)         0.902     6.921    u_bch_dec/tx_info_buf_q[15]_i_39_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     7.045 r  u_bch_dec/tx_info_buf_q[15]_i_23/O
-                         net (fo=80, unplaced)        1.205     8.250    u_bch_dec/tx_info_buf_q[15]_i_23_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     8.374 r  u_bch_dec/tx_info_buf_q[35]_i_5/O
-                         net (fo=2, unplaced)         0.460     8.834    u_bch_dec/tx_info_buf_q[35]_i_5_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.118     8.952 r  u_bch_dec/tx_info_buf_q[35]_i_4/O
-                         net (fo=1, unplaced)         0.449     9.401    u_bch_dec/tx_info_buf_q[35]_i_4_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     9.525 r  u_bch_dec/tx_info_buf_q[35]_i_2/O
-                         net (fo=1, unplaced)         0.449     9.974    u_bch_dec/corrected_info56[27]
-                         LUT6 (Prop_lut6_I4_O)        0.124    10.098 r  u_bch_dec/tx_info_buf_q[35]_i_1/O
-                         net (fo=1, unplaced)         0.000    10.098    u_bch_dec/tx_info_buf_q[35]_i_1_n_0
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[35]/D
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
+                         net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
+                         net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     5.362 r  u_ul_deframer/farm_accept_pulse_reg_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000     5.362    u_ul_deframer/farm_accept_pulse_reg_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329     5.691 f  u_ul_deframer/farm_accept_pulse_reg_i_9/O[3]
+                         net (fo=7, unplaced)         0.653     6.344    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT4 (Prop_lut4_I2_O)        0.300     6.644 r  u_csr/state_tmr[2][1][1]_i_47/O
+                         net (fo=1, unplaced)         0.000     6.644    u_csr/state_tmr[2][1][1]_i_47_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.411     7.055 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
+                         net (fo=1, unplaced)         0.918     7.973    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.097 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
+                         net (fo=3, unplaced)         0.467     8.564    u_farm1/p_36_out
+                         LUT6 (Prop_lut6_I1_O)        0.124     8.688 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         net (fo=1, unplaced)         0.449     9.137    u_ul_deframer/nxt_st[0]
+                         LUT6 (Prop_lut6_I4_O)        0.124     9.261 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
+                         net (fo=26, unplaced)        0.515     9.776    u_ul_deframer/u_farm1/st_val[0]
+                         LUT6 (Prop_lut6_I2_O)        0.124     9.900 r  u_ul_deframer/clcw_scheduled_out[wait_flag]_i_1/O
+                         net (fo=1, unplaced)         0.000     9.900    u_farm1/clcw_scheduled_out_reg[wait_flag]_0
+                         FDCE                                         r  u_farm1/clcw_scheduled_out_reg[wait_flag]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.924     4.924    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[35]/C
+                         net (fo=3971, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/clcw_scheduled_out_reg[wait_flag]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
-                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_bch_dec/tx_info_buf_q_reg[35]
+                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_farm1/clcw_scheduled_out_reg[wait_flag]
   -------------------------------------------------------------------
                          required time                          4.801    
-                         arrival time                         -10.098    
+                         arrival time                          -9.900    
   -------------------------------------------------------------------
-                         slack                                 -5.297    
+                         slack                                 -5.099    
 
-Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
-  Source:                 u_bch_dec/cb_shift_q_reg[38]/C
+Slack (VIOLATED) :        -5.099ns  (required time - arrival time)
+  Source:                 u_farm1/v_r_tmr_reg[1][7][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            u_bch_dec/tx_info_buf_q_reg[38]/D
+  Destination:            u_farm1/state_tmr_reg[0][0][0]/D
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             clk_tc_safe
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            4.000ns  (clk_tc_safe rise@4.000ns - clk_tc_safe rise@0.000ns)
-  Data Path Delay:        9.125ns  (logic 1.901ns (20.833%)  route 7.224ns (79.167%))
-  Logic Levels:           10  (LUT3=1 LUT5=1 LUT6=8)
+  Data Path Delay:        8.927ns  (logic 3.544ns (39.700%)  route 5.383ns (60.300%))
+  Logic Levels:           12  (CARRY4=3 LUT2=1 LUT3=1 LUT4=1 LUT6=5 MUXF7=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.924 - 4.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -173,58 +187,65 @@ Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.973     0.973    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/cb_shift_q_reg[38]/C
+                         net (fo=3971, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_bch_dec/cb_shift_q_reg[38]/Q
-                         net (fo=11, unplaced)        0.787     2.256    u_bch_dec/cb_candidate[39]
-                         LUT3 (Prop_lut3_I0_O)        0.295     2.551 r  u_bch_dec/bch_single_err_pulse_i_58/O
-                         net (fo=6, unplaced)         0.934     3.485    u_bch_dec/bch_single_err_pulse_i_58_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.609 r  u_bch_dec/bch_single_err_pulse_i_31/O
-                         net (fo=3, unplaced)         0.437     4.046    u_bch_dec/bch_single_err_pulse_i_31_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     4.170 r  u_bch_dec/tx_info_buf_q[55]_i_8/O
-                         net (fo=32, unplaced)        1.182     5.352    u_bch_dec/tx_info_buf_q[55]_i_8_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.476 r  u_bch_dec/tx_info_buf_q[15]_i_68/O
-                         net (fo=1, unplaced)         0.419     5.895    u_bch_dec/tx_info_buf_q[15]_i_68_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     6.019 r  u_bch_dec/tx_info_buf_q[15]_i_39/O
-                         net (fo=1, unplaced)         0.902     6.921    u_bch_dec/tx_info_buf_q[15]_i_39_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     7.045 r  u_bch_dec/tx_info_buf_q[15]_i_23/O
-                         net (fo=80, unplaced)        1.205     8.250    u_bch_dec/tx_info_buf_q[15]_i_23_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     8.374 r  u_bch_dec/tx_info_buf_q[38]_i_5/O
-                         net (fo=2, unplaced)         0.460     8.834    u_bch_dec/tx_info_buf_q[38]_i_5_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.118     8.952 r  u_bch_dec/tx_info_buf_q[38]_i_4/O
-                         net (fo=1, unplaced)         0.449     9.401    u_bch_dec/tx_info_buf_q[38]_i_4_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     9.525 r  u_bch_dec/tx_info_buf_q[38]_i_2/O
-                         net (fo=1, unplaced)         0.449     9.974    u_bch_dec/corrected_info56[30]
-                         LUT6 (Prop_lut6_I4_O)        0.124    10.098 r  u_bch_dec/tx_info_buf_q[38]_i_1/O
-                         net (fo=1, unplaced)         0.000    10.098    u_bch_dec/tx_info_buf_q[38]_i_1_n_0
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[38]/D
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
+                         net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
+                         net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     5.362 r  u_ul_deframer/farm_accept_pulse_reg_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000     5.362    u_ul_deframer/farm_accept_pulse_reg_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329     5.691 f  u_ul_deframer/farm_accept_pulse_reg_i_9/O[3]
+                         net (fo=7, unplaced)         0.653     6.344    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT4 (Prop_lut4_I2_O)        0.300     6.644 r  u_csr/state_tmr[2][1][1]_i_47/O
+                         net (fo=1, unplaced)         0.000     6.644    u_csr/state_tmr[2][1][1]_i_47_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.411     7.055 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
+                         net (fo=1, unplaced)         0.918     7.973    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.097 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
+                         net (fo=3, unplaced)         0.467     8.564    u_farm1/p_36_out
+                         LUT6 (Prop_lut6_I1_O)        0.124     8.688 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         net (fo=1, unplaced)         0.449     9.137    u_ul_deframer/nxt_st[0]
+                         LUT6 (Prop_lut6_I4_O)        0.124     9.261 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
+                         net (fo=26, unplaced)        0.515     9.776    u_ul_deframer/u_farm1/st_val[0]
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.900 r  u_ul_deframer/state_tmr[0][0][0]_i_1/O
+                         net (fo=1, unplaced)         0.000     9.900    u_farm1/state_tmr_reg[0][0][1]_1[0]
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][0][0]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.924     4.924    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[38]/C
+                         net (fo=3971, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][0][0]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
-                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_bch_dec/tx_info_buf_q_reg[38]
+                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_farm1/state_tmr_reg[0][0][0]
   -------------------------------------------------------------------
                          required time                          4.801    
-                         arrival time                         -10.098    
+                         arrival time                          -9.900    
   -------------------------------------------------------------------
-                         slack                                 -5.297    
+                         slack                                 -5.099    
 
-Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
-  Source:                 u_bch_dec/cb_shift_q_reg[38]/C
+Slack (VIOLATED) :        -5.099ns  (required time - arrival time)
+  Source:                 u_farm1/v_r_tmr_reg[1][7][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            u_bch_dec/tx_info_buf_q_reg[39]/D
+  Destination:            u_farm1/state_tmr_reg[0][0][1]/D
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             clk_tc_safe
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            4.000ns  (clk_tc_safe rise@4.000ns - clk_tc_safe rise@0.000ns)
-  Data Path Delay:        9.125ns  (logic 1.901ns (20.833%)  route 7.224ns (79.167%))
-  Logic Levels:           10  (LUT3=1 LUT5=1 LUT6=8)
+  Data Path Delay:        8.927ns  (logic 3.544ns (39.700%)  route 5.383ns (60.300%))
+  Logic Levels:           12  (CARRY4=3 LUT2=1 LUT3=1 LUT4=1 LUT6=5 MUXF7=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.924 - 4.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -241,58 +262,65 @@ Slack (VIOLATED) :        -5.297ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.973     0.973    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/cb_shift_q_reg[38]/C
+                         net (fo=3971, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_bch_dec/cb_shift_q_reg[38]/Q
-                         net (fo=11, unplaced)        0.787     2.256    u_bch_dec/cb_candidate[39]
-                         LUT3 (Prop_lut3_I0_O)        0.295     2.551 r  u_bch_dec/bch_single_err_pulse_i_58/O
-                         net (fo=6, unplaced)         0.934     3.485    u_bch_dec/bch_single_err_pulse_i_58_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.609 r  u_bch_dec/bch_single_err_pulse_i_31/O
-                         net (fo=3, unplaced)         0.437     4.046    u_bch_dec/bch_single_err_pulse_i_31_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     4.170 r  u_bch_dec/tx_info_buf_q[55]_i_8/O
-                         net (fo=32, unplaced)        1.182     5.352    u_bch_dec/tx_info_buf_q[55]_i_8_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.476 r  u_bch_dec/tx_info_buf_q[15]_i_68/O
-                         net (fo=1, unplaced)         0.419     5.895    u_bch_dec/tx_info_buf_q[15]_i_68_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     6.019 r  u_bch_dec/tx_info_buf_q[15]_i_39/O
-                         net (fo=1, unplaced)         0.902     6.921    u_bch_dec/tx_info_buf_q[15]_i_39_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     7.045 r  u_bch_dec/tx_info_buf_q[15]_i_23/O
-                         net (fo=80, unplaced)        1.205     8.250    u_bch_dec/tx_info_buf_q[15]_i_23_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     8.374 r  u_bch_dec/tx_info_buf_q[39]_i_6/O
-                         net (fo=2, unplaced)         0.460     8.834    u_bch_dec/tx_info_buf_q[39]_i_6_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.118     8.952 r  u_bch_dec/tx_info_buf_q[39]_i_5/O
-                         net (fo=1, unplaced)         0.449     9.401    u_bch_dec/tx_info_buf_q[39]_i_5_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     9.525 r  u_bch_dec/tx_info_buf_q[39]_i_2/O
-                         net (fo=1, unplaced)         0.449     9.974    u_bch_dec/corrected_info56[31]
-                         LUT6 (Prop_lut6_I4_O)        0.124    10.098 r  u_bch_dec/tx_info_buf_q[39]_i_1/O
-                         net (fo=1, unplaced)         0.000    10.098    u_bch_dec/tx_info_buf_q[39]_i_1_n_0
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[39]/D
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
+                         net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
+                         net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     5.362 r  u_ul_deframer/farm_accept_pulse_reg_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000     5.362    u_ul_deframer/farm_accept_pulse_reg_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329     5.691 f  u_ul_deframer/farm_accept_pulse_reg_i_9/O[3]
+                         net (fo=7, unplaced)         0.653     6.344    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT4 (Prop_lut4_I2_O)        0.300     6.644 r  u_csr/state_tmr[2][1][1]_i_47/O
+                         net (fo=1, unplaced)         0.000     6.644    u_csr/state_tmr[2][1][1]_i_47_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.411     7.055 f  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
+                         net (fo=1, unplaced)         0.918     7.973    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.097 f  u_ul_deframer/state_tmr[2][1][1]_i_13/O
+                         net (fo=3, unplaced)         0.467     8.564    u_farm1/p_36_out
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.688 r  u_farm1/state_tmr[2][1][1]_i_5/O
+                         net (fo=1, unplaced)         0.449     9.137    u_ul_deframer/nxt_st[1]
+                         LUT6 (Prop_lut6_I4_O)        0.124     9.261 r  u_ul_deframer/state_tmr[2][1][1]_i_2/O
+                         net (fo=26, unplaced)        0.515     9.776    u_ul_deframer/u_farm1/st_val[1]
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.900 r  u_ul_deframer/state_tmr[0][0][1]_i_1/O
+                         net (fo=1, unplaced)         0.000     9.900    u_farm1/state_tmr_reg[0][0][1]_1[1]
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][0][1]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.924     4.924    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[39]/C
+                         net (fo=3971, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][0][1]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
-                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_bch_dec/tx_info_buf_q_reg[39]
+                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_farm1/state_tmr_reg[0][0][1]
   -------------------------------------------------------------------
                          required time                          4.801    
-                         arrival time                         -10.098    
+                         arrival time                          -9.900    
   -------------------------------------------------------------------
-                         slack                                 -5.297    
+                         slack                                 -5.099    
 
-Slack (VIOLATED) :        -5.292ns  (required time - arrival time)
-  Source:                 u_bch_dec/cb_shift_q_reg[38]/C
+Slack (VIOLATED) :        -5.099ns  (required time - arrival time)
+  Source:                 u_farm1/v_r_tmr_reg[1][7][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
-  Destination:            u_bch_dec/tx_info_buf_q_reg[42]/D
+  Destination:            u_farm1/state_tmr_reg[0][1][0]/D
                             (rising edge-triggered cell FDCE clocked by clk_tc_safe  {rise@0.000ns fall@2.000ns period=4.000ns})
   Path Group:             clk_tc_safe
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            4.000ns  (clk_tc_safe rise@4.000ns - clk_tc_safe rise@0.000ns)
-  Data Path Delay:        9.120ns  (logic 1.907ns (20.910%)  route 7.213ns (79.090%))
-  Logic Levels:           10  (LUT3=1 LUT5=1 LUT6=8)
+  Data Path Delay:        8.927ns  (logic 3.544ns (39.700%)  route 5.383ns (60.300%))
+  Logic Levels:           12  (CARRY4=3 LUT2=1 LUT3=1 LUT4=1 LUT6=5 MUXF7=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.924 - 4.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -309,47 +337,54 @@ Slack (VIOLATED) :        -5.292ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.973     0.973    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/cb_shift_q_reg[38]/C
+                         net (fo=3971, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_bch_dec/cb_shift_q_reg[38]/Q
-                         net (fo=11, unplaced)        0.787     2.256    u_bch_dec/cb_candidate[39]
-                         LUT3 (Prop_lut3_I0_O)        0.295     2.551 r  u_bch_dec/bch_single_err_pulse_i_58/O
-                         net (fo=6, unplaced)         0.934     3.485    u_bch_dec/bch_single_err_pulse_i_58_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     3.609 r  u_bch_dec/bch_single_err_pulse_i_31/O
-                         net (fo=3, unplaced)         0.437     4.046    u_bch_dec/bch_single_err_pulse_i_31_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     4.170 r  u_bch_dec/tx_info_buf_q[55]_i_8/O
-                         net (fo=32, unplaced)        1.182     5.352    u_bch_dec/tx_info_buf_q[55]_i_8_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.476 r  u_bch_dec/tx_info_buf_q[15]_i_68/O
-                         net (fo=1, unplaced)         0.419     5.895    u_bch_dec/tx_info_buf_q[15]_i_68_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     6.019 r  u_bch_dec/tx_info_buf_q[15]_i_39/O
-                         net (fo=1, unplaced)         0.902     6.921    u_bch_dec/tx_info_buf_q[15]_i_39_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     7.045 r  u_bch_dec/tx_info_buf_q[15]_i_23/O
-                         net (fo=80, unplaced)        1.205     8.250    u_bch_dec/tx_info_buf_q[15]_i_23_n_0
-                         LUT6 (Prop_lut6_I0_O)        0.124     8.374 r  u_bch_dec/tx_info_buf_q[42]_i_6/O
-                         net (fo=1, unplaced)         0.449     8.823    u_bch_dec/tx_info_buf_q[42]_i_6_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     8.947 r  u_bch_dec/tx_info_buf_q[42]_i_4/O
-                         net (fo=1, unplaced)         0.449     9.396    u_bch_dec/tx_info_buf_q[42]_i_4_n_0
-                         LUT5 (Prop_lut5_I4_O)        0.124     9.520 r  u_bch_dec/tx_info_buf_q[42]_i_2/O
-                         net (fo=1, unplaced)         0.449     9.969    u_bch_dec/corrected_info56[34]
-                         LUT6 (Prop_lut6_I4_O)        0.124    10.093 r  u_bch_dec/tx_info_buf_q[42]_i_1/O
-                         net (fo=1, unplaced)         0.000    10.093    u_bch_dec/tx_info_buf_q[42]_i_1_n_0
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[42]/D
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
+                         net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
+                         LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
+                         net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     5.362 r  u_ul_deframer/farm_accept_pulse_reg_i_8/CO[3]
+                         net (fo=1, unplaced)         0.000     5.362    u_ul_deframer/farm_accept_pulse_reg_i_8_n_0
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.329     5.691 f  u_ul_deframer/farm_accept_pulse_reg_i_9/O[3]
+                         net (fo=7, unplaced)         0.653     6.344    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT4 (Prop_lut4_I2_O)        0.300     6.644 r  u_csr/state_tmr[2][1][1]_i_47/O
+                         net (fo=1, unplaced)         0.000     6.644    u_csr/state_tmr[2][1][1]_i_47_n_0
+                         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.411     7.055 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
+                         net (fo=1, unplaced)         0.918     7.973    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.097 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
+                         net (fo=3, unplaced)         0.467     8.564    u_farm1/p_36_out
+                         LUT6 (Prop_lut6_I1_O)        0.124     8.688 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         net (fo=1, unplaced)         0.449     9.137    u_ul_deframer/nxt_st[0]
+                         LUT6 (Prop_lut6_I4_O)        0.124     9.261 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
+                         net (fo=26, unplaced)        0.515     9.776    u_ul_deframer/u_farm1/st_val[0]
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.900 r  u_ul_deframer/state_tmr[0][1][0]_i_1/O
+                         net (fo=1, unplaced)         0.000     9.900    u_farm1/state_tmr_reg[0][1][1]_1[0]
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][1][0]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=3963, unset)         0.924     4.924    u_bch_dec/clk_tc_safe
-                         FDCE                                         r  u_bch_dec/tx_info_buf_q_reg[42]/C
+                         net (fo=3971, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         FDCE                                         r  u_farm1/state_tmr_reg[0][1][0]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
-                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_bch_dec/tx_info_buf_q_reg[42]
+                         FDCE (Setup_fdce_C_D)        0.062     4.801    u_farm1/state_tmr_reg[0][1][0]
   -------------------------------------------------------------------
                          required time                          4.801    
-                         arrival time                         -10.093    
+                         arrival time                          -9.900    
   -------------------------------------------------------------------
-                         slack                                 -5.292    
+                         slack                                 -5.099    
 
 
 

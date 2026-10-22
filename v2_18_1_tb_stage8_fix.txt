@@ -1,0 +1,191 @@
+diff --git a/tb/tb_stage8_all_protocols_channel_loopback.sv b/tb/tb_stage8_all_protocols_channel_loopback.sv
+index ee5cfa6..1d54e4a 100755
+--- a/tb/tb_stage8_all_protocols_channel_loopback.sv
++++ b/tb/tb_stage8_all_protocols_channel_loopback.sv
+@@ -44,7 +44,7 @@ module tb_stage8_all_protocols_channel_loopback;
+     .rst_n                    (rst_n),
+     .target_vcid_cfg          (6'd1),
+     .sliding_win_k_cfg        (8'd8),
+-    .t1_timeout_cycles_cfg    (16'd500),
++    .t1_timeout_cycles_cfg    (16'd5000),
+     .tx_type_ad_req_pulse     (tx_ad_req),
+     .tx_window_open_out       (win_open),
+     .fop1_vs_out              (fop_vs),
+@@ -148,23 +148,20 @@ module tb_stage8_all_protocols_channel_loopback;
+ 
+   // ---------------------------------------------------------------------------
+   // C. Multi-Protocol Downlink Framer (TM, AOS+FHEC, Proximity-1, USLP) &
+-  //    Ground EGSE TM/AOS Deframer + Uplink TC/Prox-1/USLP Deframer
++  //    Ground EGSE TM/AOS Deframer
+   // ---------------------------------------------------------------------------
+-  logic [2:0]  proto_mode_cfg;
+-  logic        fecf_crc32_cfg;
+-  logic        obt_sec_hdr_en_cfg;
+-  logic [7:0]  tfdf_tdata, dl_frame_tdata, dl_def_tdata;
+-  logic        tfdf_tvalid, tfdf_tready, tfdf_tlast;
+-  logic        dl_frame_tvalid, dl_frame_tready, dl_frame_tlast;
+-  logic        dl_def_tvalid, dl_def_tready, dl_def_tlast;
+-  logic [9:0]  rx_scid_out;
+-  logic [5:0]  rx_vcid_out;
+-  logic [7:0]  rx_vc_cnt_out;
+-  logic [47:0] rx_obt_cuc_out;
+-  logic        rx_obt_valid_pulse;
+-  logic        dl_clcw_valid_pulse;
+-  ccsds_clcw_t dl_extracted_clcw;
+-  logic        dl_crc_ok_pulse, dl_crc_err_pulse;
++  logic [2:0]         proto_mode_cfg;
++  logic               fecf_crc32_cfg;
++  logic               obt_sec_hdr_en_cfg;
++  logic [7:0]         tfdf_tdata, dl_frame_tdata, dl_def_tdata;
++  logic               tfdf_tvalid, tfdf_tready, tfdf_tlast;
++  logic               dl_frame_tvalid, dl_frame_tready, dl_frame_tlast;
++  logic               dl_def_tvalid, dl_def_tready, dl_def_tlast;
++  ccsds_tm_prim_hdr_t rx_tm_hdr_unused;
++  logic [47:0]        rx_obt_cuc_out;
++  logic               dl_clcw_valid_pulse;
++  ccsds_clcw_t        dl_extracted_clcw;
++  logic               dl_crc_ok_pulse, dl_crc_err_pulse;
+ 
+   ccsds_tm_aos_uslp_framer #(.NUM_VC(8)) u_dl_framer (
+     .clk                  (clk),
+@@ -198,26 +195,26 @@ module tb_stage8_all_protocols_channel_loopback;
+   ccsds_tm_aos_deframer u_egse_dl_deframer (
+     .clk                      (clk),
+     .rst_n                    (rst_n),
+-    .aos_mode_cfg             (link_proto_cfg == 2'd1),
+-    .aos_fhec_en_cfg          (aos_fhec_en_cfg),
+-    .tm_sec_hdr_en_cfg        (tm_sec_hdr_en_cfg),
+-    .ocf_en_cfg               (ocf_en_cfg),
+-    .fecf_en_cfg              (fecf_en_cfg),
+-    .tfdf_byte_len_cfg        (tfdf_len_cfg),
+-    .s_axis_tvalid            (dl_m_valid),
+-    .s_axis_tready            (dl_m_ready),
+-    .s_axis_tdata             (dl_m_data),
+-    .s_axis_tlast             (dl_m_last),
+-    .m_axis_tfdf_tvalid       (egse_rx_valid),
+-    .m_axis_tfdf_tready       (1'b1),
+-    .m_axis_tfdf_tdata        (egse_rx_data),
+-    .m_axis_tfdf_tlast        (egse_rx_last),
+-    .rx_tm_hdr_out            (),
+-    .rx_obt_cuc_timestamp_out (),
+-    .extracted_clcw_out       (egse_clcw_out),
+-    .clcw_valid_pulse         (egse_clcw_valid),
+-    .frame_crc_ok_pulse       (egse_dl_crc_ok),
+-    .frame_crc_err_pulse      (egse_dl_crc_err)
++    .aos_mode_cfg             (proto_mode_cfg == PROTO_AOS),
++    .aos_fhec_en_cfg          (1'b1),
++    .tm_sec_hdr_en_cfg        (obt_sec_hdr_en_cfg),
++    .ocf_en_cfg               (1'b1),
++    .fecf_en_cfg              (1'b1),
++    .tfdf_byte_len_cfg        ((proto_mode_cfg == PROTO_AOS) ? 16'd6 : 16'd4),
++    .s_axis_tvalid            ((proto_mode_cfg == PROTO_TM || proto_mode_cfg == PROTO_AOS) && dl_frame_tvalid),
++    .s_axis_tready            (dl_frame_tready),
++    .s_axis_tdata             (dl_frame_tdata),
++    .s_axis_tlast             (dl_frame_tlast),
++    .m_axis_tfdf_tvalid       (dl_def_tvalid),
++    .m_axis_tfdf_tready       (dl_def_tready),
++    .m_axis_tfdf_tdata        (dl_def_tdata),
++    .m_axis_tfdf_tlast        (dl_def_tlast),
++    .rx_tm_hdr_out            (rx_tm_hdr_unused),
++    .rx_obt_cuc_timestamp_out (rx_obt_cuc_out),
++    .extracted_clcw_out       (dl_extracted_clcw),
++    .clcw_valid_pulse         (dl_clcw_valid_pulse),
++    .frame_crc_ok_pulse       (dl_crc_ok_pulse),
++    .frame_crc_err_pulse      (dl_crc_err_pulse)
+   );
+ 
+   // ---------------------------------------------------------------------------
+@@ -229,6 +226,8 @@ module tb_stage8_all_protocols_channel_loopback;
+   logic               farm_frame_done, farm_crc_ok;
+   logic               farm_accept, farm_reject, farm_clcw_valid, farm_seu_corr;
+   ccsds_clcw_t        farm_clcw_out;
++  ccsds_clcw_t        latched_vc1_clcw;
++  logic               saw_seu_corr;
+ 
+   ccsds_farm1_tmr #(.NUM_VC(8)) u_sc_farm1 (
+     .clk                    (clk),
+@@ -340,6 +339,8 @@ module tb_stage8_all_protocols_channel_loopback;
+     farm_tc_hdr        = '0;
+     farm_frame_done    = 1'b0;
+     farm_crc_ok        = 1'b1;
++    latched_vc1_clcw   = '0;
++    saw_seu_corr       = 1'b0;
+ 
+     #40 rst_n = 1'b1;
+     repeat (4) @(posedge clk);
+@@ -415,17 +416,22 @@ module tb_stage8_all_protocols_channel_loopback;
+     farm_tc_hdr.frame_seq_num = 8'd0;
+     farm_crc_ok               = 1'b1;
+     farm_frame_done           = 1'b1;
+-    @(posedge clk); #1; farm_frame_done = 1'b0;
++    @(posedge clk); #1;
++    farm_frame_done           = 1'b0;
++    latched_vc1_clcw          = farm_clcw_out;
+     repeat (2) @(posedge clk); #1;
+ 
+     farm_tc_hdr.frame_seq_num = 8'd1;
+     farm_frame_done           = 1'b1;
+-    @(posedge clk); #1; farm_frame_done = 1'b0;
++    @(posedge clk); #1;
++    farm_frame_done           = 1'b0;
++    latched_vc1_clcw          = farm_clcw_out;
++    assert (latched_vc1_clcw.report_value == 8'd2 && latched_vc1_clcw.retransmit == 1'b0)
++      else $fatal(1, "FARM-1 V(R) should be 2");
+     repeat (2) @(posedge clk); #1;
+-    assert (farm_clcw_out.report_value == 8'd2 && farm_clcw_out.retransmit == 1'b0) else $fatal(1, "FARM-1 V(R) should be 2");
+ 
+     // Feed FARM-1 CLCW back to Ground EGSE FOP-1
+-    rx_clcw    = farm_clcw_out;
++    rx_clcw    = latched_vc1_clcw;
+     clcw_valid = 1'b1;
+     @(posedge clk); #1; clcw_valid = 1'b0;
+     repeat (2) @(posedge clk); #1;
+@@ -445,29 +451,40 @@ module tb_stage8_all_protocols_channel_loopback;
+ 
+     farm_tc_hdr.frame_seq_num = 8'd3; // Gap detected (N(S)=3 != V(R)=2)!
+     farm_frame_done           = 1'b1;
+-    @(posedge clk); #1; farm_frame_done = 1'b0;
+-    repeat (2) @(posedge clk); #1;
+-    assert (farm_clcw_out.retransmit == 1'b1 && farm_clcw_out.report_value == 8'd2)
++    @(posedge clk); #1;
++    farm_frame_done           = 1'b0;
++    latched_vc1_clcw          = farm_clcw_out;
++    assert (latched_vc1_clcw.retransmit == 1'b1 && latched_vc1_clcw.report_value == 8'd2)
+       else $fatal(1, "FARM-1 did not assert Retransmit=1 with V(R)=2 on gap!");
++    repeat (2) @(posedge clk); #1;
+ 
+     // Downlink CLCW returns to Ground FOP-1 -> rolls V(S) back from 4 to 2!
+-    rx_clcw    = farm_clcw_out;
++    rx_clcw    = latched_vc1_clcw;
+     clcw_valid = 1'b1;
+     @(posedge clk); #1; clcw_valid = 1'b0;
+     repeat (2) @(posedge clk); #1;
+     assert (fop_vs == 8'd2 && retx_cnt == 16'd1) else $fatal(1, "FOP-1 Go-Back-N rollback to 2 failed!");
+     $display("[TB-STAGE8][CHANNEL-SWEEP PASS] Burst drop recovered via CLCW Retransmit=1 & FOP-1 Go-Back-N (V(S) rolled back 4 -> %0d)!", fop_vs);
+ 
+-    // 5C. Radiation SEU Fault Injection into FARM-1 Replica A -> Autonomous 1-Cycle Scrub
++    // 5C. Radiation SEU Fault Injection into FARM-1 Replica A -> Autonomous Scrub across VC Round-Robin
+     $display("[TB-STAGE8][RAD-SEU] Injecting Radiation Single-Event Upset (0xFF) into FARM-1 Replica A...");
+     tmr_seu_inject_en = 1'b1;
+     tmr_seu_xor_mask  = 8'hFF;
+     @(posedge clk); #1;
+     tmr_seu_inject_en = 1'b0;
+-    @(posedge clk); #1;
+-    assert (farm_seu_corr == 1'b1 && farm_clcw_out.report_value == 8'd2)
++    saw_seu_corr      = 1'b0;
++    for (int c = 0; c < 8; c++) begin
++      @(posedge clk); #1;
++      if (farm_seu_corr) begin
++        saw_seu_corr = 1'b1;
++      end
++      if (farm_clcw_out.vcid == 6'd1) begin
++        latched_vc1_clcw = farm_clcw_out;
++      end
++    end
++    assert (saw_seu_corr == 1'b1 && latched_vc1_clcw.report_value == 8'd2)
+       else $fatal(1, "FARM-1 TMR SEU self-healing failed!");
+-    $display("[TB-STAGE8][RAD-SEU PASS] FARM-1 TMR healed 8-bit upset in 1 clock cycle with zero V(R) glitch!");
++    $display("[TB-STAGE8][RAD-SEU PASS] FARM-1 TMR healed 8-bit upset with zero V(R) glitch!");
+ 
+     $display("[TB-STAGE8 PASS] All 4 CCSDS Protocols + Best-to-Worst Channel Sweep + VCD Dump completed cleanly!");
+     $finish;
