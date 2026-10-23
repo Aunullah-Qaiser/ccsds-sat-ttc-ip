@@ -1,0 +1,331 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
+| Date         : Fri Oct 23 10:37:34 2026
+| Host         : Sagittarius running 64-bit major release  (build 9200)
+| Command      : report_timing -from [get_clocks clk_tx_sym] -to [get_clocks clk_tx_sym] -max_paths 5 -nworst 1 -file reports/vivado_crit_path_clk_tx_sym_role2.rpt
+| Design       : ccsds_sat_ttc_top
+| Device       : 7z010i-clg225
+| Speed File   : -1L  PRODUCTION 1.12 2019-11-22
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -2.408ns  (required time - arrival time)
+  Source:                 u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Destination:            u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMA/WE
+                            (rising edge-triggered cell RAMD64E clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Path Group:             clk_tx_sym
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.333ns  (clk_tx_sym rise@3.333ns - clk_tx_sym rise@0.000ns)
+  Data Path Delay:        4.979ns  (logic 2.146ns (43.101%)  route 2.833ns (56.899%))
+  Logic Levels:           6  (CARRY4=2 LUT2=1 LUT4=1 LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_tx_sym rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.973     0.973    u_tx_hwm_cdc_fifo/clk_tx_sym
+                         FDCE                                         r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/Q
+                         net (fo=217, unplaced)       0.589     2.058    u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg_n_0_[1]
+                         LUT2 (Prop_lut2_I0_O)        0.295     2.353 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_21/O
+                         net (fo=1, unplaced)         0.000     2.353    u_tx_hwm_cdc_fifo/watermark_open_q_i_21_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     2.903 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000     2.903    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256     3.159 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18/O[2]
+                         net (fo=3, unplaced)         0.923     4.082    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18_n_5
+                         LUT6 (Prop_lut6_I3_O)        0.301     4.383 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_8/O
+                         net (fo=1, unplaced)         0.419     4.802    u_tx_hwm_cdc_fifo/watermark_open_q_i_8_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.926 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_3/O
+                         net (fo=23, unplaced)        0.512     5.438    u_tx_hwm_cdc_fifo/p_12_in
+                         LUT4 (Prop_lut4_I1_O)        0.124     5.562 r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2_i_4/O
+                         net (fo=18, unplaced)        0.390     5.952    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WE
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMA/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_tx_sym rise edge)
+                                                      3.333     3.333 r  
+                                                      0.000     3.333 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.924     4.257    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WCLK
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMA/CLK
+                         clock pessimism              0.000     4.257    
+                         clock uncertainty           -0.185     4.072    
+                         RAMD64E (Setup_ramd64e_CLK_WE)
+                                                     -0.528     3.544    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMA
+  -------------------------------------------------------------------
+                         required time                          3.544    
+                         arrival time                          -5.952    
+  -------------------------------------------------------------------
+                         slack                                 -2.408    
+
+Slack (VIOLATED) :        -2.408ns  (required time - arrival time)
+  Source:                 u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Destination:            u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMB/WE
+                            (rising edge-triggered cell RAMD64E clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Path Group:             clk_tx_sym
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.333ns  (clk_tx_sym rise@3.333ns - clk_tx_sym rise@0.000ns)
+  Data Path Delay:        4.979ns  (logic 2.146ns (43.101%)  route 2.833ns (56.899%))
+  Logic Levels:           6  (CARRY4=2 LUT2=1 LUT4=1 LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_tx_sym rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.973     0.973    u_tx_hwm_cdc_fifo/clk_tx_sym
+                         FDCE                                         r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/Q
+                         net (fo=217, unplaced)       0.589     2.058    u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg_n_0_[1]
+                         LUT2 (Prop_lut2_I0_O)        0.295     2.353 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_21/O
+                         net (fo=1, unplaced)         0.000     2.353    u_tx_hwm_cdc_fifo/watermark_open_q_i_21_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     2.903 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000     2.903    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256     3.159 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18/O[2]
+                         net (fo=3, unplaced)         0.923     4.082    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18_n_5
+                         LUT6 (Prop_lut6_I3_O)        0.301     4.383 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_8/O
+                         net (fo=1, unplaced)         0.419     4.802    u_tx_hwm_cdc_fifo/watermark_open_q_i_8_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.926 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_3/O
+                         net (fo=23, unplaced)        0.512     5.438    u_tx_hwm_cdc_fifo/p_12_in
+                         LUT4 (Prop_lut4_I1_O)        0.124     5.562 r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2_i_4/O
+                         net (fo=18, unplaced)        0.390     5.952    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WE
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMB/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_tx_sym rise edge)
+                                                      3.333     3.333 r  
+                                                      0.000     3.333 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.924     4.257    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WCLK
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMB/CLK
+                         clock pessimism              0.000     4.257    
+                         clock uncertainty           -0.185     4.072    
+                         RAMD64E (Setup_ramd64e_CLK_WE)
+                                                     -0.528     3.544    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMB
+  -------------------------------------------------------------------
+                         required time                          3.544    
+                         arrival time                          -5.952    
+  -------------------------------------------------------------------
+                         slack                                 -2.408    
+
+Slack (VIOLATED) :        -2.408ns  (required time - arrival time)
+  Source:                 u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Destination:            u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMC/WE
+                            (rising edge-triggered cell RAMD64E clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Path Group:             clk_tx_sym
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.333ns  (clk_tx_sym rise@3.333ns - clk_tx_sym rise@0.000ns)
+  Data Path Delay:        4.979ns  (logic 2.146ns (43.101%)  route 2.833ns (56.899%))
+  Logic Levels:           6  (CARRY4=2 LUT2=1 LUT4=1 LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_tx_sym rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.973     0.973    u_tx_hwm_cdc_fifo/clk_tx_sym
+                         FDCE                                         r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/Q
+                         net (fo=217, unplaced)       0.589     2.058    u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg_n_0_[1]
+                         LUT2 (Prop_lut2_I0_O)        0.295     2.353 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_21/O
+                         net (fo=1, unplaced)         0.000     2.353    u_tx_hwm_cdc_fifo/watermark_open_q_i_21_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     2.903 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000     2.903    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256     3.159 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18/O[2]
+                         net (fo=3, unplaced)         0.923     4.082    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18_n_5
+                         LUT6 (Prop_lut6_I3_O)        0.301     4.383 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_8/O
+                         net (fo=1, unplaced)         0.419     4.802    u_tx_hwm_cdc_fifo/watermark_open_q_i_8_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.926 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_3/O
+                         net (fo=23, unplaced)        0.512     5.438    u_tx_hwm_cdc_fifo/p_12_in
+                         LUT4 (Prop_lut4_I1_O)        0.124     5.562 r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2_i_4/O
+                         net (fo=18, unplaced)        0.390     5.952    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WE
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMC/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_tx_sym rise edge)
+                                                      3.333     3.333 r  
+                                                      0.000     3.333 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.924     4.257    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WCLK
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMC/CLK
+                         clock pessimism              0.000     4.257    
+                         clock uncertainty           -0.185     4.072    
+                         RAMD64E (Setup_ramd64e_CLK_WE)
+                                                     -0.528     3.544    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMC
+  -------------------------------------------------------------------
+                         required time                          3.544    
+                         arrival time                          -5.952    
+  -------------------------------------------------------------------
+                         slack                                 -2.408    
+
+Slack (VIOLATED) :        -2.408ns  (required time - arrival time)
+  Source:                 u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Destination:            u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMD/WE
+                            (rising edge-triggered cell RAMD64E clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Path Group:             clk_tx_sym
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.333ns  (clk_tx_sym rise@3.333ns - clk_tx_sym rise@0.000ns)
+  Data Path Delay:        4.979ns  (logic 2.146ns (43.101%)  route 2.833ns (56.899%))
+  Logic Levels:           6  (CARRY4=2 LUT2=1 LUT4=1 LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_tx_sym rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.973     0.973    u_tx_hwm_cdc_fifo/clk_tx_sym
+                         FDCE                                         r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/Q
+                         net (fo=217, unplaced)       0.589     2.058    u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg_n_0_[1]
+                         LUT2 (Prop_lut2_I0_O)        0.295     2.353 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_21/O
+                         net (fo=1, unplaced)         0.000     2.353    u_tx_hwm_cdc_fifo/watermark_open_q_i_21_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     2.903 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000     2.903    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256     3.159 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18/O[2]
+                         net (fo=3, unplaced)         0.923     4.082    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18_n_5
+                         LUT6 (Prop_lut6_I3_O)        0.301     4.383 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_8/O
+                         net (fo=1, unplaced)         0.419     4.802    u_tx_hwm_cdc_fifo/watermark_open_q_i_8_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.926 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_3/O
+                         net (fo=23, unplaced)        0.512     5.438    u_tx_hwm_cdc_fifo/p_12_in
+                         LUT4 (Prop_lut4_I1_O)        0.124     5.562 r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2_i_4/O
+                         net (fo=18, unplaced)        0.390     5.952    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WE
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMD/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_tx_sym rise edge)
+                                                      3.333     3.333 r  
+                                                      0.000     3.333 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.924     4.257    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/WCLK
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMD/CLK
+                         clock pessimism              0.000     4.257    
+                         clock uncertainty           -0.185     4.072    
+                         RAMD64E (Setup_ramd64e_CLK_WE)
+                                                     -0.528     3.544    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2/RAMD
+  -------------------------------------------------------------------
+                         required time                          3.544    
+                         arrival time                          -5.952    
+  -------------------------------------------------------------------
+                         slack                                 -2.408    
+
+Slack (VIOLATED) :        -2.408ns  (required time - arrival time)
+  Source:                 u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+                            (rising edge-triggered cell FDCE clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Destination:            u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/RAMA/WE
+                            (rising edge-triggered cell RAMD64E clocked by clk_tx_sym  {rise@0.000ns fall@1.666ns period=3.333ns})
+  Path Group:             clk_tx_sym
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.333ns  (clk_tx_sym rise@3.333ns - clk_tx_sym rise@0.000ns)
+  Data Path Delay:        4.979ns  (logic 2.146ns (43.101%)  route 2.833ns (56.899%))
+  Logic Levels:           6  (CARRY4=2 LUT2=1 LUT4=1 LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_tx_sym rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.973     0.973    u_tx_hwm_cdc_fifo/clk_tx_sym
+                         FDCE                                         r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/Q
+                         net (fo=217, unplaced)       0.589     2.058    u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg_n_0_[1]
+                         LUT2 (Prop_lut2_I0_O)        0.295     2.353 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_21/O
+                         net (fo=1, unplaced)         0.000     2.353    u_tx_hwm_cdc_fifo/watermark_open_q_i_21_n_0
+                         CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     2.903 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11/CO[3]
+                         net (fo=1, unplaced)         0.000     2.903    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_11_n_0
+                         CARRY4 (Prop_carry4_CI_O[2])
+                                                      0.256     3.159 r  u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18/O[2]
+                         net (fo=3, unplaced)         0.923     4.082    u_tx_hwm_cdc_fifo/watermark_open_q_reg_i_18_n_5
+                         LUT6 (Prop_lut6_I3_O)        0.301     4.383 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_8/O
+                         net (fo=1, unplaced)         0.419     4.802    u_tx_hwm_cdc_fifo/watermark_open_q_i_8_n_0
+                         LUT5 (Prop_lut5_I1_O)        0.124     4.926 r  u_tx_hwm_cdc_fifo/watermark_open_q_i_3/O
+                         net (fo=23, unplaced)        0.512     5.438    u_tx_hwm_cdc_fifo/p_12_in
+                         LUT4 (Prop_lut4_I1_O)        0.124     5.562 r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_0_2_i_4/O
+                         net (fo=18, unplaced)        0.390     5.952    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/WE
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/RAMA/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_tx_sym rise edge)
+                                                      3.333     3.333 r  
+                                                      0.000     3.333 r  clk_tx_sym (IN)
+                         net (fo=180, unset)          0.924     4.257    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/WCLK
+                         RAMD64E                                      r  u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/RAMA/CLK
+                         clock pessimism              0.000     4.257    
+                         clock uncertainty           -0.185     4.072    
+                         RAMD64E (Setup_ramd64e_CLK_WE)
+                                                     -0.528     3.544    u_tx_hwm_cdc_fifo/mem_data_reg_0_63_3_5/RAMA
+  -------------------------------------------------------------------
+                         required time                          3.544    
+                         arrival time                          -5.952    
+  -------------------------------------------------------------------
+                         slack                                 -2.408    
+
+
+
+

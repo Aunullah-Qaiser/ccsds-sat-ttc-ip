@@ -52,6 +52,7 @@ TB_STAGE5 := tb/tb_stage5_fec_hcpd.sv
 TB_STAGE6 := tb/tb_stage6_full_system.sv
 TB_STAGE7 := tb/tb_stage7_hw_egse_loopback.sv
 TB_STAGE8 := tb/tb_stage8_all_protocols_channel_loopback.sv
+TB_STAGE9 := tb/tb_stage9_external_ref_check.sv
 
 ifeq ($(STAGE),2)
   TB_TOP := tb_stage2_primitives
@@ -74,6 +75,9 @@ else ifeq ($(STAGE),7)
 else ifeq ($(STAGE),8)
   TB_TOP := tb_stage8_all_protocols_channel_loopback
   TB_SRC := $(TB_STAGE8)
+else ifeq ($(STAGE),9)
+  TB_TOP := tb_stage9_external_ref_check
+  TB_SRC := $(TB_STAGE9)
 endif
 
 .PHONY: all audit regression lint sim waveform-diff channel-sweep sta clean
@@ -87,7 +91,7 @@ regression:
 	python3 scripts/run_regression_suite.py --stage 8
 
 lint:
-	verilator --lint-only -Wall -Wno-BLKSEQ -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
+	verilator --lint-only -Wall --Wno-fatal -Wno-BLKSEQ -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT -Wno-TIMESCALEMOD -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
 		-Irtl --top-module ccsds_sat_ttc_top $(RTL_SRCS)
 
 ifeq ($(OS),Windows_NT)

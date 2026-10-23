@@ -51,7 +51,8 @@ case "${STAGE}" in
   6) TB_TOP="tb_stage6_full_system";                    TB_SRC="tb/tb_stage6_full_system.sv" ;;
   7) TB_TOP="tb_stage7_hw_egse_loopback";               TB_SRC="tb/tb_stage7_hw_egse_loopback.sv" ;;
   8) TB_TOP="tb_stage8_all_protocols_channel_loopback"; TB_SRC="tb/tb_stage8_all_protocols_channel_loopback.sv" ;;
-  *) echo "Unknown STAGE=${STAGE} (expected 2..8)"; exit 1 ;;
+  9) TB_TOP="tb_stage9_external_ref_check";             TB_SRC="tb/tb_stage9_external_ref_check.sv" ;;
+  *) echo "Unknown STAGE=${STAGE} (expected 2..9)"; exit 1 ;;
 esac
 
 mkdir -p sim_waves

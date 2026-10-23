@@ -38,7 +38,7 @@ module ccsds_vc_arbiter_mux
   output logic         irq_obc_pkt_len_err
 );
 
-  logic [7:0]  pkt_buf [0:2047];
+  (* ram_style = "distributed" *) logic [7:0] pkt_buf [0:2047];
   logic [10:0] wr_spec_ptr_q;
   logic [10:0] wr_commit_ptr_q;
   logic [10:0] rd_ptr_q;
@@ -56,6 +56,12 @@ module ccsds_vc_arbiter_mux
   logic [10:0] committed_bytes;
   assign committed_bytes   = wr_commit_ptr_q - rd_ptr_q;
   assign s_axis_pkt_tready = ((wr_spec_ptr_q - rd_ptr_q) < 11'd2040);
+
+  always_ff @(posedge clk) begin
+    if (s_axis_pkt_tvalid && s_axis_pkt_tready) begin
+      pkt_buf[wr_spec_ptr_q] <= s_axis_pkt_tdata;
+    end
+  end
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -82,7 +88,6 @@ module ccsds_vc_arbiter_mux
 
       // 1. Non-Mutating OBC Space Packet Ingress Length Validator (Audit R3-3)
       if (s_axis_pkt_tvalid && s_axis_pkt_tready) begin
-        pkt_buf[wr_spec_ptr_q] <= s_axis_pkt_tdata;
         if (cur_pkt_byte_cnt_q == 16'd0) begin
           active_vcid_q <= s_axis_pkt_vcid;
         end else if (cur_pkt_byte_cnt_q == 16'd4) begin

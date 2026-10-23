@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Thu Oct 22 19:42:38 2026
+| Date         : Fri Oct 23 09:52:55 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_timing -from [get_clocks clk_sys] -to [get_clocks clk_sys] -max_paths 5 -nworst 1 -file reports/vivado_crit_path_clk_sys_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -11,7 +11,7 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 
 Timing Report
 
-Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
+Slack (VIOLATED) :        -6.221ns  (required time - arrival time)
   Source:                 u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
                             (rising edge-triggered cell FDCE clocked by clk_sys  {rise@0.000ns fall@1.666ns period=3.333ns})
   Destination:            u_reassembler/hdr_shift_q_reg[0]/CE
@@ -19,8 +19,8 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   Path Group:             clk_sys
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.333ns  (clk_sys rise@3.333ns - clk_sys rise@0.000ns)
-  Data Path Delay:        9.457ns  (logic 2.106ns (22.269%)  route 7.351ns (77.731%))
-  Logic Levels:           9  (LUT5=3 LUT6=4 MUXF7=1 RAMD64E=1)
+  Data Path Delay:        9.151ns  (logic 2.008ns (21.943%)  route 7.143ns (78.057%))
+  Logic Levels:           8  (LUT4=1 LUT5=1 LUT6=4 MUXF7=1 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -36,47 +36,45 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk_sys rise edge)    0.000     0.000 r  
                                                       0.000     0.000 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
+                         net (fo=20183, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
                          FDCE                                         r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/Q
-                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/ADDRC0
+                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/ADDRC0
                          RAMD64E (Prop_ramd64e_RADR0_O)
-                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/RAMC/O
-                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2_n_2
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20/O
-                         net (fo=1, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[7]_i_11/O
-                         net (fo=2, unplaced)         1.125     5.437    u_rx_commit_cdc_fifo/raw_ecc1[2]
-                         LUT5 (Prop_lut5_I0_O)        0.298     5.735 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4/O
-                         net (fo=12, unplaced)        1.159     6.894    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.152     7.046 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_7/O
-                         net (fo=16, unplaced)        0.503     7.549    u_rx_commit_cdc_fifo/single_err112_out
-                         LUT6 (Prop_lut6_I5_O)        0.124     7.673 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_1/O
-                         net (fo=4, unplaced)         0.926     8.599    u_reassembler/D[3]
-                         LUT6 (Prop_lut6_I3_O)        0.124     8.723 r  u_reassembler/hdr_shift_q[39]_i_3/O
-                         net (fo=1, unplaced)         0.449     9.172    u_rx_commit_cdc_fifo/hdr_shift_q_reg[39]
-                         LUT6 (Prop_lut6_I0_O)        0.124     9.296 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
-                         net (fo=2, unplaced)         0.460     9.756    u_rx_commit_cdc_fifo/hdr_idx_q_reg[0]
-                         LUT5 (Prop_lut5_I0_O)        0.124     9.880 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1__0/O
-                         net (fo=40, unplaced)        0.550    10.430    u_reassembler/E[0]
+                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/RAMC/O
+                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2_n_2
+                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4/O
+                         net (fo=2, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[2]_i_2/O
+                         net (fo=8, unplaced)         1.152     5.464    u_rx_commit_cdc_fifo/p_0_in_1[2]
+                         LUT5 (Prop_lut5_I0_O)        0.326     5.790 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4/O
+                         net (fo=7, unplaced)         0.937     6.727    u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4_n_0
+                         LUT4 (Prop_lut4_I1_O)        0.150     6.877 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3/O
+                         net (fo=12, unplaced)        0.950     7.827    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     7.951 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_1/O
+                         net (fo=4, unplaced)         0.473     8.424    u_rx_commit_cdc_fifo/D[7]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.548 f  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
+                         net (fo=1, unplaced)         0.902     9.450    u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     9.574 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1/O
+                         net (fo=40, unplaced)        0.550    10.124    u_reassembler/E[0]
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[0]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_sys rise edge)    3.333     3.333 r  
                                                       0.000     3.333 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.924     4.257    u_reassembler/clk_sys
+                         net (fo=20183, unset)        0.924     4.257    u_reassembler/clk_sys
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[0]/C
                          clock pessimism              0.000     4.257    
                          clock uncertainty           -0.185     4.072    
                          FDCE (Setup_fdce_C_CE)      -0.169     3.903    u_reassembler/hdr_shift_q_reg[0]
   -------------------------------------------------------------------
                          required time                          3.903    
-                         arrival time                         -10.430    
+                         arrival time                         -10.124    
   -------------------------------------------------------------------
-                         slack                                 -6.527    
+                         slack                                 -6.221    
 
-Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
+Slack (VIOLATED) :        -6.221ns  (required time - arrival time)
   Source:                 u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
                             (rising edge-triggered cell FDCE clocked by clk_sys  {rise@0.000ns fall@1.666ns period=3.333ns})
   Destination:            u_reassembler/hdr_shift_q_reg[10]/CE
@@ -84,8 +82,8 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   Path Group:             clk_sys
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.333ns  (clk_sys rise@3.333ns - clk_sys rise@0.000ns)
-  Data Path Delay:        9.457ns  (logic 2.106ns (22.269%)  route 7.351ns (77.731%))
-  Logic Levels:           9  (LUT5=3 LUT6=4 MUXF7=1 RAMD64E=1)
+  Data Path Delay:        9.151ns  (logic 2.008ns (21.943%)  route 7.143ns (78.057%))
+  Logic Levels:           8  (LUT4=1 LUT5=1 LUT6=4 MUXF7=1 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -101,47 +99,45 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk_sys rise edge)    0.000     0.000 r  
                                                       0.000     0.000 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
+                         net (fo=20183, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
                          FDCE                                         r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/Q
-                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/ADDRC0
+                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/ADDRC0
                          RAMD64E (Prop_ramd64e_RADR0_O)
-                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/RAMC/O
-                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2_n_2
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20/O
-                         net (fo=1, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[7]_i_11/O
-                         net (fo=2, unplaced)         1.125     5.437    u_rx_commit_cdc_fifo/raw_ecc1[2]
-                         LUT5 (Prop_lut5_I0_O)        0.298     5.735 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4/O
-                         net (fo=12, unplaced)        1.159     6.894    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.152     7.046 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_7/O
-                         net (fo=16, unplaced)        0.503     7.549    u_rx_commit_cdc_fifo/single_err112_out
-                         LUT6 (Prop_lut6_I5_O)        0.124     7.673 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_1/O
-                         net (fo=4, unplaced)         0.926     8.599    u_reassembler/D[3]
-                         LUT6 (Prop_lut6_I3_O)        0.124     8.723 r  u_reassembler/hdr_shift_q[39]_i_3/O
-                         net (fo=1, unplaced)         0.449     9.172    u_rx_commit_cdc_fifo/hdr_shift_q_reg[39]
-                         LUT6 (Prop_lut6_I0_O)        0.124     9.296 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
-                         net (fo=2, unplaced)         0.460     9.756    u_rx_commit_cdc_fifo/hdr_idx_q_reg[0]
-                         LUT5 (Prop_lut5_I0_O)        0.124     9.880 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1__0/O
-                         net (fo=40, unplaced)        0.550    10.430    u_reassembler/E[0]
+                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/RAMC/O
+                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2_n_2
+                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4/O
+                         net (fo=2, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[2]_i_2/O
+                         net (fo=8, unplaced)         1.152     5.464    u_rx_commit_cdc_fifo/p_0_in_1[2]
+                         LUT5 (Prop_lut5_I0_O)        0.326     5.790 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4/O
+                         net (fo=7, unplaced)         0.937     6.727    u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4_n_0
+                         LUT4 (Prop_lut4_I1_O)        0.150     6.877 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3/O
+                         net (fo=12, unplaced)        0.950     7.827    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     7.951 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_1/O
+                         net (fo=4, unplaced)         0.473     8.424    u_rx_commit_cdc_fifo/D[7]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.548 f  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
+                         net (fo=1, unplaced)         0.902     9.450    u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     9.574 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1/O
+                         net (fo=40, unplaced)        0.550    10.124    u_reassembler/E[0]
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[10]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_sys rise edge)    3.333     3.333 r  
                                                       0.000     3.333 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.924     4.257    u_reassembler/clk_sys
+                         net (fo=20183, unset)        0.924     4.257    u_reassembler/clk_sys
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[10]/C
                          clock pessimism              0.000     4.257    
                          clock uncertainty           -0.185     4.072    
                          FDCE (Setup_fdce_C_CE)      -0.169     3.903    u_reassembler/hdr_shift_q_reg[10]
   -------------------------------------------------------------------
                          required time                          3.903    
-                         arrival time                         -10.430    
+                         arrival time                         -10.124    
   -------------------------------------------------------------------
-                         slack                                 -6.527    
+                         slack                                 -6.221    
 
-Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
+Slack (VIOLATED) :        -6.221ns  (required time - arrival time)
   Source:                 u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
                             (rising edge-triggered cell FDCE clocked by clk_sys  {rise@0.000ns fall@1.666ns period=3.333ns})
   Destination:            u_reassembler/hdr_shift_q_reg[11]/CE
@@ -149,8 +145,8 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   Path Group:             clk_sys
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.333ns  (clk_sys rise@3.333ns - clk_sys rise@0.000ns)
-  Data Path Delay:        9.457ns  (logic 2.106ns (22.269%)  route 7.351ns (77.731%))
-  Logic Levels:           9  (LUT5=3 LUT6=4 MUXF7=1 RAMD64E=1)
+  Data Path Delay:        9.151ns  (logic 2.008ns (21.943%)  route 7.143ns (78.057%))
+  Logic Levels:           8  (LUT4=1 LUT5=1 LUT6=4 MUXF7=1 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -166,47 +162,45 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk_sys rise edge)    0.000     0.000 r  
                                                       0.000     0.000 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
+                         net (fo=20183, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
                          FDCE                                         r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/Q
-                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/ADDRC0
+                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/ADDRC0
                          RAMD64E (Prop_ramd64e_RADR0_O)
-                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/RAMC/O
-                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2_n_2
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20/O
-                         net (fo=1, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[7]_i_11/O
-                         net (fo=2, unplaced)         1.125     5.437    u_rx_commit_cdc_fifo/raw_ecc1[2]
-                         LUT5 (Prop_lut5_I0_O)        0.298     5.735 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4/O
-                         net (fo=12, unplaced)        1.159     6.894    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.152     7.046 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_7/O
-                         net (fo=16, unplaced)        0.503     7.549    u_rx_commit_cdc_fifo/single_err112_out
-                         LUT6 (Prop_lut6_I5_O)        0.124     7.673 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_1/O
-                         net (fo=4, unplaced)         0.926     8.599    u_reassembler/D[3]
-                         LUT6 (Prop_lut6_I3_O)        0.124     8.723 r  u_reassembler/hdr_shift_q[39]_i_3/O
-                         net (fo=1, unplaced)         0.449     9.172    u_rx_commit_cdc_fifo/hdr_shift_q_reg[39]
-                         LUT6 (Prop_lut6_I0_O)        0.124     9.296 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
-                         net (fo=2, unplaced)         0.460     9.756    u_rx_commit_cdc_fifo/hdr_idx_q_reg[0]
-                         LUT5 (Prop_lut5_I0_O)        0.124     9.880 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1__0/O
-                         net (fo=40, unplaced)        0.550    10.430    u_reassembler/E[0]
+                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/RAMC/O
+                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2_n_2
+                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4/O
+                         net (fo=2, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[2]_i_2/O
+                         net (fo=8, unplaced)         1.152     5.464    u_rx_commit_cdc_fifo/p_0_in_1[2]
+                         LUT5 (Prop_lut5_I0_O)        0.326     5.790 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4/O
+                         net (fo=7, unplaced)         0.937     6.727    u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4_n_0
+                         LUT4 (Prop_lut4_I1_O)        0.150     6.877 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3/O
+                         net (fo=12, unplaced)        0.950     7.827    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     7.951 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_1/O
+                         net (fo=4, unplaced)         0.473     8.424    u_rx_commit_cdc_fifo/D[7]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.548 f  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
+                         net (fo=1, unplaced)         0.902     9.450    u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     9.574 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1/O
+                         net (fo=40, unplaced)        0.550    10.124    u_reassembler/E[0]
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[11]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_sys rise edge)    3.333     3.333 r  
                                                       0.000     3.333 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.924     4.257    u_reassembler/clk_sys
+                         net (fo=20183, unset)        0.924     4.257    u_reassembler/clk_sys
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[11]/C
                          clock pessimism              0.000     4.257    
                          clock uncertainty           -0.185     4.072    
                          FDCE (Setup_fdce_C_CE)      -0.169     3.903    u_reassembler/hdr_shift_q_reg[11]
   -------------------------------------------------------------------
                          required time                          3.903    
-                         arrival time                         -10.430    
+                         arrival time                         -10.124    
   -------------------------------------------------------------------
-                         slack                                 -6.527    
+                         slack                                 -6.221    
 
-Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
+Slack (VIOLATED) :        -6.221ns  (required time - arrival time)
   Source:                 u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
                             (rising edge-triggered cell FDCE clocked by clk_sys  {rise@0.000ns fall@1.666ns period=3.333ns})
   Destination:            u_reassembler/hdr_shift_q_reg[12]/CE
@@ -214,8 +208,8 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   Path Group:             clk_sys
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.333ns  (clk_sys rise@3.333ns - clk_sys rise@0.000ns)
-  Data Path Delay:        9.457ns  (logic 2.106ns (22.269%)  route 7.351ns (77.731%))
-  Logic Levels:           9  (LUT5=3 LUT6=4 MUXF7=1 RAMD64E=1)
+  Data Path Delay:        9.151ns  (logic 2.008ns (21.943%)  route 7.143ns (78.057%))
+  Logic Levels:           8  (LUT4=1 LUT5=1 LUT6=4 MUXF7=1 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -231,47 +225,45 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk_sys rise edge)    0.000     0.000 r  
                                                       0.000     0.000 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
+                         net (fo=20183, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
                          FDCE                                         r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/Q
-                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/ADDRC0
+                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/ADDRC0
                          RAMD64E (Prop_ramd64e_RADR0_O)
-                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/RAMC/O
-                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2_n_2
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20/O
-                         net (fo=1, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[7]_i_11/O
-                         net (fo=2, unplaced)         1.125     5.437    u_rx_commit_cdc_fifo/raw_ecc1[2]
-                         LUT5 (Prop_lut5_I0_O)        0.298     5.735 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4/O
-                         net (fo=12, unplaced)        1.159     6.894    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.152     7.046 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_7/O
-                         net (fo=16, unplaced)        0.503     7.549    u_rx_commit_cdc_fifo/single_err112_out
-                         LUT6 (Prop_lut6_I5_O)        0.124     7.673 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_1/O
-                         net (fo=4, unplaced)         0.926     8.599    u_reassembler/D[3]
-                         LUT6 (Prop_lut6_I3_O)        0.124     8.723 r  u_reassembler/hdr_shift_q[39]_i_3/O
-                         net (fo=1, unplaced)         0.449     9.172    u_rx_commit_cdc_fifo/hdr_shift_q_reg[39]
-                         LUT6 (Prop_lut6_I0_O)        0.124     9.296 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
-                         net (fo=2, unplaced)         0.460     9.756    u_rx_commit_cdc_fifo/hdr_idx_q_reg[0]
-                         LUT5 (Prop_lut5_I0_O)        0.124     9.880 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1__0/O
-                         net (fo=40, unplaced)        0.550    10.430    u_reassembler/E[0]
+                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/RAMC/O
+                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2_n_2
+                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4/O
+                         net (fo=2, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[2]_i_2/O
+                         net (fo=8, unplaced)         1.152     5.464    u_rx_commit_cdc_fifo/p_0_in_1[2]
+                         LUT5 (Prop_lut5_I0_O)        0.326     5.790 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4/O
+                         net (fo=7, unplaced)         0.937     6.727    u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4_n_0
+                         LUT4 (Prop_lut4_I1_O)        0.150     6.877 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3/O
+                         net (fo=12, unplaced)        0.950     7.827    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     7.951 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_1/O
+                         net (fo=4, unplaced)         0.473     8.424    u_rx_commit_cdc_fifo/D[7]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.548 f  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
+                         net (fo=1, unplaced)         0.902     9.450    u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     9.574 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1/O
+                         net (fo=40, unplaced)        0.550    10.124    u_reassembler/E[0]
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[12]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_sys rise edge)    3.333     3.333 r  
                                                       0.000     3.333 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.924     4.257    u_reassembler/clk_sys
+                         net (fo=20183, unset)        0.924     4.257    u_reassembler/clk_sys
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[12]/C
                          clock pessimism              0.000     4.257    
                          clock uncertainty           -0.185     4.072    
                          FDCE (Setup_fdce_C_CE)      -0.169     3.903    u_reassembler/hdr_shift_q_reg[12]
   -------------------------------------------------------------------
                          required time                          3.903    
-                         arrival time                         -10.430    
+                         arrival time                         -10.124    
   -------------------------------------------------------------------
-                         slack                                 -6.527    
+                         slack                                 -6.221    
 
-Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
+Slack (VIOLATED) :        -6.221ns  (required time - arrival time)
   Source:                 u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
                             (rising edge-triggered cell FDCE clocked by clk_sys  {rise@0.000ns fall@1.666ns period=3.333ns})
   Destination:            u_reassembler/hdr_shift_q_reg[13]/CE
@@ -279,8 +271,8 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   Path Group:             clk_sys
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.333ns  (clk_sys rise@3.333ns - clk_sys rise@0.000ns)
-  Data Path Delay:        9.457ns  (logic 2.106ns (22.269%)  route 7.351ns (77.731%))
-  Logic Levels:           9  (LUT5=3 LUT6=4 MUXF7=1 RAMD64E=1)
+  Data Path Delay:        9.151ns  (logic 2.008ns (21.943%)  route 7.143ns (78.057%))
+  Logic Levels:           8  (LUT4=1 LUT5=1 LUT6=4 MUXF7=1 RAMD64E=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 4.257 - 3.333 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -296,45 +288,43 @@ Slack (VIOLATED) :        -6.527ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock clk_sys rise edge)    0.000     0.000 r  
                                                       0.000     0.000 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
+                         net (fo=20183, unset)        0.973     0.973    u_rx_commit_cdc_fifo/clk_sys
                          FDCE                                         r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/Q
-                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/ADDRC0
+                         net (fo=113, unplaced)       1.068     2.537    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/ADDRC0
                          RAMD64E (Prop_ramd64e_RADR0_O)
-                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2/RAMC/O
-                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_ecc_reg_384_447_0_2_n_2
-                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20/O
-                         net (fo=1, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_20_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[7]_i_11/O
-                         net (fo=2, unplaced)         1.125     5.437    u_rx_commit_cdc_fifo/raw_ecc1[2]
-                         LUT5 (Prop_lut5_I0_O)        0.298     5.735 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4/O
-                         net (fo=12, unplaced)        1.159     6.894    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I1_O)        0.152     7.046 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_7/O
-                         net (fo=16, unplaced)        0.503     7.549    u_rx_commit_cdc_fifo/single_err112_out
-                         LUT6 (Prop_lut6_I5_O)        0.124     7.673 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_1/O
-                         net (fo=4, unplaced)         0.926     8.599    u_reassembler/D[3]
-                         LUT6 (Prop_lut6_I3_O)        0.124     8.723 r  u_reassembler/hdr_shift_q[39]_i_3/O
-                         net (fo=1, unplaced)         0.449     9.172    u_rx_commit_cdc_fifo/hdr_shift_q_reg[39]
-                         LUT6 (Prop_lut6_I0_O)        0.124     9.296 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
-                         net (fo=2, unplaced)         0.460     9.756    u_rx_commit_cdc_fifo/hdr_idx_q_reg[0]
-                         LUT5 (Prop_lut5_I0_O)        0.124     9.880 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1__0/O
-                         net (fo=40, unplaced)        0.550    10.430    u_reassembler/E[0]
+                                                      0.295     2.832 r  u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2/RAMC/O
+                         net (fo=1, unplaced)         1.111     3.943    u_rx_commit_cdc_fifo/mem_data_reg_384_447_0_2_n_2
+                         LUT6 (Prop_lut6_I1_O)        0.124     4.067 r  u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4/O
+                         net (fo=2, unplaced)         0.000     4.067    u_rx_commit_cdc_fifo/hdr_shift_q[2]_i_4_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     4.312 r  u_rx_commit_cdc_fifo/hdr_shift_q_reg[2]_i_2/O
+                         net (fo=8, unplaced)         1.152     5.464    u_rx_commit_cdc_fifo/p_0_in_1[2]
+                         LUT5 (Prop_lut5_I0_O)        0.326     5.790 r  u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4/O
+                         net (fo=7, unplaced)         0.937     6.727    u_rx_commit_cdc_fifo/hdr_shift_q[3]_i_4_n_0
+                         LUT4 (Prop_lut4_I1_O)        0.150     6.877 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3/O
+                         net (fo=12, unplaced)        0.950     7.827    u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_3_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     7.951 r  u_rx_commit_cdc_fifo/hdr_shift_q[7]_i_1/O
+                         net (fo=4, unplaced)         0.473     8.424    u_rx_commit_cdc_fifo/D[7]
+                         LUT6 (Prop_lut6_I5_O)        0.124     8.548 f  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2/O
+                         net (fo=1, unplaced)         0.902     9.450    u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_2_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     9.574 r  u_rx_commit_cdc_fifo/hdr_shift_q[39]_i_1/O
+                         net (fo=40, unplaced)        0.550    10.124    u_reassembler/E[0]
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[13]/CE
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_sys rise edge)    3.333     3.333 r  
                                                       0.000     3.333 r  clk_sys (IN)
-                         net (fo=20134, unset)        0.924     4.257    u_reassembler/clk_sys
+                         net (fo=20183, unset)        0.924     4.257    u_reassembler/clk_sys
                          FDCE                                         r  u_reassembler/hdr_shift_q_reg[13]/C
                          clock pessimism              0.000     4.257    
                          clock uncertainty           -0.185     4.072    
                          FDCE (Setup_fdce_C_CE)      -0.169     3.903    u_reassembler/hdr_shift_q_reg[13]
   -------------------------------------------------------------------
                          required time                          3.903    
-                         arrival time                         -10.430    
+                         arrival time                         -10.124    
   -------------------------------------------------------------------
-                         slack                                 -6.527    
+                         slack                                 -6.221    
 
 
 
