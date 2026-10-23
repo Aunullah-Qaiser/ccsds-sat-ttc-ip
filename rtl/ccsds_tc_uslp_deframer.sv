@@ -120,7 +120,7 @@ module ccsds_tc_uslp_deframer
     return c;
   endfunction
 
-  assign s_axis_tready         = m_axis_tready;
+  assign s_axis_tready         = m_axis_tready || !m_axis_tvalid;
   assign parsed_tc_hdr         = cur_tc_hdr_q;
   assign parsed_tc_seg_hdr     = cur_tc_seg_hdr_q;
   assign parsed_prox1_hdr      = cur_prox1_hdr_q;
@@ -162,8 +162,10 @@ module ccsds_tc_uslp_deframer
       frame_commit_pulse   <= 1'b0;
       frame_rollback_pulse <= 1'b0;
       m_axis_tdata         <= 8'h00;
-      m_axis_tvalid        <= 1'b0;
-      m_axis_tlast         <= 1'b0;
+      if (m_axis_tready) begin
+        m_axis_tvalid <= 1'b0;
+        m_axis_tlast  <= 1'b0;
+      end
     end else begin
       extracted_ocf_valid  <= 1'b0;
       frame_done_pulse     <= 1'b0;
@@ -171,8 +173,10 @@ module ccsds_tc_uslp_deframer
       frame_crc_err_pulse  <= 1'b0;
       frame_commit_pulse   <= 1'b0;
       frame_rollback_pulse <= 1'b0;
-      m_axis_tvalid        <= 1'b0;
-      m_axis_tlast         <= 1'b0;
+      if (m_axis_tready) begin
+        m_axis_tvalid <= 1'b0;
+        m_axis_tlast  <= 1'b0;
+      end
 
       if (s_axis_tvalid && s_axis_tready) begin
         if (s_axis_tabort) begin

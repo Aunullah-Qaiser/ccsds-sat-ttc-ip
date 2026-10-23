@@ -1,0 +1,939 @@
+diff --git a/rtl/ccsds_tc_uslp_deframer.sv b/rtl/ccsds_tc_uslp_deframer.sv
+index 2b8aafe..526547c 100755
+--- a/rtl/ccsds_tc_uslp_deframer.sv
++++ b/rtl/ccsds_tc_uslp_deframer.sv
+@@ -120,7 +120,7 @@ module ccsds_tc_uslp_deframer
+     return c;
+   endfunction
+ 
+-  assign s_axis_tready         = m_axis_tready;
++  assign s_axis_tready         = m_axis_tready || !m_axis_tvalid;
+   assign parsed_tc_hdr         = cur_tc_hdr_q;
+   assign parsed_tc_seg_hdr     = cur_tc_seg_hdr_q;
+   assign parsed_prox1_hdr      = cur_prox1_hdr_q;
+@@ -162,8 +162,10 @@ module ccsds_tc_uslp_deframer
+       frame_commit_pulse   <= 1'b0;
+       frame_rollback_pulse <= 1'b0;
+       m_axis_tdata         <= 8'h00;
+-      m_axis_tvalid        <= 1'b0;
+-      m_axis_tlast         <= 1'b0;
++      if (m_axis_tready) begin
++        m_axis_tvalid <= 1'b0;
++        m_axis_tlast  <= 1'b0;
++      end
+     end else begin
+       extracted_ocf_valid  <= 1'b0;
+       frame_done_pulse     <= 1'b0;
+@@ -171,8 +173,10 @@ module ccsds_tc_uslp_deframer
+       frame_crc_err_pulse  <= 1'b0;
+       frame_commit_pulse   <= 1'b0;
+       frame_rollback_pulse <= 1'b0;
+-      m_axis_tvalid        <= 1'b0;
+-      m_axis_tlast         <= 1'b0;
++      if (m_axis_tready) begin
++        m_axis_tvalid <= 1'b0;
++        m_axis_tlast  <= 1'b0;
++      end
+ 
+       if (s_axis_tvalid && s_axis_tready) begin
+         if (s_axis_tabort) begin
+diff --git a/rtl/ccsds_tm_aos_uslp_framer.sv b/rtl/ccsds_tm_aos_uslp_framer.sv
+index da8faf0..2554f2d 100755
+--- a/rtl/ccsds_tm_aos_uslp_framer.sv
++++ b/rtl/ccsds_tm_aos_uslp_framer.sv
+@@ -140,7 +140,7 @@ module ccsds_tm_aos_uslp_framer
+     return {r[0], r[1], r[2], r[3]};
+   endfunction
+ 
+-  assign s_axis_tfdf_tready = (state_q == FRAMER_SEND_TFDF) && m_axis_frame_tready;
++  assign s_axis_tfdf_tready = (state_q == FRAMER_SEND_TFDF) && (!m_axis_frame_tvalid || m_axis_frame_tready);
+ 
+   always_ff @(posedge clk or negedge rst_n) begin
+     if (!rst_n) begin
+@@ -160,7 +160,7 @@ module ccsds_tm_aos_uslp_framer
+       m_axis_frame_tdata  <= 8'h00;
+       m_axis_frame_tvalid <= 1'b0;
+       m_axis_frame_tlast  <= 1'b0;
+-    end else if (m_axis_frame_tready) begin
++    end else if (!m_axis_frame_tvalid || m_axis_frame_tready) begin
+       m_axis_frame_tvalid <= 1'b0;
+       m_axis_frame_tlast  <= 1'b0;
+ 
+diff --git a/rtl/ccsds_vc_arbiter_mux.sv b/rtl/ccsds_vc_arbiter_mux.sv
+index 24f8c46..a9397f4 100755
+--- a/rtl/ccsds_vc_arbiter_mux.sv
++++ b/rtl/ccsds_vc_arbiter_mux.sv
+@@ -113,9 +113,11 @@ module ccsds_vc_arbiter_mux
+ 
+       // 2. Closed-Form Cycle-0 FHP Calculation & TFDF Segmenter (TX2)
+       if (!emitting_frame_q) begin
+-        m_axis_tfdf_tvalid <= 1'b0;
+-        m_axis_tfdf_tlast  <= 1'b0;
+-        if (request_next_frame) begin
++        if (m_axis_tfdf_tready) begin
++          m_axis_tfdf_tvalid <= 1'b0;
++          m_axis_tfdf_tlast  <= 1'b0;
++        end
++        if (request_next_frame && (!m_axis_tfdf_tvalid || m_axis_tfdf_tready)) begin
+           emitting_frame_q <= 1'b1;
+           tfdf_idx_q       <= 11'd0;
+           if ((committed_bytes == 11'd0) && (rem_in_cur_pkt_q == 11'd0)) begin
+@@ -130,7 +132,7 @@ module ccsds_vc_arbiter_mux
+             end
+           end
+         end
+-      end else if (m_axis_tfdf_tready) begin
++      end else if (!m_axis_tfdf_tvalid || m_axis_tfdf_tready) begin
+         m_axis_tfdf_tvalid <= 1'b1;
+         m_axis_tfdf_vcid   <= active_vcid_q;
+         m_axis_tfdf_is_oid <= emitting_oid_q;
+diff --git a/scripts/run_eda_sim.bat b/scripts/run_eda_sim.bat
+index e4f8b08..e570af7 100755
+--- a/scripts/run_eda_sim.bat
++++ b/scripts/run_eda_sim.bat
+@@ -2,7 +2,7 @@
+ REM ============================================================================
+ REM File Name   : run_eda_sim.bat
+ REM Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
+-REM Version     : v2.18 (Supports STAGE 2..8 + ccsds_channel_impairment_model)
++REM Version     : v2.19 (Supports STAGE 2..9 + External Reference Check)
+ REM Description : Native Windows Batch Runner for Xilinx Vivado (xsim),
+ REM               Verilator, QuestaSim, and Icarus Verilog (No WSL required).
+ REM ============================================================================
+@@ -12,7 +12,7 @@ set SIM=%1
+ if "%SIM%"=="" set SIM=xsim
+ 
+ set STAGE=%2
+-if "%STAGE%"=="" set STAGE=8
++if "%STAGE%"=="" set STAGE=9
+ 
+ set RTL_SRCS=rtl/ccsds_pkg.sv rtl/ccsds_crc_universal.sv rtl/ccsds_lfsr_scrambler.sv rtl/ccsds_cdc_fifo_ecc.sv rtl/ccsds_gf256_math.sv rtl/ccsds_asm_correlator.sv rtl/ccsds_bch6356_dec.sv rtl/ccsds_farm1_tmr.sv rtl/ccsds_vc_arbiter_mux.sv rtl/ccsds_dl_rs255_223_enc.sv rtl/ccsds_tc_uslp_deframer.sv rtl/ccsds_tm_aos_uslp_framer.sv rtl/ccsds_pkt_reassembler.sv rtl/ccsds_prox1_plcw_ctrl.sv rtl/ccsds_axi_lite_csr.sv rtl/ccsds_conv_viterbi_codec.sv rtl/ccsds_ul_short_ldpc_dec.sv rtl/ccsds_dl_turbo_ldpc_enc.sv rtl/ccsds_hcpd_ctrl.sv rtl/ccsds_sdls_engine.sv rtl/ccsds_pn_ranging.sv rtl/ccsds_phy_modem.sv rtl/ccsds_bch6356_enc.sv rtl/ccsds_tc_cltu_framer.sv rtl/ccsds_fop1_engine.sv rtl/ccsds_tm_aos_deframer.sv rtl/ccsds_dl_rs255_223_dec.sv rtl/ccsds_channel_impairment_model.sv rtl/ccsds_sat_ttc_top.sv
+ 
+@@ -37,13 +37,22 @@ if "%STAGE%"=="2" (
+ ) else if "%STAGE%"=="8" (
+   set TB_TOP=tb_stage8_all_protocols_channel_loopback
+   set TB_SRC=tb/tb_stage8_all_protocols_channel_loopback.sv
++) else if "%STAGE%"=="9" (
++  set TB_TOP=tb_stage9_external_ref_check
++  set TB_SRC=tb/tb_stage9_external_ref_check.sv
+ ) else (
+-  echo Unknown STAGE=%STAGE% ^(expected 2..8^)
++  echo Unknown STAGE=%STAGE% ^(expected 2..9^)
+   exit /b 1
+ )
+ 
+ echo [CCSDS-SIM-WIN] Selected Simulator: %SIM% ^| Target Testbench: %TB_TOP%
+ 
++if "%STAGE%"=="9" (
++  echo [CCSDS-SIM-WIN] Generating external reference vectors via spacepackets-py...
++  python scripts/run_external_ref_check.py --generate
++  if errorlevel 1 exit /b 1
++)
++
+ if "%SIM%"=="xsim" (
+   if not exist sim_waves mkdir sim_waves
+   call xvlog.bat -sv -i rtl %RTL_SRCS% %TB_SRC%
+@@ -64,3 +73,9 @@ if "%SIM%"=="xsim" (
+ ) else (
+   python scripts/sv_rtl_audit.py
+ )
++
++if "%STAGE%"=="9" (
++  echo [CCSDS-SIM-WIN] Verifying RTL output hex dumps against external spacepackets-py parser...
++  python scripts/run_external_ref_check.py --verify
++  if errorlevel 1 exit /b 1
++)
+diff --git a/scripts/run_external_ref_check.py b/scripts/run_external_ref_check.py
+new file mode 100755
+index 0000000..4dca5bc
+--- /dev/null
++++ b/scripts/run_external_ref_check.py
+@@ -0,0 +1,289 @@
++#!/usr/bin/env python3
++"""
++===============================================================================
++File Name   : run_external_ref_check.py
++Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
++Description : Stage 9 External Reference Interoperability Generator & Verifier
++              using the University of Stuttgart IRS `spacepackets` library
++              (https://github.com/us-irs/spacepackets-py, `pip install spacepackets`):
++                1. --generate : Uses `spacepackets` to generate external golden
++                                hex stimulus files in `sim_waves/` for Vivado xsim:
++                                  - ext_ref_ul_cltu.hex (34B CLTU with TC + SP)
++                                  - ext_ref_ul_uslp.hex (29B USLP Ext Frame + SP)
++                                  - ext_ref_dl_pkt.hex  (16B Telemetry Space Packet)
++                2. --verify   : Reads the raw hex output files dumped by Vivado
++                                xsim (`rtl_out_ul_pkt.hex`, `rtl_out_uslp_pkt.hex`,
++                                `rtl_out_dl_cadu.hex`) and validates them using
++                                `spacepackets.ccsds.SpacePacketHeader.unpack()`
++                                and independent CCSDS Blue Book CRC-16 / RS(255,223)
++                                syndrome math.
++===============================================================================
++"""
++
++from __future__ import annotations
++import argparse
++import json
++import sys
++from pathlib import Path
++from typing import Tuple, List
++
++SCRIPT_DIR = Path(__file__).resolve().parent
++REPO_ROOT = SCRIPT_DIR.parent
++WAVES_DIR = REPO_ROOT / "sim_waves"
++
++# Try importing external University of Stuttgart IRS `spacepackets` library
++try:
++    from spacepackets.ccsds import SpacePacketHeader, PacketType, SequenceFlags
++    HAVE_SPACEPACKETS = True
++except ImportError:
++    HAVE_SPACEPACKETS = False
++
++
++def build_ccsds_space_packet(is_tc: bool, apid: int, seq_count: int, payload: bytes) -> Tuple[bytes, str]:
++    """Builds a CCSDS 133.0-B-2 Space Packet using external `spacepackets` library."""
++    if HAVE_SPACEPACKETS:
++        sp_hdr = SpacePacketHeader(
++            packet_type=PacketType.TC if is_tc else PacketType.TM,
++            apid=apid,
++            seq_count=seq_count,
++            data_len=len(payload) - 1,
++            seq_flags=SequenceFlags.UNSEGMENTED,
++            sec_header_flag=False,
++        )
++        return sp_hdr.pack() + payload, "spacepackets.ccsds.SpacePacketHeader"
++    else:
++        # Bit-exact CCSDS 133.0-B-2 48-bit Primary Header
++        w0 = ((0 & 0x7) << 13) | ((1 if is_tc else 0) << 12) | (0 << 11) | (apid & 0x7FF)
++        w1 = (0b11 << 14) | (seq_count & 0x3FFF)
++        w2 = (len(payload) - 1) & 0xFFFF
++        hdr6 = w0.to_bytes(2, "big") + w1.to_bytes(2, "big") + w2.to_bytes(2, "big")
++        return hdr6 + payload, "CCSDS-133.0-B-2-Std-Struct (run `pip install spacepackets` for external lib)"
++
++
++def unpack_and_verify_space_packet(raw_pkt: bytes, exp_is_tc: bool, exp_apid: int, exp_seq: int, exp_payload: bytes) -> dict:
++    """Unpacks and verifies a raw Space Packet emitted by the SystemVerilog RTL."""
++    assert len(raw_pkt) == 6 + len(exp_payload), (
++        f"Length mismatch: got {len(raw_pkt)} bytes, expected {6 + len(exp_payload)}"
++    )
++    if HAVE_SPACEPACKETS:
++        hdr = SpacePacketHeader.unpack(raw_pkt[:6])
++        assert hdr.apid == exp_apid, f"APID mismatch: {hdr.apid:#x} != {exp_apid:#x}"
++        assert hdr.seq_count == exp_seq, f"SeqCount mismatch: {hdr.seq_count} != {exp_seq}"
++        assert hdr.data_len == len(exp_payload) - 1, f"DataLen mismatch: {hdr.data_len}"
++        assert (hdr.packet_type == PacketType.TC) == exp_is_tc, "PacketType mismatch"
++        parser_used = "spacepackets.ccsds.SpacePacketHeader.unpack"
++    else:
++        w0 = int.from_bytes(raw_pkt[0:2], "big")
++        w1 = int.from_bytes(raw_pkt[2:4], "big")
++        w2 = int.from_bytes(raw_pkt[4:6], "big")
++        apid = w0 & 0x7FF
++        is_tc = ((w0 >> 12) & 1) == 1
++        seq = w1 & 0x3FFF
++        dlen = w2
++        assert apid == exp_apid, f"APID mismatch: {apid:#x} != {exp_apid:#x}"
++        assert seq == exp_seq, f"SeqCount mismatch: {seq} != {exp_seq}"
++        assert dlen == len(exp_payload) - 1, f"DataLen mismatch: {dlen}"
++        assert is_tc == exp_is_tc, "PacketType mismatch"
++        parser_used = "CCSDS-133.0-B-2-Unpacker"
++
++    body = raw_pkt[6:]
++    assert body == exp_payload, f"Payload mismatch: {body!r} != {exp_payload!r}"
++    return {
++        "parser": parser_used,
++        "apid_hex": f"0x{exp_apid:03X}",
++        "seq_count": exp_seq,
++        "payload_ascii": exp_payload.decode("ascii"),
++        "raw_hex": raw_pkt.hex().upper(),
++    }
++
++
++def crc16_ccitt(data: bytes) -> int:
++    crc = 0xFFFF
++    for b in data:
++        crc ^= (b << 8)
++        for _ in range(8):
++            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if (crc & 0x8000) else ((crc << 1) & 0xFFFF)
++    return crc
++
++
++def bch6356_encode_block(info7: bytes) -> bytes:
++    val = int.from_bytes(info7, "big")
++    rem = 0
++    for i in range(55, -1, -1):
++        fb = ((rem >> 6) & 1) ^ ((val >> i) & 1)
++        rem = (rem << 1) & 0x7F
++        if fb:
++            rem ^= 0x45
++    par_inv = (~rem) & 0x7F
++    cb64 = (val << 8) | (par_inv << 1) | 0
++    return cb64.to_bytes(8, "big")
++
++
++def tc_randomize(data: bytes) -> bytes:
++    sr = 0xFF
++    out = bytearray()
++    for b in data:
++        pn = 0
++        for _ in range(8):
++            pn = (pn << 1) | (sr & 1)
++            fb = bin(sr & 0x5F).count("1") & 1
++            sr = (sr >> 1) | (fb << 7)
++        out.append(b ^ pn)
++    return bytes(out)
++
++
++def tm_derandomize(data: bytes) -> bytes:
++    sr = 0xFF
++    out = bytearray()
++    for b in data:
++        pn = 0
++        for _ in range(8):
++            pn = (pn << 1) | (sr & 1)
++            fb = bin(sr & 0xA9).count("1") & 1
++            sr = (sr >> 1) | (fb << 7)
++        out.append(b ^ pn)
++    return bytes(out)
++
++
++def write_hex_file(path: Path, data: bytes) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    lines = [f"{b:02X}" for b in data]
++    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
++
++
++def read_hex_file(path: Path) -> bytes:
++    lines = [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.strip().startswith("//")]
++    return bytes(int(x, 16) for x in lines)
++
++
++def generate_vectors() -> dict:
++    WAVES_DIR.mkdir(parents=True, exist_ok=True)
++
++    # 1. External Uplink Telecommand Space Packet (14 bytes: 6B Hdr + 8B "SAT_CMD1")
++    ul_sp, src_lib = build_ccsds_space_packet(is_tc=True, apid=0x245, seq_count=19, payload=b"SAT_CMD1")
++    # Wrap in CCSDS 232.0-B-4 TC Transfer Frame (SCID=0x155, VCID=1, N(S)=0, SegHdr=0xC0)
++    # Total TC frame length = 5B Prim Hdr + 1B Seg Hdr + 14B Space Pkt + 2B CRC16 = 22 bytes (c_len = 21)
++    tc_len_c = 22 - 1
++    tc_hdr40 = (0 << 38) | (0 << 37) | (0 << 36) | (0 << 34) | (0x155 << 24) | (1 << 18) | (tc_len_c << 8) | 0
++    tc_wo_crc = tc_hdr40.to_bytes(5, "big") + bytes([0xC0]) + ul_sp
++    tc_frame = tc_wo_crc + crc16_ccitt(tc_wo_crc).to_bytes(2, "big")
++    assert len(tc_frame) == 22
++
++    # Pad 22-byte TC frame with six 0x55 fill octets -> 28 bytes (4 BCH blocks of 7 bytes)
++    padded_tc = tc_frame + (b"\x55" * 6)
++    scrambled_tc = tc_randomize(padded_tc)
++    cltu = bytearray(b"\xEB\x90")
++    for idx in range(0, len(scrambled_tc), 7):
++        cltu.extend(bch6356_encode_block(scrambled_tc[idx:idx+7]))
++    cltu.extend(b"\xC5\xC5\xC5\xC5\xC5\xC5\xC5\x79")
++    assert len(cltu) == 2 + 4 * 8 + 8  # 42 bytes
++    write_hex_file(WAVES_DIR / "ext_ref_ul_cltu.hex", bytes(cltu))
++    write_hex_file(WAVES_DIR / "ext_ref_expected_ul_pkt.hex", ul_sp)
++
++    # 2. External Uplink USLP Extended Frame (CCSDS 732.1-B-3) wrapping a 14-byte Space Packet
++    uslp_sp, _ = build_ccsds_space_packet(is_tc=True, apid=0x31A, seq_count=42, payload=b"USLP_CMD")
++    # USLP Extended Header:
++    #   4B Base (TFVN=12, SCID=0x4255, SrcDst=0, VCID=2, MAP=0, EndOfPH=0)
++    #   3B Ext  (FrameLen=31-1=30, Bypass=0, Ctrl=0, Rsvd=0, OCF_Flag=1, VCF_Len=1)
++    #   1B VCF  (0x07)
++    #   3B TFDFH (Rule=0, UPID=1, FHP=0x0000)
++    #   14B Space Packet + 4B OCF (0x01040002) + 2B CRC-16 = 31 bytes total
++    uslp_tot_len = 4 + 3 + 1 + 3 + len(uslp_sp) + 4 + 2  # 31 bytes
++    uslp_base32 = (0xC << 28) | (0x4255 << 12) | (0 << 11) | (2 << 5) | (0 << 1) | 0
++    uslp_ext24  = ((uslp_tot_len - 1) << 8) | (0 << 7) | (0 << 6) | (0 << 4) | (1 << 3) | 1
++    uslp_vcf8   = b"\x07"
++    uslp_tfdf24 = ((0 << 21) | (1 << 16) | 0x0000).to_bytes(3, "big")
++    uslp_ocf32  = (0x01040002).to_bytes(4, "big")
++    uslp_wo_crc = uslp_base32.to_bytes(4, "big") + uslp_ext24.to_bytes(3, "big") + uslp_vcf8 + uslp_tfdf24 + uslp_sp + uslp_ocf32
++    uslp_frame  = uslp_wo_crc + crc16_ccitt(uslp_wo_crc).to_bytes(2, "big")
++    assert len(uslp_frame) == 31
++    write_hex_file(WAVES_DIR / "ext_ref_ul_uslp.hex", uslp_frame)
++    write_hex_file(WAVES_DIR / "ext_ref_expected_uslp_pkt.hex", uslp_sp)
++
++    # 3. External Downlink Telemetry Space Packet (16 bytes: 6B Hdr + 10B "TLM_OBC_OK")
++    dl_sp, _ = build_ccsds_space_packet(is_tc=False, apid=0x109, seq_count=88, payload=b"TLM_OBC_OK")
++    assert len(dl_sp) == 16
++    write_hex_file(WAVES_DIR / "ext_ref_dl_pkt.hex", dl_sp)
++
++    info = {
++        "generator_library": src_lib,
++        "have_spacepackets_installed": HAVE_SPACEPACKETS,
++        "ul_cltu_bytes": len(cltu),
++        "ul_cltu_hex": bytes(cltu).hex().upper(),
++        "ul_space_pkt_hex": ul_sp.hex().upper(),
++        "uslp_frame_bytes": len(uslp_frame),
++        "uslp_frame_hex": uslp_frame.hex().upper(),
++        "uslp_space_pkt_hex": uslp_sp.hex().upper(),
++        "dl_space_pkt_bytes": len(dl_sp),
++        "dl_space_pkt_hex": dl_sp.hex().upper(),
++    }
++    print(json.dumps(info, indent=2))
++    return info
++
++
++def verify_rtl_outputs() -> dict:
++    sys.path.insert(0, str(REPO_ROOT / "egse_model"))
++    import ccsds_ground_egse_model as egse
++
++    ul_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_ul_pkt.hex")
++    uslp_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_uslp_pkt.hex")
++    dl_cadu_out = read_hex_file(WAVES_DIR / "rtl_out_dl_cadu.hex")
++
++    # 1. Verify Uplink Reassembled Space Packet from CLTU->BCH->TC->Reassembler
++    res_ul = unpack_and_verify_space_packet(
++        ul_pkt_out, exp_is_tc=True, exp_apid=0x245, exp_seq=19, exp_payload=b"SAT_CMD1"
++    )
++
++    # 2. Verify Uplink Reassembled Space Packet from USLP->Reassembler
++    res_uslp = unpack_and_verify_space_packet(
++        uslp_pkt_out, exp_is_tc=True, exp_apid=0x31A, exp_seq=42, exp_payload=b"USLP_CMD"
++    )
++
++    # 3. Verify Downlink CADU emitted by VC_Arb -> TM_Framer -> RS(255,223)_Enc
++    #    Expected CADU = 4B ASM (1ACFFC1D) + Scrambled(28B TM Frame + 32B RS Parity) = 64 bytes
++    assert dl_cadu_out[:4] == b"\x1A\xCF\xFC\x1D", f"Missing 0x1ACFFC1D ASM: {dl_cadu_out[:4].hex()}"
++    descrambled = tm_derandomize(dl_cadu_out[4:])
++    tm_frame = descrambled[:-32]
++    rs_parity = descrambled[-32:]
++
++    # Check TM Frame CRC-16-CCITT residue == 0x0000
++    assert crc16_ccitt(tm_frame) == 0x0000, f"TM Frame CRC-16 failed: 0x{crc16_ccitt(tm_frame):04X}"
++
++    # Check all 32 Dual-Basis RS(255,223) syndromes (with implicit virtual fill Q = 223 - len(tm_frame))
++    rs = egse.CCSDSReedSolomon255223()
++    q_fill = 223 - len(tm_frame)
++    syndromes = rs.verify_syndrome_single(tm_frame + rs_parity, q_virtual_fill=q_fill)
++    assert all(s == 0 for s in syndromes), f"Non-zero RS(255,223) syndromes: {syndromes}"
++
++    # Extract 16-byte Space Packet from inside TM Frame (6B TM Prim Hdr + 16B TFDF + 4B CLCW + 2B CRC16 = 28B)
++    extracted_dl_sp = tm_frame[6:22]
++    res_dl = unpack_and_verify_space_packet(
++        extracted_dl_sp, exp_is_tc=False, exp_apid=0x109, exp_seq=88, exp_payload=b"TLM_OBC_OK"
++    )
++
++    summary = {
++        "status": "PASS",
++        "have_spacepackets_installed": HAVE_SPACEPACKETS,
++        "test1_ul_cltu_to_rtl_space_packet": res_ul,
++        "test2_ul_uslp_to_rtl_space_packet": res_uslp,
++        "test3_rtl_dl_cadu_to_external_parser": {
++            **res_dl,
++            "cadu_total_bytes": len(dl_cadu_out),
++            "tm_frame_crc16_residue": "0x0000",
++            "rs255_223_all_32_syndromes_zero": True,
++            "virtual_fill_q": q_fill,
++        },
++    }
++    print(json.dumps(summary, indent=2))
++    return summary
++
++
++if __name__ == "__main__":
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--generate", action="store_true", help="Generate external hex vectors for xsim")
++    parser.add_argument("--verify", action="store_true", help="Verify xsim output hex dumps")
++    args = parser.parse_args()
++    if args.verify:
++        verify_rtl_outputs()
++    else:
++        generate_vectors()
+diff --git a/tb/tb_stage9_external_ref_check.sv b/tb/tb_stage9_external_ref_check.sv
+new file mode 100755
+index 0000000..8f8deba
+--- /dev/null
++++ b/tb/tb_stage9_external_ref_check.sv
+@@ -0,0 +1,493 @@
++//=============================================================================
++// File Name   : tb_stage9_external_ref_check.sv
++// Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
++// Description : Stage 9 External Reference Interoperability Testbench
++//               (Verified against University of Stuttgart `spacepackets-py`,
++//               https://www.google.com/search?q=https://github.com/us-irs/spacepackets-py):
++//                 - NO self-loopback (our Tx never talks to our Rx!).
++//                 - Subtest 1 (External CLTU -> Spacecraft Flight Rx Chain):
++//                   Loads 42-byte external CLTU (`sim_waves/ext_ref_ul_cltu.hex`)
++//                   into `ccsds_asm_correlator -> ccsds_bch6356_dec ->
++//                   ccsds_tc_uslp_deframer -> ccsds_farm1_tmr ->
++//                   ccsds_pkt_reassembler` and dumps `sim_waves/rtl_out_ul_pkt.hex`.
++//                 - Subtest 2 (External USLP Frame -> Spacecraft Flight Rx):
++//                   Loads 31-byte external USLP frame (`sim_waves/ext_ref_ul_uslp.hex`)
++//                   into `ccsds_tc_uslp_deframer -> ccsds_pkt_reassembler` and
++//                   dumps `sim_waves/rtl_out_uslp_pkt.hex`.
++//                 - Subtest 3 (Spacecraft Flight Tx Chain -> External Parser):
++//                   Loads 16-byte external Telemetry Space Packet
++//                   (`sim_waves/ext_ref_dl_pkt.hex`) into `ccsds_vc_arbiter_mux ->
++//                   ccsds_tm_aos_uslp_framer -> ccsds_dl_rs255_223_enc` and dumps
++//                   the 64-byte CADU (`sim_waves/rtl_out_dl_cadu.hex`) for
++//                   external verification by `spacepackets-py`.
++//=============================================================================
++`timescale 1ns / 1ps
++
++module tb_stage9_external_ref_check;
++  import ccsds_pkg::*;
++
++  logic clk = 1'b0;
++  logic rst_n = 1'b0;
++  always #5 clk = ~clk; // 100 MHz clock
++
++  // ===========================================================================
++  // 1. Spacecraft Uplink Receiver Chain Under Test (CLTU -> BCH -> TC -> Reasm)
++  // ===========================================================================
++  logic signed [3:0] ul_sym_llr_in, ul_cb_llr;
++  logic              ul_sym_valid_in, ul_cb_bit, ul_cb_start, ul_cb_valid;
++  logic              ul_sync_locked, ul_phase_inv;
++  logic              ul_cltu_ended, ul_bch_1err, ul_bch_2abort;
++  logic [7:0]        ul_bch_tdata, ul_def_tdata, ul_pkt_tdata;
++  logic              ul_bch_tvalid, ul_bch_tready, ul_bch_tlast, ul_bch_tabort;
++  logic              ul_def_tvalid, ul_def_tready, ul_def_tlast;
++  logic              ul_pkt_tvalid, ul_pkt_tlast;
++  ccsds_tc_prim_hdr_t   ul_parsed_tc_hdr;
++  ccsds_space_pkt_hdr_t ul_parsed_pkt_hdr;
++  logic              ul_frame_done, ul_frame_crc_ok, ul_frame_commit, ul_frame_rollback;
++  logic              ul_farm_accept, ul_farm_reject, ul_clcw_valid, ul_tmr_seu_corr;
++  ccsds_clcw_t       ul_clcw_sched;
++  logic              ul_pkt_done, ul_idle_stripped, ul_pkt_len_err;
++
++  ccsds_asm_correlator u_ul_sync (
++    .clk                 (clk),
++    .rst_n               (rst_n),
++    .sync_mode           (2'd0),
++    .hamming_thresh      (3'd1),
++    .tail_or_abort_pulse (ul_cltu_ended),
++    .sym_llr_in          (ul_sym_llr_in),
++    .sym_valid_in        (ul_sym_valid_in),
++    .cb_llr_out          (ul_cb_llr),
++    .cb_hard_bit_out     (ul_cb_bit),
++    .cb_start_pulse      (ul_cb_start),
++    .cb_valid_out        (ul_cb_valid),
++    .sync_locked         (ul_sync_locked),
++    .phase_inverted      (ul_phase_inv)
++  );
++
++  ccsds_bch6356_dec u_ul_bch_dec (
++    .clk                    (clk),
++    .rst_n                  (rst_n),
++    .tc_derand_en           (1'b1),
++    .cb_hard_bit_in         (ul_cb_bit),
++    .cb_start_pulse         (ul_cb_start),
++    .cb_valid_in            (ul_cb_valid),
++    .cltu_ended_pulse       (ul_cltu_ended),
++    .bch_single_err_pulse   (ul_bch_1err),
++    .bch_double_abort_pulse (ul_bch_2abort),
++    .m_axis_tdata           (ul_bch_tdata),
++    .m_axis_tvalid          (ul_bch_tvalid),
++    .m_axis_tready          (ul_bch_tready),
++    .m_axis_tlast           (ul_bch_tlast),
++    .m_axis_tabort          (ul_bch_tabort)
++  );
++
++  ccsds_tc_uslp_deframer u_ul_tc_deframer (
++    .clk                      (clk),
++    .rst_n                    (rst_n),
++    .spacecraft_id_cfg        (10'h155),
++    .uslp_scid_cfg            (16'h4255),
++    .uslp_trunc_frame_len_cfg (16'd25),
++    .uslp_tfdf_3byte_en_cfg   (1'b1),
++    .fecf_crc32_cfg           (1'b0),
++    .tc_seg_hdr_present_cfg   (1'b1),
++    .s_axis_tdata             (ul_bch_tdata),
++    .s_axis_tvalid            (ul_bch_tvalid),
++    .s_axis_tready            (ul_bch_tready),
++    .s_axis_tlast             (ul_bch_tlast),
++    .s_axis_tabort            (ul_bch_tabort),
++    .parsed_tc_hdr            (ul_parsed_tc_hdr),
++    .parsed_tc_seg_hdr        (),
++    .parsed_prox1_hdr         (),
++    .parsed_uslp_trunc_hdr    (),
++    .parsed_uslp_ext_hdr      (),
++    .parsed_uslp_tfdf_hdr     (),
++    .detected_proto_mode      (),
++    .extracted_ocf_word       (),
++    .extracted_ocf_valid      (),
++    .frame_done_pulse         (ul_frame_done),
++    .frame_crc_ok             (ul_frame_crc_ok),
++    .frame_crc_err_pulse      (),
++    .frame_commit_pulse       (ul_frame_commit),
++    .frame_rollback_pulse     (ul_frame_rollback),
++    .m_axis_tdata             (ul_def_tdata),
++    .m_axis_tvalid            (ul_def_tvalid),
++    .m_axis_tready            (ul_def_tready),
++    .m_axis_tlast             (ul_def_tlast)
++  );
++
++  ccsds_farm1_tmr #(.NUM_VC(8)) u_ul_farm1 (
++    .clk                     (clk),
++    .rst_n                   (rst_n),
++    .sdls_en                 (1'b0),
++    .bc_require_sdls         (1'b0),
++    .window_half_w           (8'd16),
++    .no_rf_avail             (1'b0),
++    .no_bit_lock             (1'b0),
++    .rx_buffer_wait          (1'b0),
++    .tmr_seu_inject_en       (1'b0),
++    .tmr_seu_replica_sel     (2'd0),
++    .tmr_seu_vc_sel          (3'd1),
++    .tmr_seu_xor_mask        (8'h00),
++    .tc_hdr_in               (ul_parsed_tc_hdr),
++    .bc_cmd_byte0            (8'h00),
++    .bc_cmd_byte1            (8'h00),
++    .bc_cmd_byte2            (8'h00),
++    .bc_cmd_len              (3'd1),
++    .frame_done_pulse        (ul_frame_done),
++    .frame_crc_ok            (ul_frame_crc_ok),
++    .sdls_auth_ok            (1'b1),
++    .farm_accept_pulse       (ul_farm_accept),
++    .farm_reject_pulse       (ul_farm_reject),
++    .clcw_scheduled_out      (ul_clcw_sched),
++    .clcw_valid_pulse        (ul_clcw_valid),
++    .tmr_seu_corrected_pulse (ul_tmr_seu_corr)
++  );
++
++  ccsds_pkt_reassembler u_ul_pkt_reasm (
++    .clk                     (clk),
++    .rst_n                   (rst_n),
++    .fhp_resync_en           (1'b0),
++    .frame_fhp_in            (11'd0),
++    .frame_start_pulse       (1'b0),
++    .s_axis_tdata            (ul_def_tdata),
++    .s_axis_tvalid           (ul_def_tvalid),
++    .s_axis_tready           (ul_def_tready),
++    .s_axis_tlast            (ul_def_tlast),
++    .m_axis_pkt_tdata        (ul_pkt_tdata),
++    .m_axis_pkt_tvalid       (ul_pkt_tvalid),
++    .m_axis_pkt_tready       (1'b1),
++    .m_axis_pkt_tlast        (ul_pkt_tlast),
++    .parsed_pkt_hdr          (ul_parsed_pkt_hdr),
++    .pkt_completed_pulse     (ul_pkt_done),
++    .idle_pkt_stripped_pulse (ul_idle_stripped),
++    .pkt_len_err_pulse       (ul_pkt_len_err)
++  );
++
++  // ===========================================================================
++  // 2. Spacecraft USLP Receiver Chain Under Test (USLP Deframer -> Reassembler)
++  // ===========================================================================
++  logic [7:0]           uslp_s_tdata, uslp_def_tdata, uslp_pkt_tdata;
++  logic                 uslp_s_tvalid, uslp_s_tready;
++  logic                 uslp_def_tvalid, uslp_def_tready, uslp_def_tlast;
++  logic                 uslp_pkt_tvalid, uslp_pkt_tlast;
++  logic [2:0]           uslp_det_proto;
++  logic [31:0]          uslp_ext_ocf, uslp_ocf_latched;
++  logic                 uslp_ext_ocf_valid, uslp_frame_done, uslp_frame_crc_ok;
++  ccsds_space_pkt_hdr_t uslp_parsed_pkt_hdr;
++
++  ccsds_tc_uslp_deframer u_uslp_deframer (
++    .clk                      (clk),
++    .rst_n                    (rst_n),
++    .spacecraft_id_cfg        (10'h155),
++    .uslp_scid_cfg            (16'h4255),
++    .uslp_trunc_frame_len_cfg (16'd25),
++    .uslp_tfdf_3byte_en_cfg   (1'b1),
++    .fecf_crc32_cfg           (1'b0),
++    .tc_seg_hdr_present_cfg   (1'b1),
++    .s_axis_tdata             (uslp_s_tdata),
++    .s_axis_tvalid            (uslp_s_tvalid),
++    .s_axis_tready            (uslp_s_tready),
++    .s_axis_tlast             (1'b0),
++    .s_axis_tabort            (1'b0),
++    .parsed_tc_hdr            (),
++    .parsed_tc_seg_hdr        (),
++    .parsed_prox1_hdr         (),
++    .parsed_uslp_trunc_hdr    (),
++    .parsed_uslp_ext_hdr      (),
++    .parsed_uslp_tfdf_hdr     (),
++    .detected_proto_mode      (uslp_det_proto),
++    .extracted_ocf_word       (uslp_ext_ocf),
++    .extracted_ocf_valid      (uslp_ext_ocf_valid),
++    .frame_done_pulse         (uslp_frame_done),
++    .frame_crc_ok             (uslp_frame_crc_ok),
++    .frame_crc_err_pulse      (),
++    .frame_commit_pulse       (),
++    .frame_rollback_pulse     (),
++    .m_axis_tdata             (uslp_def_tdata),
++    .m_axis_tvalid            (uslp_def_tvalid),
++    .m_axis_tready            (uslp_def_tready),
++    .m_axis_tlast             (uslp_def_tlast)
++  );
++
++  ccsds_pkt_reassembler u_uslp_pkt_reasm (
++    .clk                     (clk),
++    .rst_n                   (rst_n),
++    .fhp_resync_en           (1'b0),
++    .frame_fhp_in            (11'd0),
++    .frame_start_pulse       (1'b0),
++    .s_axis_tdata            (uslp_def_tdata),
++    .s_axis_tvalid           (uslp_def_tvalid),
++    .s_axis_tready           (uslp_def_tready),
++    .s_axis_tlast            (uslp_def_tlast),
++    .m_axis_pkt_tdata        (uslp_pkt_tdata),
++    .m_axis_pkt_tvalid       (uslp_pkt_tvalid),
++    .m_axis_pkt_tready       (1'b1),
++    .m_axis_pkt_tlast        (uslp_pkt_tlast),
++    .parsed_pkt_hdr          (uslp_parsed_pkt_hdr),
++    .pkt_completed_pulse     (),
++    .idle_pkt_stripped_pulse (),
++    .pkt_len_err_pulse       ()
++  );
++
++  // ===========================================================================
++  // 3. Spacecraft Downlink Transmitter Chain Under Test (VC_Arb -> TM -> RS)
++  // ===========================================================================
++  logic        dl_req_next_frame;
++  logic [7:0]  dl_s_pkt_tdata, dl_tfdf_tdata, dl_tm_frm_tdata, dl_cadu_tdata;
++  logic        dl_s_pkt_tvalid, dl_s_pkt_tready, dl_s_pkt_tlast;
++  logic        dl_tfdf_tvalid, dl_tfdf_tready, dl_tfdf_tlast, dl_tfdf_is_oid;
++  logic [2:0]  dl_tfdf_vcid;
++  logic [10:0] dl_tfdf_fhp;
++  logic        dl_tm_frm_tvalid, dl_tm_frm_tready, dl_tm_frm_tlast;
++  logic        dl_cadu_tvalid, dl_cadu_tlast;
++  logic        dl_pkt_len_err;
++  logic [15:0] dl_conv_sym_unused;
++  logic        dl_conv_val_unused;
++
++  ccsds_vc_arbiter_mux #(.NUM_VC(8)) u_dl_vc_arb (
++    .clk                 (clk),
++    .rst_n               (rst_n),
++    .tfdf_byte_len_cfg   (11'd16),
++    .request_next_frame  (dl_req_next_frame),
++    .s_axis_pkt_tdata    (dl_s_pkt_tdata),
++    .s_axis_pkt_vcid     (3'd1),
++    .s_axis_pkt_tvalid   (dl_s_pkt_tvalid),
++    .s_axis_pkt_tready   (dl_s_pkt_tready),
++    .s_axis_pkt_tlast    (dl_s_pkt_tlast),
++    .m_axis_tfdf_tdata   (dl_tfdf_tdata),
++    .m_axis_tfdf_tvalid  (dl_tfdf_tvalid),
++    .m_axis_tfdf_tready  (dl_tfdf_tready),
++    .m_axis_tfdf_tlast   (dl_tfdf_tlast),
++    .m_axis_tfdf_vcid    (dl_tfdf_vcid),
++    .m_axis_tfdf_fhp     (dl_tfdf_fhp),
++    .m_axis_tfdf_is_oid  (dl_tfdf_is_oid),
++    .irq_obc_pkt_len_err (dl_pkt_len_err)
++  );
++
++  ccsds_tm_aos_uslp_framer #(.NUM_VC(8)) u_dl_tm_framer (
++    .clk                   (clk),
++    .rst_n                 (rst_n),
++    .spacecraft_id_cfg     (10'h155),
++    .ocf_en_cfg            (1'b1),
++    .fecf_en_cfg           (1'b1),
++    .clcw_mbox_in          (32'h0104_0001),
++    .proto_mode_cfg        (PROTO_TM),
++    .aos_fhec_en_cfg       (1'b0),
++    .uslp_scid_cfg         (16'h4255),
++    .uslp_trunc_mode_cfg   (1'b0),
++    .uslp_vcf_cnt_len_cfg  (3'd1),
++    .uslp_upid_cfg         (5'd1),
++    .fecf_crc32_cfg        (1'b0),
++    .tfdf_byte_len_cfg     (11'd16),
++    .obt_sec_hdr_en_cfg    (1'b0),
++    .obt_cuc_timestamp_48b (48'h6530_0042_8000),
++    .s_axis_tfdf_tdata     (dl_tfdf_tdata),
++    .s_axis_tfdf_tvalid    (dl_tfdf_tvalid),
++    .s_axis_tfdf_tready    (dl_tfdf_tready),
++    .s_axis_tfdf_tlast     (dl_tfdf_tlast),
++    .s_axis_tfdf_vcid      (dl_tfdf_vcid),
++    .s_axis_tfdf_fhp       (dl_tfdf_fhp),
++    .m_axis_frame_tdata    (dl_tm_frm_tdata),
++    .m_axis_frame_tvalid   (dl_tm_frm_tvalid),
++    .m_axis_frame_tready   (dl_tm_frm_tready),
++    .m_axis_frame_tlast    (dl_tm_frm_tlast)
++  );
++
++  ccsds_dl_rs255_223_enc u_dl_rs_enc (
++    .clk                (clk),
++    .rst_n              (rst_n),
++    .interleave_depth_i (4'd1),
++    .tm_rand_en         (1'b1),
++    .conv_enc_en        (1'b0),
++    .s_axis_tdata       (dl_tm_frm_tdata),
++    .s_axis_tvalid      (dl_tm_frm_tvalid),
++    .s_axis_tready      (dl_tm_frm_tready),
++    .s_axis_tlast       (dl_tm_frm_tlast),
++    .m_axis_cadu_tdata  (dl_cadu_tdata),
++    .m_axis_cadu_tvalid (dl_cadu_tvalid),
++    .m_axis_cadu_tready (1'b1),
++    .m_axis_cadu_tlast  (dl_cadu_tlast),
++    .conv_symbols_out   (dl_conv_sym_unused),
++    .conv_symbols_valid (dl_conv_val_unused)
++  );
++
++  // ===========================================================================
++  // Stimulus & Capture Buffers
++  // ===========================================================================
++  logic [7:0] ext_ul_cltu_mem  [0:41];
++  logic [7:0] ext_exp_ul_pkt   [0:13];
++  logic [7:0] ext_ul_uslp_mem  [0:30];
++  logic [7:0] ext_exp_uslp_pkt [0:13];
++  logic [7:0] ext_dl_pkt_mem   [0:15];
++
++  logic [7:0] rtl_ul_pkt_out   [0:13];
++  logic [7:0] rtl_uslp_pkt_out [0:13];
++  logic [7:0] rtl_dl_cadu_out  [0:63];
++
++  integer ul_pkt_cnt, uslp_pkt_cnt, dl_cadu_cnt;
++  logic   ul_crc_ok_latched, ul_farm_acc_latched, uslp_crc_ok_latched;
++
++  always_ff @(posedge clk or negedge rst_n) begin
++    if (!rst_n) begin
++      ul_pkt_cnt          <= 0;
++      uslp_pkt_cnt        <= 0;
++      dl_cadu_cnt         <= 0;
++      ul_crc_ok_latched   <= 1'b0;
++      ul_farm_acc_latched <= 1'b0;
++      uslp_crc_ok_latched <= 1'b0;
++      uslp_ocf_latched    <= 32'd0;
++    end else begin
++      if (ul_pkt_tvalid) begin
++        rtl_ul_pkt_out[ul_pkt_cnt] <= ul_pkt_tdata;
++        ul_pkt_cnt                 <= ul_pkt_cnt + 1;
++      end
++      if (ul_frame_done && ul_frame_crc_ok) begin
++        ul_crc_ok_latched <= 1'b1;
++      end
++      if (ul_farm_accept) begin
++        ul_farm_acc_latched <= 1'b1;
++      end
++      if (uslp_pkt_tvalid) begin
++        rtl_uslp_pkt_out[uslp_pkt_cnt] <= uslp_pkt_tdata;
++        uslp_pkt_cnt                   <= uslp_pkt_cnt + 1;
++      end
++      if (uslp_ext_ocf_valid) begin
++        uslp_ocf_latched <= uslp_ext_ocf;
++      end
++      if (uslp_frame_done && uslp_frame_crc_ok) begin
++        uslp_crc_ok_latched <= 1'b1;
++      end
++      if (dl_cadu_tvalid) begin
++        rtl_dl_cadu_out[dl_cadu_cnt] <= dl_cadu_tdata;
++        dl_cadu_cnt                  <= dl_cadu_cnt + 1;
++      end
++    end
++  end
++
++  integer fd;
++
++  initial begin
++    // Load external golden vectors generated by `scripts/run_external_ref_check.py --generate`
++    $readmemh("sim_waves/ext_ref_ul_cltu.hex",          ext_ul_cltu_mem);
++    $readmemh("sim_waves/ext_ref_expected_ul_pkt.hex",  ext_exp_ul_pkt);
++    $readmemh("sim_waves/ext_ref_ul_uslp.hex",          ext_ul_uslp_mem);
++    $readmemh("sim_waves/ext_ref_expected_uslp_pkt.hex",ext_exp_uslp_pkt);
++    $readmemh("sim_waves/ext_ref_dl_pkt.hex",           ext_dl_pkt_mem);
++
++    rst_n             = 1'b0;
++    ul_sym_llr_in     = 4'sd7;
++    ul_sym_valid_in   = 1'b0;
++    uslp_s_tdata      = 8'h00;
++    uslp_s_tvalid     = 1'b0;
++    dl_req_next_frame = 1'b0;
++    dl_s_pkt_tdata    = 8'h00;
++    dl_s_pkt_tvalid   = 1'b0;
++    dl_s_pkt_tlast    = 1'b0;
++
++    #40 rst_n = 1'b1;
++    repeat (4) @(posedge clk);
++    #1;
++
++    // =========================================================================
++    // SUBTEST 1: External CLTU (`spacepackets-py`) -> Spacecraft Flight Rx RTL
++    // =========================================================================
++    $display("[TB-STAGE9][EXT-REF-1] Streaming 42-byte External CLTU (from spacepackets-py) into Spacecraft Uplink Rx Chain...");
++    for (int b_idx = 0; b_idx < 42; b_idx++) begin
++      for (int bit_pos = 7; bit_pos >= 0; bit_pos--) begin
++        logic bit_val;
++        bit_val         = ext_ul_cltu_mem[b_idx][bit_pos];
++        ul_sym_llr_in   = bit_val ? -4'sd7 : 4'sd7;
++        ul_sym_valid_in = 1'b1;
++        @(posedge clk);
++        #1;
++      end
++    end
++    ul_sym_valid_in = 1'b0;
++    repeat (40) @(posedge clk);
++    #1;
++
++    assert (ul_crc_ok_latched == 1'b1) else $fatal(1, "External CLTU TC Frame CRC-16 failed in RTL!");
++    assert (ul_farm_acc_latched == 1'b1) else $fatal(1, "External CLTU TC Frame rejected by FARM-1!");
++    assert (ul_pkt_cnt == 14) else $fatal(1, $sformatf("Expected 14 reassembled Space Packet bytes, got %0d", ul_pkt_cnt));
++    for (int i = 0; i < 14; i++) begin
++      assert (rtl_ul_pkt_out[i] == ext_exp_ul_pkt[i])
++        else $fatal(1, $sformatf("UL Space Packet byte[%0d] mismatch: got 0x%02X, expected 0x%02X",
++                                 i, rtl_ul_pkt_out[i], ext_exp_ul_pkt[i]));
++    end
++
++    fd = $fopen("sim_waves/rtl_out_ul_pkt.hex", "w");
++    for (int i = 0; i < 14; i++) $fdisplay(fd, "%02X", rtl_ul_pkt_out[i]);
++    $fclose(fd);
++    $display("[TB-STAGE9][EXT-REF-1 PASS] Spacecraft RTL decoded external CLTU -> Space Packet (APID=0x%03X, Seq=%0d, Body=\"SAT_CMD1\") with 0 errors!",
++             ul_parsed_pkt_hdr.apid, ul_parsed_pkt_hdr.pkt_seq_cnt);
++
++    // =========================================================================
++    // SUBTEST 2: External USLP Frame (`spacepackets-py`) -> Spacecraft Rx RTL
++    // =========================================================================
++    $display("[TB-STAGE9][EXT-REF-2] Streaming 31-byte External USLP Extended Frame into Spacecraft Uplink Deframer + Reassembler...");
++    for (int i = 0; i < 31; i++) begin
++      uslp_s_tvalid = 1'b1;
++      uslp_s_tdata  = ext_ul_uslp_mem[i];
++      @(posedge clk);
++      while (!uslp_s_tready) @(posedge clk);
++      #1;
++    end
++    uslp_s_tvalid = 1'b0;
++    repeat (20) @(posedge clk);
++    #1;
++
++    assert (uslp_crc_ok_latched == 1'b1) else $fatal(1, "External USLP Frame CRC-16 failed in RTL!");
++    assert (uslp_ocf_latched == 32'h0104_0002) else $fatal(1, "External USLP OCF extraction mismatch!");
++    assert (uslp_pkt_cnt == 14) else $fatal(1, $sformatf("Expected 14 USLP Space Packet bytes, got %0d", uslp_pkt_cnt));
++    for (int i = 0; i < 14; i++) begin
++      assert (rtl_uslp_pkt_out[i] == ext_exp_uslp_pkt[i])
++        else $fatal(1, $sformatf("USLP Space Packet byte[%0d] mismatch: got 0x%02X, expected 0x%02X",
++                                 i, rtl_uslp_pkt_out[i], ext_exp_uslp_pkt[i]));
++    end
++
++    fd = $fopen("sim_waves/rtl_out_uslp_pkt.hex", "w");
++    for (int i = 0; i < 14; i++) $fdisplay(fd, "%02X", rtl_uslp_pkt_out[i]);
++    $fclose(fd);
++    $display("[TB-STAGE9][EXT-REF-2 PASS] Spacecraft RTL decoded external USLP Frame -> Space Packet (APID=0x%03X, Seq=%0d, OCF=0x%08X) with 0 errors!",
++             uslp_parsed_pkt_hdr.apid, uslp_parsed_pkt_hdr.pkt_seq_cnt, uslp_ocf_latched);
++
++    // =========================================================================
++    // SUBTEST 3: Spacecraft Flight Tx Chain -> External `spacepackets-py` Parser
++    // =========================================================================
++    $display("[TB-STAGE9][EXT-REF-3] Streaming 16-byte Telemetry Space Packet through Spacecraft Tx Chain (VC_Arb -> TM_Framer -> RS255_223_Enc)...");
++    for (int i = 0; i < 16; i++) begin
++      dl_s_pkt_tvalid = 1'b1;
++      dl_s_pkt_tdata  = ext_dl_pkt_mem[i];
++      dl_s_pkt_tlast  = (i == 15);
++      @(posedge clk);
++      while (!dl_s_pkt_tready) @(posedge clk);
++      #1;
++    end
++    dl_s_pkt_tvalid = 1'b0;
++    dl_s_pkt_tlast  = 1'b0;
++    assert (dl_pkt_len_err == 1'b0) else $fatal(1, "VC Arbiter flagged Space Packet length error!");
++
++    // Request 1 Downlink Transfer Frame from VC Arbiter -> TM Framer -> RS(255,223) Encoder
++    dl_req_next_frame = 1'b1;
++    @(posedge clk);
++    #1;
++    dl_req_next_frame = 1'b0;
++
++    while (!(dl_cadu_tvalid && dl_cadu_tlast)) @(posedge clk);
++    repeat (4) @(posedge clk);
++    #1;
++
++    assert (dl_cadu_cnt == 64) else $fatal(1, $sformatf("Expected 64-byte CADU (4B ASM + 28B TM + 32B RS), got %0d", dl_cadu_cnt));
++    assert ({rtl_dl_cadu_out[0], rtl_dl_cadu_out[1], rtl_dl_cadu_out[2], rtl_dl_cadu_out[3]} == 32'h1ACFFC1D)
++      else $fatal(1, "Downlink CADU ASM 0x1ACFFC1D mismatch!");
++
++    fd = $fopen("sim_waves/rtl_out_dl_cadu.hex", "w");
++    for (int i = 0; i < 64; i++) $fdisplay(fd, "%02X", rtl_dl_cadu_out[i]);
++    $fclose(fd);
++    $display("[TB-STAGE9][EXT-REF-3 PASS] Spacecraft RTL emitted 64-byte RS(255,223)-encoded CADU to sim_waves/rtl_out_dl_cadu.hex!");
++
++    $display("[TB-STAGE9 PASS] All 3 External Reference Interoperability Subtests passed in RTL!");
++    $finish;
++  end
++
++endmodule : tb_stage9_external_ref_check

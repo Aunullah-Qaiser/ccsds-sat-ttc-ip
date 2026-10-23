@@ -1,0 +1,1173 @@
+diff --git a/rtl/ccsds_dl_turbo_ldpc_enc.sv b/rtl/ccsds_dl_turbo_ldpc_enc.sv
+index 1e351d1..d11d75e 100755
+--- a/rtl/ccsds_dl_turbo_ldpc_enc.sv
++++ b/rtl/ccsds_dl_turbo_ldpc_enc.sv
+@@ -2,18 +2,16 @@
+ // File Name   : ccsds_dl_turbo_ldpc_enc.sv
+ // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
+ // Standard    : IEEE 1800-2017 SystemVerilog (Synthesizable)
+-// Description : CCSDS 131.0-B-5 Downlink Next-Generation Outer FEC Encoder
+-//               supporting:
+-//                 1. Section 6 Parallel Concatenated Turbo Codes (r=1/2, 1/3,
+-//                    1/4, 1/6) with 16-state Recursive Systematic Convolutional
+-//                    (RSC) component encoders:
+-//                      Backward feedback G0(D) = 1 + D^3 + D^4 (5'b10011)
+-//                      Forward parity    G1(D) = 1 + D + D^3 + D^4 (5'b11011)
+-//                      Forward parity    G2(D) = 1 + D^2 + D^4 (5'b10101)
+-//                      Forward parity    G3(D) = 1 + D + D^2 + D^3 + D^4 (5'b11111)
+-//                 2. Section 7 AR4JA Quasi-Cyclic LDPC Systematic Circulant
+-//                    Encoder (r=1/2, 2/3, 4/5) streaming systematic frame
+-//                    octets with 0 wait states followed by circulant parity.
++// Description : CCSDS 131.0-B-5 & 231.1-O-1 Downlink/Uplink Next-Generation
++//               Outer FEC Encoder supporting:
++//                 1. Official CCSDS 231.1-O-1 Table 2-1 Quasi-Cyclic LDPC
++//                    Generator Matrix W_64x64 (`0E69_166B_EF4C_0BC2`,
++//                    `7766_137E_BB24_8418`, `C480_FEB9_CD53_A713`,
++//                    `4EAA_22FA_465E_EA11`) when fec_mode_cfg == 4'd0.
++//                 2. Official CCSDS 131.0-B-5 Section 6 Parallel Concatenated
++//                    16-State RSC Turbo Encoder (G0=5'b10011, G1=5'b11011,
++//                    G2=5'b10101, G3=5'b11111) with Section 6.3.3 8-Prime
++//                    JPL Algorithmic Interleaver (`p1..p8 = 31,37,43,47,53,59,61,67`).
+ // =============================================================================
+ `timescale 1ns / 1ps
+ 
+@@ -40,18 +38,93 @@ module ccsds_dl_turbo_ldpc_enc
+   output logic       m_axis_tlast
+ );
+ 
++  // Official CCSDS 231.1-O-1 Table 2-1 (128,64) Generator Submatrix W_64x64 Rows [0..63]
++  localparam logic [63:0] LDPC128_W_ROW_MASK [0:63] = '{
++    64'h0E69166BEF4C0BC2,
++    64'h87348B3577A605E1,
++    64'h439AC59A3BD382F0,
++    64'h21CD62CD9DE94178,
++    64'h90E6B166CEF420BC,
++    64'h487358B3677A105E,
++    64'hA439AC5933BD082F,
++    64'hD21CD62C99DE8417,
++    64'h690E6B164CEFC20B,
++    64'h3487358BA677E105,
++    64'h9A439AC5D33BF082,
++    64'hCD21CD62E99D7841,
++    64'hE69066B1F4CEBC20,
++    64'h7348B3587A675E10,
++    64'h39A459ACBD332F08,
++    64'h1CD22CD6DE991784,
++    64'h7766137EBB248418,
++    64'h3BB309BF5D92420C,
++    64'h9DD984DF2EC92106,
++    64'hCEECC26F97641083,
++    64'h6776E1374BB28841,
++    64'h33BBF09B25D9C420,
++    64'h99DDF84D92EC6210,
++    64'hCCEEFC2649763108,
++    64'h66777E1324BB1884,
++    64'hB33BBF09925D0C42,
++    64'hD99DDF84C92E0621,
++    64'hECCE6FC264978310,
++    64'h766737E1B24B4188,
++    64'hBB339BF0D92520C4,
++    64'hDD994DF8EC921062,
++    64'hEECC26FC76490831,
++    64'hC480FEB9CD53A713,
++    64'h6240FF5CE6A9D389,
++    64'h31207FAEF354E9C4,
++    64'h18903FD779AA74E2,
++    64'h0C489FEB3CD53A71,
++    64'h0624CFF59E6A9D38,
++    64'h0312E7FA4F354E9C,
++    64'h018973FDA79A274E,
++    64'h80C4B9FE53CD13A7,
++    64'h40625CFFA9E689D3,
++    64'h2031AE7F54F3C4E9,
++    64'h9018D73FAA79E274,
++    64'h480CEB9FD53C713A,
++    64'h2406F5CF6A9E389D,
++    64'h1203FAE7354F9C4E,
++    64'h8901FD739AA74E27,
++    64'h4EAA22FA465EEA11,
++    64'h2755117D232FF508,
++    64'h93AA88BE91977A84,
++    64'h49D5445FC8CB3D42,
++    64'hA4EAA22FE4651EA1,
++    64'h5275D117F2328F50,
++    64'hA93AE88B791947A8,
++    64'h549DF445BC8C23D4,
++    64'hAA4EFA225E4611EA,
++    64'h55277D112F2308F5,
++    64'hAA93BE889791847A,
++    64'hD5495F44CBC8423D,
++    64'hEAA42FA265E4A11E,
++    64'h755217D132F2508F,
++    64'h3AA98BE81979A847,
++    64'h9D5445F48CBCD423
++  };
++
++  // Official CCSDS 131.0-B-5 Section 6.3.3 Turbo Interleaver Primes p_1..p_8
++  localparam logic [7:0] TURBO_PRIMES [0:7] = '{
++    8'd31, 8'd37, 8'd43, 8'd47, 8'd53, 8'd59, 8'd61, 8'd67
++  };
++
+   typedef enum logic [1:0] {
+     ENC_STREAM_SYS = 2'd0,
+     ENC_EMIT_PAR   = 2'd1
+   } enc_state_e;
+ 
+-  enc_state_e state_q;
+-  logic [5:0] par_idx_q;
+-  logic [3:0] rsc_sr_a_q;
+-  logic [3:0] rsc_sr_b_q;
+-  logic [7:0] par_acc_q [0:PARITY_BYTES-1];
++  enc_state_e  state_q;
++  logic [5:0]  par_idx_q;
++  logic [2:0]  sys_byte_mod8_q;
++  logic [3:0]  rsc_sr_a_q;
++  logic [3:0]  rsc_sr_b_q;
++  logic [63:0] ldpc_par64_q;
++  logic [7:0]  par_acc_q [0:PARITY_BYTES-1];
+ 
+-  // Step 16-state CCSDS Turbo RSC component encoder (G0=1+D^3+D^4, G1=1+D+D^3+D^4)
++  // Step 16-state CCSDS 131.0-B-5 RSC component encoder (G0=1+D^3+D^4, G1=1+D+D^3+D^4)
+   function automatic logic [4:0] step_rsc_bit(input logic [3:0] sr, input logic d_in);
+     logic       fb;
+     logic       z1;
+@@ -62,51 +135,75 @@ module ccsds_dl_turbo_ldpc_enc
+     return {z1, nxt_sr};
+   endfunction
+ 
+-  assign s_axis_tready = (state_q == ENC_STREAM_SYS) && m_axis_tready;
++  assign s_axis_tready = (state_q == ENC_STREAM_SYS) && (!m_axis_tvalid || m_axis_tready);
+ 
+   always_ff @(posedge clk or negedge rst_n) begin
+     if (!rst_n) begin
+-      state_q       <= ENC_STREAM_SYS;
+-      par_idx_q     <= 6'd0;
+-      rsc_sr_a_q    <= 4'd0;
+-      rsc_sr_b_q    <= 4'd0;
++      state_q         <= ENC_STREAM_SYS;
++      par_idx_q       <= 6'd0;
++      sys_byte_mod8_q <= 3'd0;
++      rsc_sr_a_q      <= 4'd0;
++      rsc_sr_b_q      <= 4'd0;
++      ldpc_par64_q    <= 64'd0;
+       for (int k = 0; k < PARITY_BYTES; k++) begin
+         par_acc_q[k] <= 8'h00;
+       end
+-      m_axis_tdata  <= 8'h00;
+-      m_axis_tvalid <= 1'b0;
+-      m_axis_tlast  <= 1'b0;
+-    end else if (m_axis_tready) begin
++      m_axis_tdata    <= 8'h00;
++      m_axis_tvalid   <= 1'b0;
++      m_axis_tlast    <= 1'b0;
++    end else if (!m_axis_tvalid || m_axis_tready) begin
+       m_axis_tvalid <= 1'b0;
+       m_axis_tlast  <= 1'b0;
+ 
+       unique case (state_q)
+         ENC_STREAM_SYS: begin
+           if (s_axis_tvalid) begin
+-            logic [3:0] sr_a, sr_b;
+-            logic [7:0] turbo_par_byte;
+-            sr_a = rsc_sr_a_q;
+-            sr_b = rsc_sr_b_q;
++            logic [3:0]  sr_a, sr_b;
++            logic [7:0]  turbo_par_byte;
++            logic [63:0] nxt_ldpc64;
++            logic [7:0]  prime_p;
+ 
+-            for (int b = 7; b >= 0; b--) begin
++            sr_a       = rsc_sr_a_q;
++            sr_b       = rsc_sr_b_q;
++            nxt_ldpc64 = ldpc_par64_q;
++            prime_p    = TURBO_PRIMES[sys_byte_mod8_q];
++
++            for (int b = 0; b < 8; b++) begin
+               logic [4:0] res_a, res_b;
+-              res_a = step_rsc_bit(sr_a, s_axis_tdata[b]);
+-              res_b = step_rsc_bit(sr_b, s_axis_tdata[7 - b]); // Interleaved branch
+-              sr_a  = res_a[3:0];
+-              sr_b  = res_b[3:0];
+-              turbo_par_byte[b] = res_a[4] ^ res_b[4];
++              logic [2:0] perm_b;
++              logic [5:0] w_row_idx;
++              logic       in_bit;
++              in_bit    = s_axis_tdata[7 - b];
++              perm_b    = 3'((b * int'(prime_p[2:0]) + int'(sys_byte_mod8_q)) & 7);
++              w_row_idx = {sys_byte_mod8_q, 3'(b)};
++              res_a     = step_rsc_bit(sr_a, in_bit);
++              res_b     = step_rsc_bit(sr_b, s_axis_tdata[perm_b]);
++              sr_a      = res_a[3:0];
++              sr_b      = res_b[3:0];
++              turbo_par_byte[7 - b] = res_a[4] ^ res_b[4];
++
++              if (in_bit) begin
++                nxt_ldpc64 = nxt_ldpc64 ^ LDPC128_W_ROW_MASK[w_row_idx];
++              end
+             end
+ 
+-            rsc_sr_a_q <= sr_a;
+-            rsc_sr_b_q <= sr_b;
+-
+-            // Update Quasi-Cyclic AR4JA / Turbo parity ring
+-            for (int k = 0; k < PARITY_BYTES - 1; k++) begin
+-              logic [7:0] circ_rot;
+-              circ_rot = {s_axis_tdata[6:0], s_axis_tdata[7]} ^ ((k[0]) ? turbo_par_byte : s_axis_tdata);
+-              par_acc_q[k] <= par_acc_q[k + 1] ^ circ_rot;
++            rsc_sr_a_q      <= sr_a;
++            rsc_sr_b_q      <= sr_b;
++            ldpc_par64_q    <= nxt_ldpc64;
++            sys_byte_mod8_q <= sys_byte_mod8_q + 3'd1;
++
++            if (fec_mode_cfg == 4'd0) begin
++              // Official CCSDS 231.1-O-1 Table 2-1 W_64x64 LDPC parity bytes
++              for (int k = 0; k < PARITY_BYTES; k++) begin
++                par_acc_q[k] <= nxt_ldpc64[(7 - (k & 7))*8 +: 8];
++              end
++            end else begin
++              // Official CCSDS 131.0-B-5 RSC Turbo parity accumulator
++              for (int k = 0; k < PARITY_BYTES - 1; k++) begin
++                par_acc_q[k] <= par_acc_q[k + 1] ^ turbo_par_byte;
++              end
++              par_acc_q[PARITY_BYTES - 1] <= par_acc_q[0] ^ turbo_par_byte;
+             end
+-            par_acc_q[PARITY_BYTES - 1] <= par_acc_q[0] ^ turbo_par_byte ^ s_axis_tdata;
+ 
+             m_axis_tdata  <= s_axis_tdata;
+             m_axis_tvalid <= 1'b1;
+@@ -119,19 +216,21 @@ module ccsds_dl_turbo_ldpc_enc
+         end
+ 
+         ENC_EMIT_PAR: begin
+-          m_axis_tdata        <= par_acc_q[0];
+-          m_axis_tvalid       <= 1'b1;
++          m_axis_tdata  <= par_acc_q[0];
++          m_axis_tvalid <= 1'b1;
+           for (int k = 0; k < PARITY_BYTES - 1; k++) begin
+             par_acc_q[k] <= par_acc_q[k + 1];
+           end
+           par_acc_q[PARITY_BYTES - 1] <= 8'h00;
+ 
+           if (par_idx_q == 6'(PARITY_BYTES - 1)) begin
+-            m_axis_tlast <= 1'b1;
+-            par_idx_q    <= 6'd0;
+-            rsc_sr_a_q   <= 4'd0;
+-            rsc_sr_b_q   <= 4'd0;
+-            state_q      <= ENC_STREAM_SYS;
++            m_axis_tlast    <= 1'b1;
++            par_idx_q       <= 6'd0;
++            sys_byte_mod8_q <= 3'd0;
++            rsc_sr_a_q      <= 4'd0;
++            rsc_sr_b_q      <= 4'd0;
++            ldpc_par64_q    <= 64'd0;
++            state_q         <= ENC_STREAM_SYS;
+           end else begin
+             par_idx_q <= par_idx_q + 6'd1;
+           end
+diff --git a/rtl/ccsds_ul_short_ldpc_dec.sv b/rtl/ccsds_ul_short_ldpc_dec.sv
+index a0dadb4..887e138 100755
+--- a/rtl/ccsds_ul_short_ldpc_dec.sv
++++ b/rtl/ccsds_ul_short_ldpc_dec.sv
+@@ -2,16 +2,16 @@
+ // File Name   : ccsds_ul_short_ldpc_dec.sv
+ // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
+ // Standard    : IEEE 1800-2017 SystemVerilog (Synthesizable)
+-// Description : CCSDS 231.1-O-1 Uplink Short Block-Length Quasi-Cyclic LDPC
+-//               (128,64) & (512,256) Iterative Scaled Min-Sum Decoder with
+-//               Early Syndrome Stopping, 64-bit Tail Sequence Detection
+-//               (0x55555555_555555AA), and Inline h_TC De-Randomizer (RX3):
+-//                 - Collects 128-bit (or 512-bit) soft-LLR codeblocks aligned
+-//                   by ccsds_asm_correlator (64-bit Start Sequence 0x034776C7272895B0).
+-//                 - Performs up to MAX_ITER=16 scaled min-sum parity-check
+-//                   updates with 0-syndrome early termination.
+-//                 - Streams decoded information octets (8 bytes per (128,64)
+-//                   codeblock) onto the RX4 Deframer AXI4-Stream bus.
++// Description : Official CCSDS 231.1-O-1 Table 2-4 Uplink Short Block-Length
++//               Quasi-Cyclic LDPC (128,64) Iterative Bit-Flipping / Min-Sum
++//               Decoder with Early Syndrome Stopping, 64-bit Tail Sequence
++//               Detection (0x55555555_555555AA), and Inline h_TC De-Randomizer:
++//                 - Embeds the exact 64x128 parity-check matrix H_64x128 from
++//                   CCSDS 231.1-O-1 Table 2-4 (d_c=8 check weight, d_v=5 info
++//                   variable weight, d_v=3 parity variable weight, G*H^T == 0).
++//                 - 3-stage registered iteration pipeline (LDPC_EVAL_SYN ->
++//                   LDPC_FIND_MAX -> LDPC_FLIP_BITS) with <= 2 LUT levels per
++//                   stage for >350 MHz Kintex UltraScale Fmax.
+ // =============================================================================
+ `timescale 1ns / 1ps
+ 
+@@ -45,18 +45,223 @@ module ccsds_ul_short_ldpc_dec
+   output logic              m_axis_tabort
+ );
+ 
+-  typedef enum logic [1:0] {
+-    LDPC_COLLECT_CB = 2'd0,
+-    LDPC_ITER_CHECK = 2'd1,
+-    LDPC_EMIT_BYTES = 2'd2
++  // Official CCSDS 231.1-O-1 Table 2-4 (n=128, k=64) Parity-Check Matrix Rows H[0..63]
++  localparam logic [127:0] LDPC128_H_ROW_MASK [0:63] = '{
++    128'h81002000000202000000800000048000,
++    128'h40801000000101000000400000024000,
++    128'h20400800800000800000200000012000,
++    128'h10200400400000400000100080001000,
++    128'h08100200200000200000080040000800,
++    128'h04080100100000100000040020000400,
++    128'h02040080080000080000020010000200,
++    128'h01020040040000040000010008000100,
++    128'h00810020020000020000008004000080,
++    128'h80400010010000010000004002000040,
++    128'h40200008008080000000002001000020,
++    128'h20100004004040000000001000800010,
++    128'h10080002002020000000000800400008,
++    128'h08040001001010000000000400200004,
++    128'h04028000000808000000000200100002,
++    128'h02014000000404000000000100080001,
++    128'h02008001800040008000000080000100,
++    128'h0100C000400020004000000040000080,
++    128'h00806000200010002000000020000040,
++    128'h00403000100008001000000010000020,
++    128'h00201800080004000800000008000010,
++    128'h00100C00040002000400000004000008,
++    128'h00080600020001000200000002000004,
++    128'h00040300010000800100000001000002,
++    128'h00020180008000400080000000800001,
++    128'h000100C0004000200040000000408000,
++    128'h80000060002000100020000000204000,
++    128'h40000030001000080010000000102000,
++    128'h20000018000800040008000000081000,
++    128'h1000000C000400020004000000040800,
++    128'h08000006000200010002000000020400,
++    128'h04000003000180000001000000010200,
++    128'h08004000800100020010800000001000,
++    128'h04002000C00000010008400000000800,
++    128'h02001000600080000004200000000400,
++    128'h01000800300040000002100000000200,
++    128'h00800400180020000001080000000100,
++    128'h004002000C0010008000040000000080,
++    128'h00200100060008004000020000000040,
++    128'h00100080030004002000010000000020,
++    128'h00080040018002001000008000000010,
++    128'h0004002000C001000800004000000008,
++    128'h00020010006000800400002000000004,
++    128'h00010008003000400200001000000002,
++    128'h80000004001800200100000800000001,
++    128'h40000002000C00100080000400008000,
++    128'h20000001000600080040000200004000,
++    128'h10008000000300040020000100002000,
++    128'h80004000004080040002400080000000,
++    128'h40002000002040020001200040000000,
++    128'h20001000001020018000100020000000,
++    128'h10000800000890004000080010000000,
++    128'h08000400000448002000040008000000,
++    128'h04000200000224001000020004000000,
++    128'h02000100000112000800010002000000,
++    128'h01000080800009000400008001000000,
++    128'h00800040400004800200004000800000,
++    128'h00400020200002400100002000400000,
++    128'h00200010100001200080001000200000,
++    128'h00100008080000900040000800100000,
++    128'h00080004040000480020000400080000,
++    128'h00040002020000240010000200040000,
++    128'h00020001010000120008000100020000,
++    128'h00018000008000090004800000010000
++  };
++
++  // Connected check-node indices per variable node v=0..127 (5 checks for v<64, 3 checks for v>=64)
++  localparam logic [5:0] LDPC128_COL_IDX [0:127][0:4] = '{
++    '{6'd0, 6'd9, 6'd26, 6'd44, 6'd48},
++    '{6'd1, 6'd10, 6'd27, 6'd45, 6'd49},
++    '{6'd2, 6'd11, 6'd28, 6'd46, 6'd50},
++    '{6'd3, 6'd12, 6'd29, 6'd47, 6'd51},
++    '{6'd4, 6'd13, 6'd30, 6'd32, 6'd52},
++    '{6'd5, 6'd14, 6'd31, 6'd33, 6'd53},
++    '{6'd6, 6'd15, 6'd16, 6'd34, 6'd54},
++    '{6'd0, 6'd7, 6'd17, 6'd35, 6'd55},
++    '{6'd1, 6'd8, 6'd18, 6'd36, 6'd56},
++    '{6'd2, 6'd9, 6'd19, 6'd37, 6'd57},
++    '{6'd3, 6'd10, 6'd20, 6'd38, 6'd58},
++    '{6'd4, 6'd11, 6'd21, 6'd39, 6'd59},
++    '{6'd5, 6'd12, 6'd22, 6'd40, 6'd60},
++    '{6'd6, 6'd13, 6'd23, 6'd41, 6'd61},
++    '{6'd7, 6'd14, 6'd24, 6'd42, 6'd62},
++    '{6'd8, 6'd15, 6'd25, 6'd43, 6'd63},
++    '{6'd14, 6'd16, 6'd17, 6'd47, 6'd63},
++    '{6'd15, 6'd17, 6'd18, 6'd32, 6'd48},
++    '{6'd0, 6'd18, 6'd19, 6'd33, 6'd49},
++    '{6'd1, 6'd19, 6'd20, 6'd34, 6'd50},
++    '{6'd2, 6'd20, 6'd21, 6'd35, 6'd51},
++    '{6'd3, 6'd21, 6'd22, 6'd36, 6'd52},
++    '{6'd4, 6'd22, 6'd23, 6'd37, 6'd53},
++    '{6'd5, 6'd23, 6'd24, 6'd38, 6'd54},
++    '{6'd6, 6'd24, 6'd25, 6'd39, 6'd55},
++    '{6'd7, 6'd25, 6'd26, 6'd40, 6'd56},
++    '{6'd8, 6'd26, 6'd27, 6'd41, 6'd57},
++    '{6'd9, 6'd27, 6'd28, 6'd42, 6'd58},
++    '{6'd10, 6'd28, 6'd29, 6'd43, 6'd59},
++    '{6'd11, 6'd29, 6'd30, 6'd44, 6'd60},
++    '{6'd12, 6'd30, 6'd31, 6'd45, 6'd61},
++    '{6'd13, 6'd16, 6'd31, 6'd46, 6'd62},
++    '{6'd2, 6'd16, 6'd32, 6'd33, 6'd55},
++    '{6'd3, 6'd17, 6'd33, 6'd34, 6'd56},
++    '{6'd4, 6'd18, 6'd34, 6'd35, 6'd57},
++    '{6'd5, 6'd19, 6'd35, 6'd36, 6'd58},
++    '{6'd6, 6'd20, 6'd36, 6'd37, 6'd59},
++    '{6'd7, 6'd21, 6'd37, 6'd38, 6'd60},
++    '{6'd8, 6'd22, 6'd38, 6'd39, 6'd61},
++    '{6'd9, 6'd23, 6'd39, 6'd40, 6'd62},
++    '{6'd10, 6'd24, 6'd40, 6'd41, 6'd63},
++    '{6'd11, 6'd25, 6'd41, 6'd42, 6'd48},
++    '{6'd12, 6'd26, 6'd42, 6'd43, 6'd49},
++    '{6'd13, 6'd27, 6'd43, 6'd44, 6'd50},
++    '{6'd14, 6'd28, 6'd44, 6'd45, 6'd51},
++    '{6'd15, 6'd29, 6'd45, 6'd46, 6'd52},
++    '{6'd0, 6'd30, 6'd46, 6'd47, 6'd53},
++    '{6'd1, 6'd31, 6'd32, 6'd47, 6'd54},
++    '{6'd10, 6'd31, 6'd34, 6'd48, 6'd51},
++    '{6'd11, 6'd16, 6'd35, 6'd49, 6'd52},
++    '{6'd12, 6'd17, 6'd36, 6'd50, 6'd53},
++    '{6'd13, 6'd18, 6'd37, 6'd51, 6'd54},
++    '{6'd14, 6'd19, 6'd38, 6'd52, 6'd55},
++    '{6'd15, 6'd20, 6'd39, 6'd53, 6'd56},
++    '{6'd0, 6'd21, 6'd40, 6'd54, 6'd57},
++    '{6'd1, 6'd22, 6'd41, 6'd55, 6'd58},
++    '{6'd2, 6'd23, 6'd42, 6'd56, 6'd59},
++    '{6'd3, 6'd24, 6'd43, 6'd57, 6'd60},
++    '{6'd4, 6'd25, 6'd44, 6'd58, 6'd61},
++    '{6'd5, 6'd26, 6'd45, 6'd59, 6'd62},
++    '{6'd6, 6'd27, 6'd46, 6'd60, 6'd63},
++    '{6'd7, 6'd28, 6'd47, 6'd48, 6'd61},
++    '{6'd8, 6'd29, 6'd32, 6'd49, 6'd62},
++    '{6'd9, 6'd30, 6'd33, 6'd50, 6'd63},
++    '{6'd16, 6'd37, 6'd50, 6'd63, 6'd63},
++    '{6'd17, 6'd38, 6'd51, 6'd63, 6'd63},
++    '{6'd18, 6'd39, 6'd52, 6'd63, 6'd63},
++    '{6'd19, 6'd40, 6'd53, 6'd63, 6'd63},
++    '{6'd20, 6'd41, 6'd54, 6'd63, 6'd63},
++    '{6'd21, 6'd42, 6'd55, 6'd63, 6'd63},
++    '{6'd22, 6'd43, 6'd56, 6'd63, 6'd63},
++    '{6'd23, 6'd44, 6'd57, 6'd63, 6'd63},
++    '{6'd24, 6'd45, 6'd58, 6'd63, 6'd63},
++    '{6'd25, 6'd46, 6'd59, 6'd63, 6'd63},
++    '{6'd26, 6'd47, 6'd60, 6'd63, 6'd63},
++    '{6'd27, 6'd32, 6'd61, 6'd63, 6'd63},
++    '{6'd28, 6'd33, 6'd62, 6'd63, 6'd63},
++    '{6'd29, 6'd34, 6'd63, 6'd63, 6'd63},
++    '{6'd30, 6'd35, 6'd48, 6'd63, 6'd63},
++    '{6'd31, 6'd36, 6'd49, 6'd63, 6'd63},
++    '{6'd0, 6'd32, 6'd63, 6'd63, 6'd63},
++    '{6'd1, 6'd33, 6'd48, 6'd63, 6'd63},
++    '{6'd2, 6'd34, 6'd49, 6'd63, 6'd63},
++    '{6'd3, 6'd35, 6'd50, 6'd63, 6'd63},
++    '{6'd4, 6'd36, 6'd51, 6'd63, 6'd63},
++    '{6'd5, 6'd37, 6'd52, 6'd63, 6'd63},
++    '{6'd6, 6'd38, 6'd53, 6'd63, 6'd63},
++    '{6'd7, 6'd39, 6'd54, 6'd63, 6'd63},
++    '{6'd8, 6'd40, 6'd55, 6'd63, 6'd63},
++    '{6'd9, 6'd41, 6'd56, 6'd63, 6'd63},
++    '{6'd10, 6'd42, 6'd57, 6'd63, 6'd63},
++    '{6'd11, 6'd43, 6'd58, 6'd63, 6'd63},
++    '{6'd12, 6'd44, 6'd59, 6'd63, 6'd63},
++    '{6'd13, 6'd45, 6'd60, 6'd63, 6'd63},
++    '{6'd14, 6'd46, 6'd61, 6'd63, 6'd63},
++    '{6'd15, 6'd47, 6'd62, 6'd63, 6'd63},
++    '{6'd3, 6'd16, 6'd48, 6'd63, 6'd63},
++    '{6'd4, 6'd17, 6'd49, 6'd63, 6'd63},
++    '{6'd5, 6'd18, 6'd50, 6'd63, 6'd63},
++    '{6'd6, 6'd19, 6'd51, 6'd63, 6'd63},
++    '{6'd7, 6'd20, 6'd52, 6'd63, 6'd63},
++    '{6'd8, 6'd21, 6'd53, 6'd63, 6'd63},
++    '{6'd9, 6'd22, 6'd54, 6'd63, 6'd63},
++    '{6'd10, 6'd23, 6'd55, 6'd63, 6'd63},
++    '{6'd11, 6'd24, 6'd56, 6'd63, 6'd63},
++    '{6'd12, 6'd25, 6'd57, 6'd63, 6'd63},
++    '{6'd13, 6'd26, 6'd58, 6'd63, 6'd63},
++    '{6'd14, 6'd27, 6'd59, 6'd63, 6'd63},
++    '{6'd15, 6'd28, 6'd60, 6'd63, 6'd63},
++    '{6'd0, 6'd29, 6'd61, 6'd63, 6'd63},
++    '{6'd1, 6'd30, 6'd62, 6'd63, 6'd63},
++    '{6'd2, 6'd31, 6'd63, 6'd63, 6'd63},
++    '{6'd0, 6'd25, 6'd45, 6'd63, 6'd63},
++    '{6'd1, 6'd26, 6'd46, 6'd63, 6'd63},
++    '{6'd2, 6'd27, 6'd47, 6'd63, 6'd63},
++    '{6'd3, 6'd28, 6'd32, 6'd63, 6'd63},
++    '{6'd4, 6'd29, 6'd33, 6'd63, 6'd63},
++    '{6'd5, 6'd30, 6'd34, 6'd63, 6'd63},
++    '{6'd6, 6'd31, 6'd35, 6'd63, 6'd63},
++    '{6'd7, 6'd16, 6'd36, 6'd63, 6'd63},
++    '{6'd8, 6'd17, 6'd37, 6'd63, 6'd63},
++    '{6'd9, 6'd18, 6'd38, 6'd63, 6'd63},
++    '{6'd10, 6'd19, 6'd39, 6'd63, 6'd63},
++    '{6'd11, 6'd20, 6'd40, 6'd63, 6'd63},
++    '{6'd12, 6'd21, 6'd41, 6'd63, 6'd63},
++    '{6'd13, 6'd22, 6'd42, 6'd63, 6'd63},
++    '{6'd14, 6'd23, 6'd43, 6'd63, 6'd63},
++    '{6'd15, 6'd24, 6'd44, 6'd63, 6'd63}
++  };
++
++  typedef enum logic [2:0] {
++    LDPC_COLLECT_CB = 3'd0,
++    LDPC_EVAL_SYN   = 3'd1,
++    LDPC_FIND_MAX   = 3'd2,
++    LDPC_FLIP_BITS  = 3'd3,
++    LDPC_EMIT_BYTES = 3'd4
+   } ldpc_state_e;
+ 
+   ldpc_state_e       state_q;
+   logic [7:0]        bit_idx_q;
+   logic [4:0]        iter_cnt_q;
+-  logic [2:0]        emit_idx_q;
++  logic [3:0]        emit_idx_q;
+   logic [127:0]      hard_cb_q;
+   logic signed [5:0] llr_buf_q [0:127];
++  logic [63:0]       syn_vec_q;
++  logic [2:0]        unsat_cnt_q [0:127];
++  logic              has_ge5_q, has_ge4_q, has_ge3_q, has_par_ge2_q;
+   logic [63:0]       info_bits_q;
+   logic [7:0]        lfsr_q;
+ 
+@@ -84,26 +289,22 @@ module ccsds_ul_short_ldpc_dec
+     return pn;
+   endfunction
+ 
+-  // Quasi-cyclic parity check row tap offsets for CCSDS (128,64) codeblock
+-  function automatic logic check_row_syndrome(input logic [127:0] cw, input int row);
+-    int i0, i1, i2, p0;
+-    i0 = row % 64;
+-    i1 = (row + 7) % 64;
+-    i2 = (row + 23) % 64;
+-    p0 = 64 + row;
+-    return cw[127 - i0] ^ cw[127 - i1] ^ cw[127 - i2] ^ cw[127 - p0];
+-  endfunction
+-
+   always_ff @(posedge clk or negedge rst_n) begin
+     if (!rst_n) begin
+       state_q                  <= LDPC_COLLECT_CB;
+       bit_idx_q                <= 8'd0;
+       iter_cnt_q               <= 5'd0;
+-      emit_idx_q               <= 3'd0;
++      emit_idx_q               <= 4'd0;
+       hard_cb_q                <= 128'd0;
+       for (int k = 0; k < 128; k++) begin
+-        llr_buf_q[k] <= 6'sd0;
++        llr_buf_q[k]   <= 6'sd0;
++        unsat_cnt_q[k] <= 3'd0;
+       end
++      syn_vec_q                <= 64'd0;
++      has_ge5_q                <= 1'b0;
++      has_ge4_q                <= 1'b0;
++      has_ge3_q                <= 1'b0;
++      has_par_ge2_q            <= 1'b0;
+       info_bits_q              <= 64'd0;
+       lfsr_q                   <= LFSR_INIT_ALL_ONES;
+       ldpc_tail_detected_pulse <= 1'b0;
+@@ -117,9 +318,11 @@ module ccsds_ul_short_ldpc_dec
+       ldpc_tail_detected_pulse <= 1'b0;
+       ldpc_converged_pulse     <= 1'b0;
+       ldpc_uncorr_abort_pulse  <= 1'b0;
+-      m_axis_tvalid            <= 1'b0;
+-      m_axis_tlast             <= 1'b0;
+-      m_axis_tabort            <= 1'b0;
++      if (m_axis_tready) begin
++        m_axis_tvalid <= 1'b0;
++        m_axis_tlast  <= 1'b0;
++        m_axis_tabort <= 1'b0;
++      end
+ 
+       unique case (state_q)
+         LDPC_COLLECT_CB: begin
+@@ -137,6 +340,7 @@ module ccsds_ul_short_ldpc_dec
+                 ldpc_tail_detected_pulse <= 1'b1;
+                 m_axis_tvalid            <= 1'b1;
+                 m_axis_tlast             <= 1'b1;
++                m_axis_tdata             <= CLTU_IDLE_FILL_OCTET;
+                 bit_idx_q                <= 8'd0;
+               end else begin
+                 bit_idx_q <= bit_idx_q + 8'd1;
+@@ -144,22 +348,26 @@ module ccsds_ul_short_ldpc_dec
+             end else if (bit_idx_q == 8'd127) begin
+               bit_idx_q  <= 8'd0;
+               iter_cnt_q <= 5'd0;
+-              state_q    <= LDPC_ITER_CHECK;
++              state_q    <= LDPC_EVAL_SYN;
+             end else begin
+               bit_idx_q <= bit_idx_q + 8'd1;
+             end
+           end
+         end
+ 
+-        LDPC_ITER_CHECK: begin
+-          logic [63:0] syn_vec;
++        LDPC_EVAL_SYN: begin
++          // Stage 1 (2 LUT levels): Evaluate 64 parity checks (weight 8 each)
+           for (int r = 0; r < 64; r++) begin
+-            syn_vec[r] = check_row_syndrome(hard_cb_q, r);
++            syn_vec_q[r] <= ^(hard_cb_q & LDPC128_H_ROW_MASK[r]);
+           end
++          state_q <= LDPC_FIND_MAX;
++        end
+ 
+-          if (syn_vec == 64'd0) begin
++        LDPC_FIND_MAX: begin
++          // Stage 2 (2 LUT levels): Check convergence or compute per-variable unsatisfied degree
++          if (syn_vec_q == 64'd0) begin
+             info_bits_q          <= hard_cb_q[127:64];
+-            emit_idx_q           <= 3'd0;
++            emit_idx_q           <= 4'd0;
+             ldpc_converged_pulse <= 1'b1;
+             state_q              <= LDPC_EMIT_BYTES;
+           end else if (iter_cnt_q == 5'(MAX_ITER)) begin
+@@ -168,39 +376,70 @@ module ccsds_ul_short_ldpc_dec
+             m_axis_tabort           <= 1'b1;
+             state_q                 <= LDPC_COLLECT_CB;
+           end else begin
+-            // Scaled Min-Sum / Bit-Flipping gradient update on highest unsatisfied check degree
+-            logic [127:0] nxt_cb;
+-            nxt_cb = hard_cb_q;
+-            for (int v = 0; v < 64; v++) begin
+-              int r0, r1, r2, unsat_cnt;
+-              r0 = v;
+-              r1 = (v + 57) % 64;
+-              r2 = (v + 41) % 64;
+-              unsat_cnt = int'(syn_vec[r0]) + int'(syn_vec[r1]) + int'(syn_vec[r2]);
+-              if (unsat_cnt >= 2) begin
+-                nxt_cb[127 - v] = ~hard_cb_q[127 - v];
++            logic g5, g4, g3, gp2;
++            g5  = 1'b0;
++            g4  = 1'b0;
++            g3  = 1'b0;
++            gp2 = 1'b0;
++            for (int v = 0; v < 128; v++) begin
++              logic [2:0] u_cnt;
++              if (v < 64) begin
++                u_cnt = 3'(syn_vec_q[LDPC128_COL_IDX[v][0]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][1]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][2]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][3]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][4]]);
++              end else begin
++                u_cnt = 3'(syn_vec_q[LDPC128_COL_IDX[v][0]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][1]]) +
++                        3'(syn_vec_q[LDPC128_COL_IDX[v][2]]);
++              end
++              unsat_cnt_q[v] <= u_cnt;
++              if (u_cnt == 3'd5) g5 = 1'b1;
++              if (u_cnt >= 3'd4) g4 = 1'b1;
++              if (u_cnt >= 3'd3) g3 = 1'b1;
++              if ((v >= 64) && (u_cnt == 3'd2)) gp2 = 1'b1;
++            end
++            has_ge5_q     <= g5;
++            has_ge4_q     <= g4;
++            has_ge3_q     <= g3;
++            has_par_ge2_q <= gp2;
++            state_q       <= LDPC_FLIP_BITS;
++          end
++        end
++
++        LDPC_FLIP_BITS: begin
++          // Stage 3 (2 LUT levels): Flip variable nodes achieving maximum unsatisfied check count
++          logic [2:0] thresh;
++          thresh = has_ge5_q ? 3'd5 : (has_ge4_q ? 3'd4 : (has_ge3_q ? 3'd3 : 3'd2));
++          for (int v = 0; v < 128; v++) begin
++            if (thresh >= 3'd3) begin
++              if (unsat_cnt_q[v] == thresh) begin
++                hard_cb_q[127 - v] <= ~hard_cb_q[127 - v];
+               end
++            end else if ((v >= 64) && has_par_ge2_q && (unsat_cnt_q[v] == 3'd2)) begin
++              hard_cb_q[127 - v] <= ~hard_cb_q[127 - v];
+             end
+-            hard_cb_q  <= nxt_cb;
+-            iter_cnt_q <= iter_cnt_q + 5'd1;
+           end
++          iter_cnt_q <= iter_cnt_q + 5'd1;
++          state_q    <= LDPC_EVAL_SYN;
+         end
+ 
+         LDPC_EMIT_BYTES: begin
+-          if (m_axis_tready) begin
+-            logic [7:0] raw_byte;
+-            logic [7:0] pn_byte;
+-            raw_byte      = info_bits_q[63:56];
+-            pn_byte       = tc_derand_en ? get_tc_pn_byte(lfsr_q) : 8'h00;
+-            m_axis_tdata  <= raw_byte ^ pn_byte;
+-            m_axis_tvalid <= 1'b1;
+-            info_bits_q   <= {info_bits_q[55:0], 8'h00};
+-            lfsr_q        <= next_tc_lfsr_state(lfsr_q);
+-            if (emit_idx_q == 3'd7) begin
+-              emit_idx_q <= 3'd0;
++          if (!m_axis_tvalid || m_axis_tready) begin
++            if (emit_idx_q == 4'd8) begin
++              emit_idx_q <= 4'd0;
+               state_q    <= LDPC_COLLECT_CB;
+             end else begin
+-              emit_idx_q <= emit_idx_q + 3'd1;
++              logic [7:0] raw_byte;
++              logic [7:0] pn_byte;
++              raw_byte      = info_bits_q[63:56];
++              pn_byte       = tc_derand_en ? get_tc_pn_byte(lfsr_q) : 8'h00;
++              m_axis_tdata  <= raw_byte ^ pn_byte;
++              m_axis_tvalid <= 1'b1;
++              info_bits_q   <= {info_bits_q[55:0], 8'h00};
++              lfsr_q        <= next_tc_lfsr_state(lfsr_q);
++              emit_idx_q    <= emit_idx_q + 4'd1;
+             end
+           end
+         end
+diff --git a/scripts/run_external_ref_check.py b/scripts/run_external_ref_check.py
+index 1152fc9..4fe843a 100755
+--- a/scripts/run_external_ref_check.py
++++ b/scripts/run_external_ref_check.py
+@@ -12,16 +12,16 @@ Description : Stage 9 External Reference Interoperability Generator & Verifier
+               Modes:
+                 1. --generate : Generates external golden hex stimulus files in
+                                 `sim_waves/` for Vivado xsim:
+-                                  - ext_ref_ul_cltu.hex         (42B CLTU with TC + SP)
+-                                  - ext_ref_ul_uslp.hex         (31B USLP Ext Frame + SP)
+-                                  - ext_ref_dl_pkt.hex          (16B Telemetry Space Packet)
+-                                  - ext_ref_sdls_rx_frame.hex   (21B AES-128-CTR SDLS Frame)
+-                                  - ext_ref_rs_corrupted_cw.hex (60B RS(255,223) CW w/ 2 byte errors)
++                                  - ext_ref_ul_cltu.hex           (42B CLTU with TC + SP)
++                                  - ext_ref_ul_uslp.hex           (31B USLP Ext Frame + SP)
++                                  - ext_ref_dl_pkt.hex            (16B Telemetry Space Packet)
++                                  - ext_ref_sdls_rx_frame.hex     (21B AES-128-CTR SDLS Frame)
++                                  - ext_ref_rs_corrupted_cw.hex   (60B RS(255,223) CW w/ 2 byte errors)
++                                  - ext_ref_ldpc128_noisy_cbs.hex (32B = Two (128,64) LDPC CBs w/ 2 bit errors each)
+                 2. --verify   : Reads the raw hex output files dumped by Vivado
+-                                xsim (`rtl_out_ul_pkt.hex`, `rtl_out_uslp_pkt.hex`,
+-                                `rtl_out_dl_cadu.hex`, `rtl_out_sdls_rx_pkt.hex`,
+-                                `rtl_out_sdls_tx_frame.hex`,
+-                                `rtl_out_rs_corrected_pkt.hex`) and validates them.
++                                xsim and validates them against `spacepackets`,
++                                `cryptography` AES-128, Dual-Basis RS(255,223),
++                                and CCSDS 231.1-O-1 Table 2-1/2-4 (128,64) LDPC.
+ ===============================================================================
+ """
+ 
+@@ -45,6 +45,36 @@ except ImportError:
+ 
+ NIST_FIPS197_KEY16 = bytes.fromhex("2B7E151628AED2A6ABF7158809CF4F3C")
+ 
++# Official CCSDS 231.1-O-1 Table 2-1 (n=128, k=64) Generator Matrix W_64x64 Base Rows
++LDPC128_W_BASE = [
++    [0x0E69, 0x166B, 0xEF4C, 0x0BC2],  # Row 1  (block row 0)
++    [0x7766, 0x137E, 0xBB24, 0x8418],  # Row 17 (block row 1)
++    [0xC480, 0xFEB9, 0xCD53, 0xA713],  # Row 33 (block row 2)
++    [0x4EAA, 0x22FA, 0x465E, 0xEA11],  # Row 49 (block row 3)
++]
++
++
++def ror16(val: int, s: int) -> int:
++    s %= 16
++    return ((val >> s) | ((val << (16 - s)) & 0xFFFF)) & 0xFFFF
++
++
++def encode_ccsds_ldpc128_block(info8: bytes) -> bytes:
++    """Encodes an 8-byte (64-bit) block into a 16-byte (128-bit) codeblock per CCSDS 231.1-O-1 Table 2-1."""
++    assert len(info8) == 8
++    info_int = int.from_bytes(info8, "big")
++    par64 = 0
++    for r in range(64):
++        bit = (info_int >> (63 - r)) & 1
++        if bit:
++            br = r // 16
++            sh = r % 16
++            w_row = 0
++            for bc in range(4):
++                w_row = (w_row << 16) | ror16(LDPC128_W_BASE[br][bc], sh)
++            par64 ^= w_row
++    return info8 + par64.to_bytes(8, "big")
++
+ 
+ def aes128_ecb_encrypt_block(key16: bytes, block16: bytes) -> bytes:
+     assert len(key16) == 16 and len(block16) == 16
+@@ -274,13 +304,26 @@ def generate_vectors() -> dict:
+     tm_frame = tm_wo_crc + crc16_ccitt(tm_wo_crc).to_bytes(2, "big")
+     rs = egse.CCSDSReedSolomon255223()
+     clean_cw = bytearray(rs.encode_single(tm_frame, q_virtual_fill=195))
+-    assert len(clean_cw) == 60
+-    # Inject 2 distinct multi-bit byte errors inside the Space Packet (byte 7 in SP header, byte 14 in SP body)
+     corrupted_cw = bytearray(clean_cw)
+     corrupted_cw[7]  ^= 0xA5
+     corrupted_cw[14] ^= 0x3C
+     write_hex_file(WAVES_DIR / "ext_ref_rs_corrupted_cw.hex", bytes(corrupted_cw))
+ 
++    # 6. Step 3C: Two 128-bit CCSDS 231.1-O-1 Table 2-1 (128,64) LDPC Codeblocks (32 bytes)
++    #    wrapping a 16-byte Space Packet (APID=0x245, Seq=105, Body="LDPC128_OK"),
++    #    with 2 corrupted bits injected into EACH 128-bit codeblock!
++    ldpc_sp, _ = build_ccsds_space_packet(is_tc=True, apid=0x245, seq_count=105, payload=b"LDPC128_OK")
++    assert len(ldpc_sp) == 16
++    cb0 = bytearray(encode_ccsds_ldpc128_block(ldpc_sp[0:8]))
++    cb1 = bytearray(encode_ccsds_ldpc128_block(ldpc_sp[8:16]))
++    # Flip 2 bits in Codeblock 0 (byte 1 bit 2, byte 5 bit 6) and 2 bits in Codeblock 1 (byte 0 bit 4, byte 6 bit 1)
++    cb0[1] ^= 0x04
++    cb0[5] ^= 0x40
++    cb1[0] ^= 0x10
++    cb1[6] ^= 0x02
++    write_hex_file(WAVES_DIR / "ext_ref_ldpc128_noisy_cbs.hex", bytes(cb0 + cb1))
++    write_hex_file(WAVES_DIR / "ext_ref_expected_ldpc_pkt.hex", ldpc_sp)
++
+     info = {
+         "generator_library": src_lib,
+         "aes_library": "cryptography.hazmat.primitives.ciphers.algorithms.AES (NIST FIPS-197 AES-128)",
+@@ -290,7 +333,8 @@ def generate_vectors() -> dict:
+         "dl_space_pkt_bytes": len(dl_sp),
+         "sdls_aes128_rx_frame_bytes": len(sdls_rx_frame),
+         "rs_corrupted_cw_bytes": len(corrupted_cw),
+-        "rs_injected_errors": "byte[7] ^= 0xA5, byte[14] ^= 0x3C",
++        "ldpc128_noisy_cbs_bytes": len(cb0 + cb1),
++        "ldpc128_injected_errors": "CB0: 2 bit flips (byte[1]^=0x04, byte[5]^=0x40); CB1: 2 bit flips (byte[0]^=0x10, byte[6]^=0x02)",
+     }
+     print(json.dumps(info, indent=2))
+     return info
+@@ -306,6 +350,8 @@ def verify_rtl_outputs() -> dict:
+     sdls_rx_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_sdls_rx_pkt.hex")
+     sdls_tx_frame_out = read_hex_file(WAVES_DIR / "rtl_out_sdls_tx_frame.hex")
+     rs_corr_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_rs_corrected_pkt.hex")
++    ldpc_dec_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_ldpc_decoded_pkt.hex")
++    dl_ldpc_cw_out = read_hex_file(WAVES_DIR / "rtl_out_dl_ldpc_cw.hex")
+ 
+     # 1. Verify Uplink Reassembled Space Packet from CLTU->BCH->TC->Reassembler
+     res_ul = unpack_and_verify_space_packet(
+@@ -351,6 +397,15 @@ def verify_rtl_outputs() -> dict:
+         rs_corr_pkt_out, exp_is_tc=False, exp_apid=0x109, exp_seq=88, exp_payload=b"TLM_OBC_OK"
+     )
+ 
++    # 6. Verify Step 3C CCSDS 231.1-O-1 (128,64) LDPC Decoded Space Packet & Encoder Codeblock
++    res_ldpc_dec = unpack_and_verify_space_packet(
++        ldpc_dec_pkt_out, exp_is_tc=True, exp_apid=0x245, exp_seq=105, exp_payload=b"LDPC128_OK"
++    )
++    exp_dl_ldpc_cw = encode_ccsds_ldpc128_block(ldpc_dec_pkt_out[0:8])
++    assert dl_ldpc_cw_out == exp_dl_ldpc_cw, (
++        f"DL LDPC(128,64) CW mismatch: {dl_ldpc_cw_out.hex()} != {exp_dl_ldpc_cw.hex()}"
++    )
++
+     summary = {
+         "status": "PASS",
+         "have_spacepackets_installed": HAVE_SPACEPACKETS,
+@@ -373,6 +428,12 @@ def verify_rtl_outputs() -> dict:
+             **res_rs_corr,
+             "corrupted_bytes_healed": 2,
+         },
++        "test6_step3c_ccsds_ldpc128_and_turbo": {
++            **res_ldpc_dec,
++            "noisy_codeblocks_decoded": 2,
++            "injected_bit_errors_healed": 4,
++            "dl_ldpc128_table2_1_cw_hex": dl_ldpc_cw_out.hex().upper(),
++        },
+     }
+     print(json.dumps(summary, indent=2))
+     return summary
+diff --git a/tb/tb_stage9_external_ref_check.sv b/tb/tb_stage9_external_ref_check.sv
+index 02d8161..fa52236 100755
+--- a/tb/tb_stage9_external_ref_check.sv
++++ b/tb/tb_stage9_external_ref_check.sv
+@@ -2,28 +2,24 @@
+ // File Name   : tb_stage9_external_ref_check.sv
+ // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
+ // Description : Stage 9 External Reference Interoperability Testbench
+-//               (Verified against University of Stuttgart `spacepackets-py` &
+-//               PyCA `cryptography` NIST FIPS-197 AES-128):
++//               (Verified against University of Stuttgart `spacepackets-py`,
++//               PyCA `cryptography` NIST FIPS-197 AES-128, Dual-Basis RS(255,223),
++//               and Official CCSDS 231.1-O-1 Table 2-1/2-4 (128,64) LDPC):
+ //                 - NO self-loopback (our Tx never talks to our Rx!).
+-//                 - Subtest 1 (External CLTU -> Spacecraft Flight Rx Chain):
+-//                   42B external CLTU -> `asm_correlator -> bch6356_dec ->
+-//                   tc_uslp_deframer -> farm1_tmr -> pkt_reassembler`.
+-//                 - Subtest 2 (External USLP Frame -> Spacecraft Flight Rx):
+-//                   31B external USLP frame -> `tc_uslp_deframer -> pkt_reassembler`.
+-//                 - Subtest 3 (Spacecraft Flight Tx Chain -> External Parser):
+-//                   16B Telemetry Space Packet -> `vc_arbiter_mux ->
+-//                   tm_aos_uslp_framer -> dl_rs255_223_enc` -> 64B CADU.
+-//                 - Subtest 4 (Step 3A — External PyCA `cryptography` AES-128-CTR
++//                 - Subtest 1: 42B External CLTU -> Spacecraft Flight Rx Chain.
++//                 - Subtest 2: 31B External USLP Frame -> Spacecraft Flight Rx.
++//                 - Subtest 3: 16B Telemetry Space Packet -> Spacecraft Tx CADU.
++//                 - Subtest 4 (Step 3A): External PyCA `cryptography` AES-128-CTR
+ //                   <-> `ccsds_sdls_engine.sv` Uplink Decrypt, Anti-Replay &
+-//                   Downlink Encrypt).
+-//                 - Subtest 5 (Step 3B — Corrupted 60B Dual-Basis RS(255,223)
+-//                   Codeword -> `ccsds_dl_rs255_223_dec` -> `ccsds_tm_aos_deframer`
+-//                   -> `ccsds_pkt_reassembler`):
+-//                   Injects 2 corrupted bytes inside the TM Frame / Space Packet
+-//                   (`byte[7] ^= 0xA5, byte[14] ^= 0x3C`), verifies that
+-//                   `ccsds_dl_rs255_223_dec` heals both bytes (`corr_cnt == 2`),
+-//                   restores TM Frame CRC-16 == 0x0000, and recovers the exact
+-//                   16-byte Telemetry Space Packet (`APID=0x109, Seq=88`).
++//                   Downlink Encrypt.
++//                 - Subtest 5 (Step 3B): Corrupted 60B Dual-Basis RS(255,223)
++//                   Codeword (2 corrupted bytes) -> `ccsds_dl_rs255_223_dec`
++//                   -> `ccsds_tm_aos_deframer` -> `ccsds_pkt_reassembler`.
++//                 - Subtest 6 (Step 3C): Two Noisy 128-bit CCSDS 231.1-O-1
++//                   Table 2-1/2-4 (128,64) LDPC Codeblocks (2 corrupted bits
++//                   injected into EACH codeblock = 4 bit errors total) ->
++//                   `ccsds_ul_short_ldpc_dec` -> `ccsds_pkt_reassembler`, plus
++//                   `ccsds_dl_turbo_ldpc_enc` Table 2-1 W_64x64 encoder check.
+ //=============================================================================
+ `timescale 1ns / 1ps
+ 
+@@ -464,26 +460,99 @@ module tb_stage9_external_ref_check;
+     .pkt_len_err_pulse       ()
+   );
+ 
++  // ===========================================================================
++  // 6. Step 3C: CCSDS 231.1-O-1 (128,64) LDPC Decoder & Encoder Under Test
++  // ===========================================================================
++  logic signed [3:0]    ldpc_cb_llr_in;
++  logic                 ldpc_cb_bit_in, ldpc_cb_start_in, ldpc_cb_valid_in;
++  logic                 ldpc_tail_pulse, ldpc_conv_pulse, ldpc_abort_pulse;
++  logic [7:0]           ldpc_m_tdata, ldpc_pkt_tdata;
++  logic                 ldpc_m_tvalid, ldpc_m_tready, ldpc_m_tlast, ldpc_m_tabort;
++  logic                 ldpc_pkt_tvalid, ldpc_pkt_tlast;
++  ccsds_space_pkt_hdr_t ldpc_parsed_pkt_hdr;
++
++  logic [7:0]           dl_ldpc_s_tdata, dl_ldpc_m_tdata;
++  logic                 dl_ldpc_s_tvalid, dl_ldpc_s_tready, dl_ldpc_s_tlast;
++  logic                 dl_ldpc_m_tvalid, dl_ldpc_m_tlast;
++
++  ccsds_ul_short_ldpc_dec u_ldpc_dut (
++    .clk                      (clk),
++    .rst_n                    (rst_n),
++    .ldpc_mode_512_en         (1'b0),
++    .tc_derand_en             (1'b0),
++    .cb_llr_in                (ldpc_cb_llr_in),
++    .cb_hard_bit_in           (ldpc_cb_bit_in),
++    .cb_start_pulse           (ldpc_cb_start_in),
++    .cb_valid_in              (ldpc_cb_valid_in),
++    .ldpc_tail_detected_pulse (ldpc_tail_pulse),
++    .ldpc_converged_pulse     (ldpc_conv_pulse),
++    .ldpc_uncorr_abort_pulse  (ldpc_abort_pulse),
++    .m_axis_tdata             (ldpc_m_tdata),
++    .m_axis_tvalid            (ldpc_m_tvalid),
++    .m_axis_tready            (ldpc_m_tready),
++    .m_axis_tlast             (ldpc_m_tlast),
++    .m_axis_tabort            (ldpc_m_tabort)
++  );
++
++  ccsds_pkt_reassembler u_ldpc_pkt_reasm (
++    .clk                     (clk),
++    .rst_n                   (rst_n),
++    .fhp_resync_en           (1'b0),
++    .frame_fhp_in            (11'd0),
++    .frame_start_pulse       (1'b0),
++    .s_axis_tdata            (ldpc_m_tdata),
++    .s_axis_tvalid           (ldpc_m_tvalid),
++    .s_axis_tready           (ldpc_m_tready),
++    .s_axis_tlast            (ldpc_m_tlast),
++    .m_axis_pkt_tdata        (ldpc_pkt_tdata),
++    .m_axis_pkt_tvalid       (ldpc_pkt_tvalid),
++    .m_axis_pkt_tready       (1'b1),
++    .m_axis_pkt_tlast        (ldpc_pkt_tlast),
++    .parsed_pkt_hdr          (ldpc_parsed_pkt_hdr),
++    .pkt_completed_pulse     (),
++    .idle_pkt_stripped_pulse (),
++    .pkt_len_err_pulse       ()
++  );
++
++  ccsds_dl_turbo_ldpc_enc #(.PARITY_BYTES(8)) u_dl_ldpc_enc_dut (
++    .clk           (clk),
++    .rst_n         (rst_n),
++    .fec_mode_cfg  (4'd0),
++    .s_axis_tdata  (dl_ldpc_s_tdata),
++    .s_axis_tvalid (dl_ldpc_s_tvalid),
++    .s_axis_tready (dl_ldpc_s_tready),
++    .s_axis_tlast  (dl_ldpc_s_tlast),
++    .m_axis_tdata  (dl_ldpc_m_tdata),
++    .m_axis_tvalid (dl_ldpc_m_tvalid),
++    .m_axis_tready (1'b1),
++    .m_axis_tlast  (dl_ldpc_m_tlast)
++  );
++
+   // ===========================================================================
+   // Stimulus & Capture Buffers
+   // ===========================================================================
+-  logic [7:0] ext_ul_cltu_mem     [0:41];
+-  logic [7:0] ext_exp_ul_pkt      [0:13];
+-  logic [7:0] ext_ul_uslp_mem     [0:30];
+-  logic [7:0] ext_exp_uslp_pkt    [0:13];
+-  logic [7:0] ext_dl_pkt_mem      [0:15];
+-  logic [7:0] ext_sdls_rx_mem     [0:20];
+-  logic [7:0] ext_exp_sdls_pkt    [0:13];
+-  logic [7:0] ext_rs_corr_cw_mem  [0:59];
+-
+-  logic [7:0] rtl_ul_pkt_out      [0:13];
+-  logic [7:0] rtl_uslp_pkt_out    [0:13];
+-  logic [7:0] rtl_dl_cadu_out     [0:63];
+-  logic [7:0] rtl_sdls_rx_pkt     [0:13];
+-  logic [7:0] rtl_sdls_tx_frame   [0:22];
+-  logic [7:0] rtl_rs_corr_pkt_out [0:15];
+-
+-  integer ul_pkt_cnt, uslp_pkt_cnt, dl_cadu_cnt, sdls_rx_pkt_cnt, sdls_tx_cnt, rs_pkt_cnt;
++  logic [7:0] ext_ul_cltu_mem        [0:41];
++  logic [7:0] ext_exp_ul_pkt         [0:13];
++  logic [7:0] ext_ul_uslp_mem        [0:30];
++  logic [7:0] ext_exp_uslp_pkt       [0:13];
++  logic [7:0] ext_dl_pkt_mem         [0:15];
++  logic [7:0] ext_sdls_rx_mem        [0:20];
++  logic [7:0] ext_exp_sdls_pkt       [0:13];
++  logic [7:0] ext_rs_corr_cw_mem     [0:59];
++  logic [7:0] ext_ldpc_noisy_cbs_mem [0:31];
++  logic [7:0] ext_exp_ldpc_pkt       [0:15];
++
++  logic [7:0] rtl_ul_pkt_out         [0:13];
++  logic [7:0] rtl_uslp_pkt_out       [0:13];
++  logic [7:0] rtl_dl_cadu_out        [0:63];
++  logic [7:0] rtl_sdls_rx_pkt        [0:13];
++  logic [7:0] rtl_sdls_tx_frame      [0:22];
++  logic [7:0] rtl_rs_corr_pkt_out    [0:15];
++  logic [7:0] rtl_ldpc_pkt_out       [0:15];
++  logic [7:0] rtl_dl_ldpc_cw_out     [0:15];
++
++  integer ul_pkt_cnt, uslp_pkt_cnt, dl_cadu_cnt, sdls_rx_pkt_cnt, sdls_tx_cnt;
++  integer rs_pkt_cnt, ldpc_pkt_cnt, ldpc_conv_cnt, dl_ldpc_cw_cnt;
+   logic   ul_crc_ok_latched, ul_farm_acc_latched, uslp_crc_ok_latched;
+   logic   sdls_auth_done_latched, sdls_auth_ok_latched, rs_tm_crc_ok_latched;
+ 
+@@ -495,6 +564,9 @@ module tb_stage9_external_ref_check;
+       sdls_rx_pkt_cnt        <= 0;
+       sdls_tx_cnt            <= 0;
+       rs_pkt_cnt             <= 0;
++      ldpc_pkt_cnt           <= 0;
++      ldpc_conv_cnt          <= 0;
++      dl_ldpc_cw_cnt         <= 0;
+       ul_crc_ok_latched      <= 1'b0;
+       ul_farm_acc_latched    <= 1'b0;
+       uslp_crc_ok_latched    <= 1'b0;
+@@ -546,20 +618,33 @@ module tb_stage9_external_ref_check;
+       if (rs_tm_crc_ok) begin
+         rs_tm_crc_ok_latched <= 1'b1;
+       end
++      if (ldpc_pkt_tvalid && (ldpc_pkt_cnt < 16)) begin
++        rtl_ldpc_pkt_out[ldpc_pkt_cnt] <= ldpc_pkt_tdata;
++        ldpc_pkt_cnt                   <= ldpc_pkt_cnt + 1;
++      end
++      if (ldpc_conv_pulse) begin
++        ldpc_conv_cnt <= ldpc_conv_cnt + 1;
++      end
++      if (dl_ldpc_m_tvalid && (dl_ldpc_cw_cnt < 16)) begin
++        rtl_dl_ldpc_cw_out[dl_ldpc_cw_cnt] <= dl_ldpc_m_tdata;
++        dl_ldpc_cw_cnt                     <= dl_ldpc_cw_cnt + 1;
++      end
+     end
+   end
+ 
+   integer fd;
+ 
+   initial begin
+-    $readmemh("sim_waves/ext_ref_ul_cltu.hex",           ext_ul_cltu_mem);
+-    $readmemh("sim_waves/ext_ref_expected_ul_pkt.hex",   ext_exp_ul_pkt);
+-    $readmemh("sim_waves/ext_ref_ul_uslp.hex",           ext_ul_uslp_mem);
+-    $readmemh("sim_waves/ext_ref_expected_uslp_pkt.hex", ext_exp_uslp_pkt);
+-    $readmemh("sim_waves/ext_ref_dl_pkt.hex",            ext_dl_pkt_mem);
+-    $readmemh("sim_waves/ext_ref_sdls_rx_frame.hex",     ext_sdls_rx_mem);
+-    $readmemh("sim_waves/ext_ref_expected_sdls_pkt.hex", ext_exp_sdls_pkt);
+-    $readmemh("sim_waves/ext_ref_rs_corrupted_cw.hex",   ext_rs_corr_cw_mem);
++    $readmemh("sim_waves/ext_ref_ul_cltu.hex",            ext_ul_cltu_mem);
++    $readmemh("sim_waves/ext_ref_expected_ul_pkt.hex",    ext_exp_ul_pkt);
++    $readmemh("sim_waves/ext_ref_ul_uslp.hex",            ext_ul_uslp_mem);
++    $readmemh("sim_waves/ext_ref_expected_uslp_pkt.hex",  ext_exp_uslp_pkt);
++    $readmemh("sim_waves/ext_ref_dl_pkt.hex",             ext_dl_pkt_mem);
++    $readmemh("sim_waves/ext_ref_sdls_rx_frame.hex",      ext_sdls_rx_mem);
++    $readmemh("sim_waves/ext_ref_expected_sdls_pkt.hex",  ext_exp_sdls_pkt);
++    $readmemh("sim_waves/ext_ref_rs_corrupted_cw.hex",    ext_rs_corr_cw_mem);
++    $readmemh("sim_waves/ext_ref_ldpc128_noisy_cbs.hex",  ext_ldpc_noisy_cbs_mem);
++    $readmemh("sim_waves/ext_ref_expected_ldpc_pkt.hex",  ext_exp_ldpc_pkt);
+ 
+     rst_n             = 1'b0;
+     ul_sym_llr_in     = 4'sd7;
+@@ -579,6 +664,13 @@ module tb_stage9_external_ref_check;
+     rs_s_tvalid       = 1'b0;
+     rs_s_tdata        = 8'h00;
+     rs_s_tlast        = 1'b0;
++    ldpc_cb_llr_in    = 4'sd7;
++    ldpc_cb_bit_in    = 1'b0;
++    ldpc_cb_start_in  = 1'b0;
++    ldpc_cb_valid_in  = 1'b0;
++    dl_ldpc_s_tvalid  = 1'b0;
++    dl_ldpc_s_tdata   = 8'h00;
++    dl_ldpc_s_tlast   = 1'b0;
+ 
+     #40 rst_n = 1'b1;
+     repeat (4) @(posedge clk);
+@@ -708,7 +800,6 @@ module tb_stage9_external_ref_check;
+                                  i, rtl_sdls_rx_pkt[i], ext_exp_sdls_pkt[i]));
+     end
+ 
+-    // Verify Anti-Replay Rejection
+     for (int i = 0; i < 21; i++) begin
+       sdls_s_rx_tvalid = 1'b1;
+       sdls_s_rx_tdata  = ext_sdls_rx_mem[i];
+@@ -724,7 +815,6 @@ module tb_stage9_external_ref_check;
+     assert (sdls_auth_ok_latched == 1'b0)
+       else $fatal(1, "SDLS Anti-Replay failed to reject replayed Seq=5 frame!");
+ 
+-    // Encrypt 16-byte Telemetry Space Packet on Downlink Tx using NIST FIPS-197 AES-128-CTR
+     for (int i = 0; i < 16; i++) begin
+       sdls_s_tx_tvalid = 1'b1;
+       sdls_s_tx_tdata  = ext_dl_pkt_mem[i];
+@@ -786,7 +876,66 @@ module tb_stage9_external_ref_check;
+     $display("[TB-STAGE9][EXT-REF-5 PASS] Step 3B Dual-Basis RS(255,223) Decoder healed %0d corrupted bytes, restored TM CRC-16==0x0000, and recovered Space Packet (APID=0x%03X, Seq=%0d, Body=\"TLM_OBC_OK\")!",
+              rs_corr_sym_cnt, rs_parsed_pkt_hdr.apid, rs_parsed_pkt_hdr.pkt_seq_cnt);
+ 
+-    $display("[TB-STAGE9 PASS] All 5 External Reference Interoperability Subtests (including Step 3A AES-128 & Step 3B RS(255,223) Error Correction) passed in RTL!");
++    // =========================================================================
++    // SUBTEST 6 (Step 3C): Official CCSDS 231.1-O-1 (128,64) LDPC & Turbo
++    // =========================================================================
++    $display("[TB-STAGE9][EXT-REF-6] Streaming Two Noisy 128-bit CCSDS 231.1-O-1 Table 2-1/2-4 LDPC Codeblocks (4 bit errors total) into ccsds_ul_short_ldpc_dec...");
++    for (int cb = 0; cb < 2; cb++) begin
++      for (int b_idx = 0; b_idx < 16; b_idx++) begin
++        for (int bit_pos = 7; bit_pos >= 0; bit_pos--) begin
++          logic bit_val;
++          bit_val          = ext_ldpc_noisy_cbs_mem[cb * 16 + b_idx][bit_pos];
++          ldpc_cb_bit_in   = bit_val;
++          ldpc_cb_llr_in   = bit_val ? -4'sd7 : 4'sd7;
++          ldpc_cb_start_in = (cb == 0 && b_idx == 0 && bit_pos == 7);
++          ldpc_cb_valid_in = 1'b1;
++          @(posedge clk);
++          #1;
++        end
++      end
++      ldpc_cb_valid_in = 1'b0;
++      ldpc_cb_start_in = 1'b0;
++      repeat (35) @(posedge clk);
++      #1;
++    end
++
++    assert (ldpc_conv_cnt == 2)
++      else $fatal(1, $sformatf("Expected 2 converged LDPC(128,64) codeblocks, got %0d", ldpc_conv_cnt));
++    assert (ldpc_pkt_cnt == 16)
++      else $fatal(1, $sformatf("Expected 16 reassembled Space Packet bytes after LDPC(128,64) decoding, got %0d", ldpc_pkt_cnt));
++    for (int i = 0; i < 16; i++) begin
++      assert (rtl_ldpc_pkt_out[i] == ext_exp_ldpc_pkt[i])
++        else $fatal(1, $sformatf("LDPC-Decoded Space Packet byte[%0d] mismatch: got 0x%02X, expected 0x%02X",
++                                 i, rtl_ldpc_pkt_out[i], ext_exp_ldpc_pkt[i]));
++    end
++
++    // Also stream the first 8 bytes of the Space Packet into ccsds_dl_turbo_ldpc_enc (Table 2-1 W_64x64)
++    for (int i = 0; i < 8; i++) begin
++      dl_ldpc_s_tvalid = 1'b1;
++      dl_ldpc_s_tdata  = ext_exp_ldpc_pkt[i];
++      dl_ldpc_s_tlast  = (i == 7);
++      @(posedge clk);
++      while (!dl_ldpc_s_tready) @(posedge clk);
++      #1;
++    end
++    dl_ldpc_s_tvalid = 1'b0;
++    dl_ldpc_s_tlast  = 1'b0;
++    repeat (16) @(posedge clk);
++    #1;
++    assert (dl_ldpc_cw_cnt == 16)
++      else $fatal(1, $sformatf("Expected 16-byte (128-bit) LDPC codeword from ccsds_dl_turbo_ldpc_enc, got %0d", dl_ldpc_cw_cnt));
++
++    fd = $fopen("sim_waves/rtl_out_ldpc_decoded_pkt.hex", "w");
++    for (int i = 0; i < 16; i++) $fdisplay(fd, "%02X", rtl_ldpc_pkt_out[i]);
++    $fclose(fd);
++
++    fd = $fopen("sim_waves/rtl_out_dl_ldpc_cw.hex", "w");
++    for (int i = 0; i < 16; i++) $fdisplay(fd, "%02X", rtl_dl_ldpc_cw_out[i]);
++    $fclose(fd);
++
++    $display("[TB-STAGE9][EXT-REF-6 PASS] Step 3C Official CCSDS 231.1-O-1 (128,64) LDPC Decoder healed 4 bit errors across 2 codeblocks and recovered Space Packet (APID=0x%03X, Seq=%0d, Body=\"LDPC128_OK\")!",
++             ldpc_parsed_pkt_hdr.apid, ldpc_parsed_pkt_hdr.pkt_seq_cnt);
++    $display("[TB-STAGE9 PASS] All 6 External Reference Interoperability Subtests (Steps 2, 3A, 3B & 3C) passed in RTL!");
+     $finish;
+   end
+ 

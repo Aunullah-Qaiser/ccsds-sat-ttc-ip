@@ -140,7 +140,7 @@ module ccsds_tm_aos_uslp_framer
     return {r[0], r[1], r[2], r[3]};
   endfunction
 
-  assign s_axis_tfdf_tready = (state_q == FRAMER_SEND_TFDF) && m_axis_frame_tready;
+  assign s_axis_tfdf_tready = (state_q == FRAMER_SEND_TFDF) && (!m_axis_frame_tvalid || m_axis_frame_tready);
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -160,7 +160,7 @@ module ccsds_tm_aos_uslp_framer
       m_axis_frame_tdata  <= 8'h00;
       m_axis_frame_tvalid <= 1'b0;
       m_axis_frame_tlast  <= 1'b0;
-    end else if (m_axis_frame_tready) begin
+    end else if (!m_axis_frame_tvalid || m_axis_frame_tready) begin
       m_axis_frame_tvalid <= 1'b0;
       m_axis_frame_tlast  <= 1'b0;
 

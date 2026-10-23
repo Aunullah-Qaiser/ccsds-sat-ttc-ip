@@ -78,7 +78,7 @@ module ccsds_tm_aos_deframer
   logic [31:0]   ocf_shift_q;
   logic [15:0]   crc_q;
 
-  assign s_axis_tready = m_axis_tfdf_tready;
+  assign s_axis_tready = m_axis_tfdf_tready || !m_axis_tfdf_tvalid;
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin

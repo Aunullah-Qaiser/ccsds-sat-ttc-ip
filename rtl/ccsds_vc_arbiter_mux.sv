@@ -113,9 +113,11 @@ module ccsds_vc_arbiter_mux
 
       // 2. Closed-Form Cycle-0 FHP Calculation & TFDF Segmenter (TX2)
       if (!emitting_frame_q) begin
-        m_axis_tfdf_tvalid <= 1'b0;
-        m_axis_tfdf_tlast  <= 1'b0;
-        if (request_next_frame) begin
+        if (m_axis_tfdf_tready) begin
+          m_axis_tfdf_tvalid <= 1'b0;
+          m_axis_tfdf_tlast  <= 1'b0;
+        end
+        if (request_next_frame && (!m_axis_tfdf_tvalid || m_axis_tfdf_tready)) begin
           emitting_frame_q <= 1'b1;
           tfdf_idx_q       <= 11'd0;
           if ((committed_bytes == 11'd0) && (rem_in_cur_pkt_q == 11'd0)) begin
@@ -130,7 +132,7 @@ module ccsds_vc_arbiter_mux
             end
           end
         end
-      end else if (m_axis_tfdf_tready) begin
+      end else if (!m_axis_tfdf_tvalid || m_axis_tfdf_tready) begin
         m_axis_tfdf_tvalid <= 1'b1;
         m_axis_tfdf_vcid   <= active_vcid_q;
         m_axis_tfdf_is_oid <= emitting_oid_q;
