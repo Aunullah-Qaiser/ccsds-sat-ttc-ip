@@ -109,6 +109,10 @@ module ccsds_sat_ttc_top
   logic        csr_sdls_en;
   logic        csr_bc_req_sdls;
   logic        csr_srrc_4sps_en;
+  logic        csr_gardner_ted_en;
+  logic        csr_fll_assist_en;
+  logic        csr_sdls_gcm_mode;
+  logic [1:0]  csr_turnaround_kaband;
   logic [7:0]  csr_win_half_w;
   logic [3:0]  csr_rs_interleave;
   logic [7:0]  csr_rs_q_fill;
@@ -195,6 +199,10 @@ module ccsds_sat_ttc_top
     .sdls_en_cfg                 (csr_sdls_en),
     .bc_require_sdls_cfg         (csr_bc_req_sdls),
     .srrc_4sps_en_cfg            (csr_srrc_4sps_en),
+    .gardner_ted_en_cfg          (csr_gardner_ted_en),
+    .fll_assist_en_cfg           (csr_fll_assist_en),
+    .sdls_gcm_mode_cfg           (csr_sdls_gcm_mode),
+    .turnaround_kaband_cfg       (csr_turnaround_kaband),
     .window_half_w_cfg           (csr_win_half_w),
     .rs_interleave_i_cfg         (csr_rs_interleave),
     .rs_virt_fill_q_cfg          (csr_rs_q_fill),
@@ -221,42 +229,62 @@ module ccsds_sat_ttc_top
   logic               tx_phy_tvalid;
   logic               tx_phy_tready;
   logic [7:0]         tx_phy_tdata;
-  (* ASYNC_REG = "TRUE" *) logic srrc_en_meta_q, srrc_en_sync_q;
+  logic [1:0]         gardner_phase_unused;
+  (* ASYNC_REG = "TRUE" *) logic       srrc_en_meta_q,    srrc_en_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic       gardner_en_meta_q, gardner_en_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic       fll_en_meta_q,     fll_en_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [1:0] kaband_meta_q,     kaband_sync_q;
 
   always_ff @(posedge clk_adc_iq or negedge rst_n) begin
     if (!rst_n) begin
-      srrc_en_meta_q <= 1'b0;
-      srrc_en_sync_q <= 1'b0;
+      srrc_en_meta_q    <= 1'b0;
+      srrc_en_sync_q    <= 1'b0;
+      gardner_en_meta_q <= 1'b0;
+      gardner_en_sync_q <= 1'b0;
+      fll_en_meta_q     <= 1'b0;
+      fll_en_sync_q     <= 1'b0;
+      kaband_meta_q     <= 2'd0;
+      kaband_sync_q     <= 2'd0;
     end else begin
-      srrc_en_meta_q <= csr_srrc_4sps_en;
-      srrc_en_sync_q <= srrc_en_meta_q;
+      srrc_en_meta_q    <= csr_srrc_4sps_en;
+      srrc_en_sync_q    <= srrc_en_meta_q;
+      gardner_en_meta_q <= csr_gardner_ted_en;
+      gardner_en_sync_q <= gardner_en_meta_q;
+      fll_en_meta_q     <= csr_fll_assist_en;
+      fll_en_sync_q     <= fll_en_meta_q;
+      kaband_meta_q     <= csr_turnaround_kaband;
+      kaband_sync_q     <= kaband_meta_q;
     end
   end
 
   ccsds_phy_modem u_phy_modem (
-    .clk                    (clk_adc_iq),
-    .rst_n                  (rst_n),
-    .mod_mode_cfg           (mod_mode_cfg),
-    .line_code_cfg          (line_code_cfg),
-    .turnaround_xband_cfg   (turnaround_xband_cfg),
-    .pn_ranging_en_cfg      (pn_ranging_en_cfg),
-    .srrc_4sps_en_cfg       (srrc_en_sync_q),
-    .tx_pn_chip_in          (tx_pn_chip),
-    .rx_i_in                (rx_i_adc_in),
-    .rx_q_in                (rx_q_adc_in),
-    .rx_iq_valid_in         (rx_iq_valid_in),
-    .rx_sym_valid_out       (phy_rx_sym_valid),
-    .rx_sym_byte_out        (phy_rx_sym_byte),
-    .wideband_pn_sample_out (wideband_pn_sample),
-    .carrier_lock_out       (phy_carrier_lock),
-    .symbol_lock_out        (phy_symbol_lock),
-    .tx_nco_fcw_out         (tx_nco_fcw_unused),
-    .s_axis_tx_tvalid       (tx_phy_tvalid),
-    .s_axis_tx_tready       (tx_phy_tready),
-    .s_axis_tx_tdata        (tx_phy_tdata),
-    .tx_i_out               (tx_i_dac_out),
-    .tx_q_out               (tx_q_dac_out),
-    .tx_iq_valid_out        (tx_iq_valid_out)
+    .clk                      (clk_adc_iq),
+    .rst_n                    (rst_n),
+    .mod_mode_cfg             (mod_mode_cfg),
+    .line_code_cfg            (line_code_cfg),
+    .turnaround_xband_cfg     (turnaround_xband_cfg),
+    .turnaround_kaband_cfg    (kaband_sync_q),
+    .pn_ranging_en_cfg        (pn_ranging_en_cfg),
+    .srrc_4sps_en_cfg         (srrc_en_sync_q),
+    .gardner_ted_en_cfg       (gardner_en_sync_q),
+    .fll_assist_en_cfg        (fll_en_sync_q),
+    .tx_pn_chip_in            (tx_pn_chip),
+    .rx_i_in                  (rx_i_adc_in),
+    .rx_q_in                  (rx_q_adc_in),
+    .rx_iq_valid_in           (rx_iq_valid_in),
+    .rx_sym_valid_out         (phy_rx_sym_valid),
+    .rx_sym_byte_out          (phy_rx_sym_byte),
+    .wideband_pn_sample_out   (wideband_pn_sample),
+    .carrier_lock_out         (phy_carrier_lock),
+    .symbol_lock_out          (phy_symbol_lock),
+    .gardner_strobe_phase_out (gardner_phase_unused),
+    .tx_nco_fcw_out           (tx_nco_fcw_unused),
+    .s_axis_tx_tvalid         (tx_phy_tvalid),
+    .s_axis_tx_tready         (tx_phy_tready),
+    .s_axis_tx_tdata          (tx_phy_tdata),
+    .tx_i_out                 (tx_i_dac_out),
+    .tx_q_out                 (tx_q_dac_out),
+    .tx_iq_valid_out          (tx_iq_valid_out)
   );
 
   ccsds_pn_ranging u_pn_ranging (
@@ -522,6 +550,7 @@ module ccsds_sat_ttc_top
     .clk                        (clk_tc_safe),
     .rst_n                      (rst_n),
     .sdls_en_cfg                (active_sdls_en),
+    .sdls_gcm_mode_cfg          (csr_sdls_gcm_mode),
     .bc_require_sdls_cfg        (active_bc_req_sdls),
     .tx_default_spi_cfg         (16'h0001),
     .master_key_cfg             (256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F),
@@ -584,12 +613,14 @@ module ccsds_sat_ttc_top
     .tmr_seu_corrected_pulse (farm_tmr_seu_pulse)
   );
 
-  // Synchronize scheduled CLCW into clk_sys
+  // Synchronize scheduled CLCW for the active Uplink TC VC into clk_sys
   always_ff @(posedge clk_sys or negedge rst_n) begin
     if (!rst_n) begin
       clcw_scheduled_sys_q <= '0;
     end else if (clcw_valid_pulse_tc) begin
-      clcw_scheduled_sys_q <= clcw_scheduled_tc;
+      if ((clcw_scheduled_tc.vcid == parsed_tc_hdr.vcid) || (clcw_scheduled_sys_q == '0)) begin
+        clcw_scheduled_sys_q <= clcw_scheduled_tc;
+      end
     end
   end
 
@@ -702,11 +733,20 @@ module ccsds_sat_ttc_top
   //---------------------------------------------------------------------------
   // 5. Downlink VC Arbiter, Framer, Outer FEC, Scrambler & High-Watermark FIFO
   //---------------------------------------------------------------------------
+  logic tx_pkt_committed_q;
+  always_ff @(posedge clk_sys or negedge rst_n) begin
+    if (!rst_n) begin
+      tx_pkt_committed_q <= 1'b0;
+    end else begin
+      tx_pkt_committed_q <= s_axis_tx_pkt_tvalid && s_axis_tx_pkt_tready && s_axis_tx_pkt_tlast;
+    end
+  end
+
   ccsds_vc_arbiter_mux u_vc_arb (
     .clk                 (clk_sys),
     .rst_n               (rst_n),
     .tfdf_byte_len_cfg   (csr_tfdf_len),
-    .request_next_frame  (s_axis_tx_pkt_tvalid),
+    .request_next_frame  (tx_pkt_committed_q),
     .s_axis_pkt_tdata    (s_axis_tx_pkt_tdata),
     .s_axis_pkt_vcid     (s_axis_tx_pkt_tuser.vcid[2:0]),
     .s_axis_pkt_tvalid   (s_axis_tx_pkt_tvalid),

@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Sat Oct 24 07:49:23 2026
+| Date         : Sun Oct 25 00:06:28 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_timing -from [get_clocks clk_adc_iq] -to [get_clocks clk_adc_iq] -max_paths 5 -nworst 1 -file reports/vivado_crit_path_clk_adc_iq_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -11,7 +11,7 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 
 Timing Report
 
-Slack (VIOLATED) :        -4.134ns  (required time - arrival time)
+Slack (VIOLATED) :        -4.068ns  (required time - arrival time)
   Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
                             (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
   Destination:            u_phy_modem/i_derot_q_reg[13]/D
@@ -19,8 +19,8 @@ Slack (VIOLATED) :        -4.134ns  (required time - arrival time)
   Path Group:             clk_adc_iq
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
-  Data Path Delay:        6.995ns  (logic 2.284ns (32.652%)  route 4.711ns (67.348%))
-  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT5=1 LUT6=3)
+  Data Path Delay:        6.929ns  (logic 2.382ns (34.377%)  route 4.547ns (65.623%))
+  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT4=1 LUT5=1 LUT6=2)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -37,57 +37,57 @@ Slack (VIOLATED) :        -4.134ns  (required time - arrival time)
                          (clock clk_adc_iq rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
                          net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4__8/O
-                         net (fo=20, unplaced)        1.171     3.948    u_phy_modem/g0_b4__8_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.152     4.100 r  u_phy_modem/q_derot_q[14]_i_20/O
-                         net (fo=19, unplaced)        0.961     5.061    u_phy_modem/q_derot_q[14]_i_20_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.185 r  u_phy_modem/i_derot_q[7]_i_24/O
-                         net (fo=2, unplaced)         0.460     5.645    u_phy_modem/i_derot_q[7]_i_24_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     5.769 r  u_phy_modem/i_derot_q[7]_i_17/O
-                         net (fo=3, unplaced)         0.467     6.236    u_phy_modem/i_derot_q[7]_i_17_n_0
-                         LUT3 (Prop_lut3_I1_O)        0.124     6.360 r  u_phy_modem/i_derot_q[7]_i_4/O
-                         net (fo=1, unplaced)         0.639     6.999    u_phy_modem/i_derot_q[7]_i_4_n_0
-                         CARRY4 (Prop_carry4_DI[1]_CO[3])
-                                                      0.507     7.506 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.506    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4/O
+                         net (fo=16, unplaced)        1.165     3.942    u_phy_modem/g0_b4_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     4.066 r  u_phy_modem/q_derot_q[14]_i_23/O
+                         net (fo=16, unplaced)        0.956     5.022    u_phy_modem/q_derot_q[14]_i_23_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     5.146 r  u_phy_modem/i_derot_q[7]_i_11/O
+                         net (fo=2, unplaced)         0.913     6.059    u_phy_modem/i_derot_q[7]_i_11_n_0
+                         LUT3 (Prop_lut3_I1_O)        0.153     6.212 r  u_phy_modem/i_derot_q[7]_i_2/O
+                         net (fo=2, unplaced)         0.500     6.712    u_phy_modem/i_derot_q[7]_i_2_n_0
+                         LUT4 (Prop_lut4_I3_O)        0.327     7.039 r  u_phy_modem/i_derot_q[7]_i_6/O
+                         net (fo=1, unplaced)         0.000     7.039    u_phy_modem/i_derot_q[7]_i_6_n_0
+                         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401     7.440 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.440    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.114     7.620 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.620    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
+                                                      0.114     7.554 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.554    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_O[1])
-                                                      0.348     7.968 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[1]
-                         net (fo=1, unplaced)         0.000     7.968    u_phy_modem/i_derot_q_reg[14]_i_1_n_6
+                                                      0.348     7.902 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[1]
+                         net (fo=1, unplaced)         0.000     7.902    u_phy_modem/i_derot_q_reg[14]_i_1_n_6
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[13]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_adc_iq rise edge)
                                                       3.000     3.000 r  
                                                       0.000     3.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[13]/C
                          clock pessimism              0.000     3.924    
                          clock uncertainty           -0.185     3.739    
                          FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/i_derot_q_reg[13]
   -------------------------------------------------------------------
                          required time                          3.834    
-                         arrival time                          -7.968    
+                         arrival time                          -7.902    
   -------------------------------------------------------------------
-                         slack                                 -4.134    
+                         slack                                 -4.068    
 
-Slack (VIOLATED) :        -4.134ns  (required time - arrival time)
-  Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
+Slack (VIOLATED) :        -3.992ns  (required time - arrival time)
+  Source:                 u_phy_modem/gardner_err_q_reg[0][1]/C
                             (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
-  Destination:            u_phy_modem/q_derot_q_reg[13]/D
+  Destination:            u_phy_modem/gardner_phase_q_reg[1]/D
                             (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
   Path Group:             clk_adc_iq
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
-  Data Path Delay:        6.995ns  (logic 2.284ns (32.652%)  route 4.711ns (67.348%))
-  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT5=1 LUT6=3)
+  Data Path Delay:        6.820ns  (logic 2.595ns (38.050%)  route 4.225ns (61.950%))
+  Logic Levels:           9  (CARRY4=4 LUT3=1 LUT4=1 LUT5=2 LUT6=1)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -104,48 +104,51 @@ Slack (VIOLATED) :        -4.134ns  (required time - arrival time)
                          (clock clk_adc_iq rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
-                         FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
+                         net (fo=1613, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
+                         FDCE                                         r  u_phy_modem/gardner_err_q_reg[0][1]/C
   -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
-                         net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4__8/O
-                         net (fo=20, unplaced)        1.171     3.948    u_phy_modem/g0_b4__8_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.152     4.100 r  u_phy_modem/q_derot_q[14]_i_20/O
-                         net (fo=19, unplaced)        0.961     5.061    u_phy_modem/q_derot_q[14]_i_20_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.185 r  u_phy_modem/q_derot_q[7]_i_26/O
-                         net (fo=2, unplaced)         0.460     5.645    u_phy_modem/q_derot_q[7]_i_26_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     5.769 r  u_phy_modem/q_derot_q[7]_i_17/O
-                         net (fo=3, unplaced)         0.467     6.236    u_phy_modem/q_derot_q[7]_i_17_n_0
-                         LUT3 (Prop_lut3_I1_O)        0.124     6.360 r  u_phy_modem/q_derot_q[7]_i_4/O
-                         net (fo=1, unplaced)         0.639     6.999    u_phy_modem/q_derot_q[7]_i_4_n_0
-                         CARRY4 (Prop_carry4_DI[1]_CO[3])
-                                                      0.507     7.506 r  u_phy_modem/q_derot_q_reg[7]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.506    u_phy_modem/q_derot_q_reg[7]_i_1_n_0
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/gardner_err_q_reg[0][1]/Q
+                         net (fo=5, unplaced)         0.769     2.238    u_phy_modem/gardner_err_q_reg[0]_74[1]
+                         LUT4 (Prop_lut4_I1_O)        0.321     2.559 r  u_phy_modem/gardner_phase_q[1]_i_27/O
+                         net (fo=1, unplaced)         0.000     2.559    u_phy_modem/gardner_phase_q[1]_i_27_n_0
+                         CARRY4 (Prop_carry4_DI[0]_CO[3])
+                                                      0.553     3.112 r  u_phy_modem/gardner_phase_q_reg[1]_i_6/CO[3]
+                         net (fo=1, unplaced)         0.000     3.112    u_phy_modem/gardner_phase_q_reg[1]_i_6_n_0
                          CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.114     7.620 r  u_phy_modem/q_derot_q_reg[11]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.620    u_phy_modem/q_derot_q_reg[11]_i_1_n_0
-                         CARRY4 (Prop_carry4_CI_O[1])
-                                                      0.348     7.968 r  u_phy_modem/q_derot_q_reg[14]_i_1/O[1]
-                         net (fo=1, unplaced)         0.000     7.968    u_phy_modem/q_derot_q0[13]
-                         FDCE                                         r  u_phy_modem/q_derot_q_reg[13]/D
+                                                      0.114     3.226 r  u_phy_modem/gardner_phase_q_reg[1]_i_4/CO[3]
+                         net (fo=33, unplaced)        0.990     4.216    u_phy_modem/gardner_phase_q_reg[1]_i_4_n_0
+                         LUT6 (Prop_lut6_I4_O)        0.124     4.340 r  u_phy_modem/gardner_phase_q[0]_i_41/O
+                         net (fo=1, unplaced)         0.449     4.789    u_phy_modem/gardner_phase_q[0]_i_41_n_0
+                         LUT5 (Prop_lut5_I4_O)        0.124     4.913 r  u_phy_modem/gardner_phase_q[0]_i_14/O
+                         net (fo=1, unplaced)         0.639     5.552    u_phy_modem/gardner_phase_q[0]_i_14_n_0
+                         CARRY4 (Prop_carry4_DI[1]_CO[3])
+                                                      0.507     6.059 r  u_phy_modem/gardner_phase_q_reg[0]_i_3/CO[3]
+                         net (fo=1, unplaced)         0.000     6.059    u_phy_modem/gardner_phase_q_reg[0]_i_3_n_0
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.173 r  u_phy_modem/gardner_phase_q_reg[0]_i_2/CO[3]
+                         net (fo=2, unplaced)         0.929     7.102    u_phy_modem/gardner_phase_q_reg[0]_i_2_n_0
+                         LUT3 (Prop_lut3_I1_O)        0.118     7.220 r  u_phy_modem/gardner_phase_q[1]_i_2/O
+                         net (fo=1, unplaced)         0.449     7.669    u_phy_modem/gardner_phase_q[1]_i_2_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     7.793 r  u_phy_modem/gardner_phase_q[1]_i_1/O
+                         net (fo=1, unplaced)         0.000     7.793    u_phy_modem/gardner_phase_q[1]_i_1_n_0
+                         FDCE                                         r  u_phy_modem/gardner_phase_q_reg[1]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_adc_iq rise edge)
                                                       3.000     3.000 r  
                                                       0.000     3.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
-                         FDCE                                         r  u_phy_modem/q_derot_q_reg[13]/C
+                         net (fo=1613, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
+                         FDCE                                         r  u_phy_modem/gardner_phase_q_reg[1]/C
                          clock pessimism              0.000     3.924    
                          clock uncertainty           -0.185     3.739    
-                         FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/q_derot_q_reg[13]
+                         FDCE (Setup_fdce_C_D)        0.062     3.801    u_phy_modem/gardner_phase_q_reg[1]
   -------------------------------------------------------------------
-                         required time                          3.834    
-                         arrival time                          -7.968    
+                         required time                          3.801    
+                         arrival time                          -7.793    
   -------------------------------------------------------------------
-                         slack                                 -4.134    
+                         slack                                 -3.992    
 
-Slack (VIOLATED) :        -4.042ns  (required time - arrival time)
+Slack (VIOLATED) :        -3.976ns  (required time - arrival time)
   Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
                             (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
   Destination:            u_phy_modem/i_derot_q_reg[14]/D
@@ -153,8 +156,8 @@ Slack (VIOLATED) :        -4.042ns  (required time - arrival time)
   Path Group:             clk_adc_iq
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
-  Data Path Delay:        6.903ns  (logic 2.192ns (31.754%)  route 4.711ns (68.246%))
-  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT5=1 LUT6=3)
+  Data Path Delay:        6.837ns  (logic 2.290ns (33.494%)  route 4.547ns (66.506%))
+  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT4=1 LUT5=1 LUT6=2)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -171,115 +174,48 @@ Slack (VIOLATED) :        -4.042ns  (required time - arrival time)
                          (clock clk_adc_iq rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
                          net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4__8/O
-                         net (fo=20, unplaced)        1.171     3.948    u_phy_modem/g0_b4__8_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.152     4.100 r  u_phy_modem/q_derot_q[14]_i_20/O
-                         net (fo=19, unplaced)        0.961     5.061    u_phy_modem/q_derot_q[14]_i_20_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.185 r  u_phy_modem/i_derot_q[7]_i_24/O
-                         net (fo=2, unplaced)         0.460     5.645    u_phy_modem/i_derot_q[7]_i_24_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     5.769 r  u_phy_modem/i_derot_q[7]_i_17/O
-                         net (fo=3, unplaced)         0.467     6.236    u_phy_modem/i_derot_q[7]_i_17_n_0
-                         LUT3 (Prop_lut3_I1_O)        0.124     6.360 r  u_phy_modem/i_derot_q[7]_i_4/O
-                         net (fo=1, unplaced)         0.639     6.999    u_phy_modem/i_derot_q[7]_i_4_n_0
-                         CARRY4 (Prop_carry4_DI[1]_CO[3])
-                                                      0.507     7.506 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.506    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4/O
+                         net (fo=16, unplaced)        1.165     3.942    u_phy_modem/g0_b4_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     4.066 r  u_phy_modem/q_derot_q[14]_i_23/O
+                         net (fo=16, unplaced)        0.956     5.022    u_phy_modem/q_derot_q[14]_i_23_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     5.146 r  u_phy_modem/i_derot_q[7]_i_11/O
+                         net (fo=2, unplaced)         0.913     6.059    u_phy_modem/i_derot_q[7]_i_11_n_0
+                         LUT3 (Prop_lut3_I1_O)        0.153     6.212 r  u_phy_modem/i_derot_q[7]_i_2/O
+                         net (fo=2, unplaced)         0.500     6.712    u_phy_modem/i_derot_q[7]_i_2_n_0
+                         LUT4 (Prop_lut4_I3_O)        0.327     7.039 r  u_phy_modem/i_derot_q[7]_i_6/O
+                         net (fo=1, unplaced)         0.000     7.039    u_phy_modem/i_derot_q[7]_i_6_n_0
+                         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401     7.440 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.440    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.114     7.620 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.620    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
+                                                      0.114     7.554 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.554    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_O[2])
-                                                      0.256     7.876 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[2]
-                         net (fo=1, unplaced)         0.000     7.876    u_phy_modem/i_derot_q_reg[14]_i_1_n_5
+                                                      0.256     7.810 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[2]
+                         net (fo=1, unplaced)         0.000     7.810    u_phy_modem/i_derot_q_reg[14]_i_1_n_5
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[14]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_adc_iq rise edge)
                                                       3.000     3.000 r  
                                                       0.000     3.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[14]/C
                          clock pessimism              0.000     3.924    
                          clock uncertainty           -0.185     3.739    
                          FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/i_derot_q_reg[14]
   -------------------------------------------------------------------
                          required time                          3.834    
-                         arrival time                          -7.876    
+                         arrival time                          -7.810    
   -------------------------------------------------------------------
-                         slack                                 -4.042    
+                         slack                                 -3.976    
 
-Slack (VIOLATED) :        -4.042ns  (required time - arrival time)
-  Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
-                            (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
-  Destination:            u_phy_modem/q_derot_q_reg[14]/D
-                            (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
-  Path Group:             clk_adc_iq
-  Path Type:              Setup (Max at Slow Process Corner)
-  Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
-  Data Path Delay:        6.903ns  (logic 2.192ns (31.754%)  route 4.711ns (68.246%))
-  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT5=1 LUT6=3)
-  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
-    Source Clock Delay      (SCD):    0.973ns
-    Clock Pessimism Removal (CPR):    0.000ns
-  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
-    Total System Jitter     (TSJ):    0.071ns
-    Total Input Jitter      (TIJ):    0.000ns
-    Discrete Jitter          (DJ):    0.000ns
-    Phase Error              (PE):    0.000ns
-    User Uncertainty         (UU):    0.150ns
-
-    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
-  -------------------------------------------------------------------    -------------------
-                         (clock clk_adc_iq rise edge)
-                                                      0.000     0.000 r  
-                                                      0.000     0.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
-                         FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
-  -------------------------------------------------------------------    -------------------
-                         FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
-                         net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4__8/O
-                         net (fo=20, unplaced)        1.171     3.948    u_phy_modem/g0_b4__8_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.152     4.100 r  u_phy_modem/q_derot_q[14]_i_20/O
-                         net (fo=19, unplaced)        0.961     5.061    u_phy_modem/q_derot_q[14]_i_20_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.185 r  u_phy_modem/q_derot_q[7]_i_26/O
-                         net (fo=2, unplaced)         0.460     5.645    u_phy_modem/q_derot_q[7]_i_26_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     5.769 r  u_phy_modem/q_derot_q[7]_i_17/O
-                         net (fo=3, unplaced)         0.467     6.236    u_phy_modem/q_derot_q[7]_i_17_n_0
-                         LUT3 (Prop_lut3_I1_O)        0.124     6.360 r  u_phy_modem/q_derot_q[7]_i_4/O
-                         net (fo=1, unplaced)         0.639     6.999    u_phy_modem/q_derot_q[7]_i_4_n_0
-                         CARRY4 (Prop_carry4_DI[1]_CO[3])
-                                                      0.507     7.506 r  u_phy_modem/q_derot_q_reg[7]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.506    u_phy_modem/q_derot_q_reg[7]_i_1_n_0
-                         CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.114     7.620 r  u_phy_modem/q_derot_q_reg[11]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.620    u_phy_modem/q_derot_q_reg[11]_i_1_n_0
-                         CARRY4 (Prop_carry4_CI_O[2])
-                                                      0.256     7.876 r  u_phy_modem/q_derot_q_reg[14]_i_1/O[2]
-                         net (fo=1, unplaced)         0.000     7.876    u_phy_modem/q_derot_q0[14]
-                         FDCE                                         r  u_phy_modem/q_derot_q_reg[14]/D
-  -------------------------------------------------------------------    -------------------
-
-                         (clock clk_adc_iq rise edge)
-                                                      3.000     3.000 r  
-                                                      0.000     3.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
-                         FDCE                                         r  u_phy_modem/q_derot_q_reg[14]/C
-                         clock pessimism              0.000     3.924    
-                         clock uncertainty           -0.185     3.739    
-                         FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/q_derot_q_reg[14]
-  -------------------------------------------------------------------
-                         required time                          3.834    
-                         arrival time                          -7.876    
-  -------------------------------------------------------------------
-                         slack                                 -4.042    
-
-Slack (VIOLATED) :        -4.021ns  (required time - arrival time)
+Slack (VIOLATED) :        -3.955ns  (required time - arrival time)
   Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
                             (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
   Destination:            u_phy_modem/i_derot_q_reg[12]/D
@@ -287,8 +223,8 @@ Slack (VIOLATED) :        -4.021ns  (required time - arrival time)
   Path Group:             clk_adc_iq
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
-  Data Path Delay:        6.882ns  (logic 2.171ns (31.546%)  route 4.711ns (68.454%))
-  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT5=1 LUT6=3)
+  Data Path Delay:        6.816ns  (logic 2.269ns (33.289%)  route 4.547ns (66.711%))
+  Logic Levels:           8  (CARRY4=3 LUT3=1 LUT4=1 LUT5=1 LUT6=2)
   Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
     Source Clock Delay      (SCD):    0.973ns
@@ -305,46 +241,110 @@ Slack (VIOLATED) :        -4.021ns  (required time - arrival time)
                          (clock clk_adc_iq rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
                          net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4__8/O
-                         net (fo=20, unplaced)        1.171     3.948    u_phy_modem/g0_b4__8_n_0
-                         LUT5 (Prop_lut5_I0_O)        0.152     4.100 r  u_phy_modem/q_derot_q[14]_i_20/O
-                         net (fo=19, unplaced)        0.961     5.061    u_phy_modem/q_derot_q[14]_i_20_n_0
-                         LUT6 (Prop_lut6_I1_O)        0.124     5.185 r  u_phy_modem/i_derot_q[7]_i_24/O
-                         net (fo=2, unplaced)         0.460     5.645    u_phy_modem/i_derot_q[7]_i_24_n_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     5.769 r  u_phy_modem/i_derot_q[7]_i_17/O
-                         net (fo=3, unplaced)         0.467     6.236    u_phy_modem/i_derot_q[7]_i_17_n_0
-                         LUT3 (Prop_lut3_I1_O)        0.124     6.360 r  u_phy_modem/i_derot_q[7]_i_4/O
-                         net (fo=1, unplaced)         0.639     6.999    u_phy_modem/i_derot_q[7]_i_4_n_0
-                         CARRY4 (Prop_carry4_DI[1]_CO[3])
-                                                      0.507     7.506 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.506    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4/O
+                         net (fo=16, unplaced)        1.165     3.942    u_phy_modem/g0_b4_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     4.066 r  u_phy_modem/q_derot_q[14]_i_23/O
+                         net (fo=16, unplaced)        0.956     5.022    u_phy_modem/q_derot_q[14]_i_23_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     5.146 r  u_phy_modem/i_derot_q[7]_i_11/O
+                         net (fo=2, unplaced)         0.913     6.059    u_phy_modem/i_derot_q[7]_i_11_n_0
+                         LUT3 (Prop_lut3_I1_O)        0.153     6.212 r  u_phy_modem/i_derot_q[7]_i_2/O
+                         net (fo=2, unplaced)         0.500     6.712    u_phy_modem/i_derot_q[7]_i_2_n_0
+                         LUT4 (Prop_lut4_I3_O)        0.327     7.039 r  u_phy_modem/i_derot_q[7]_i_6/O
+                         net (fo=1, unplaced)         0.000     7.039    u_phy_modem/i_derot_q[7]_i_6_n_0
+                         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401     7.440 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.440    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_CO[3])
-                                                      0.114     7.620 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
-                         net (fo=1, unplaced)         0.000     7.620    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
+                                                      0.114     7.554 r  u_phy_modem/i_derot_q_reg[11]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.554    u_phy_modem/i_derot_q_reg[11]_i_1_n_0
                          CARRY4 (Prop_carry4_CI_O[0])
-                                                      0.235     7.855 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[0]
-                         net (fo=1, unplaced)         0.000     7.855    u_phy_modem/i_derot_q_reg[14]_i_1_n_7
+                                                      0.235     7.789 r  u_phy_modem/i_derot_q_reg[14]_i_1/O[0]
+                         net (fo=1, unplaced)         0.000     7.789    u_phy_modem/i_derot_q_reg[14]_i_1_n_7
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[12]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock clk_adc_iq rise edge)
                                                       3.000     3.000 r  
                                                       0.000     3.000 r  clk_adc_iq (IN)
-                         net (fo=1490, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
+                         net (fo=1613, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
                          FDCE                                         r  u_phy_modem/i_derot_q_reg[12]/C
                          clock pessimism              0.000     3.924    
                          clock uncertainty           -0.185     3.739    
                          FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/i_derot_q_reg[12]
   -------------------------------------------------------------------
                          required time                          3.834    
-                         arrival time                          -7.855    
+                         arrival time                          -7.789    
   -------------------------------------------------------------------
-                         slack                                 -4.021    
+                         slack                                 -3.955    
+
+Slack (VIOLATED) :        -3.954ns  (required time - arrival time)
+  Source:                 u_phy_modem/rx_phase_q16_reg[10]/C
+                            (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
+  Destination:            u_phy_modem/i_derot_q_reg[9]/D
+                            (rising edge-triggered cell FDCE clocked by clk_adc_iq  {rise@0.000ns fall@1.500ns period=3.000ns})
+  Path Group:             clk_adc_iq
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.000ns  (clk_adc_iq rise@3.000ns - clk_adc_iq rise@0.000ns)
+  Data Path Delay:        6.815ns  (logic 2.268ns (33.280%)  route 4.547ns (66.720%))
+  Logic Levels:           7  (CARRY4=2 LUT3=1 LUT4=1 LUT5=1 LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 3.924 - 3.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.185ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.150ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_adc_iq rise edge)
+                                                      0.000     0.000 r  
+                                                      0.000     0.000 r  clk_adc_iq (IN)
+                         net (fo=1613, unset)         0.973     0.973    u_phy_modem/clk_adc_iq
+                         FDCE                                         r  u_phy_modem/rx_phase_q16_reg[10]/C
+  -------------------------------------------------------------------    -------------------
+                         FDCE (Prop_fdce_C_Q)         0.496     1.469 f  u_phy_modem/rx_phase_q16_reg[10]/Q
+                         net (fo=12, unplaced)        1.013     2.482    u_phy_modem/sel[0]
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.777 f  u_phy_modem/g0_b4/O
+                         net (fo=16, unplaced)        1.165     3.942    u_phy_modem/g0_b4_n_0
+                         LUT5 (Prop_lut5_I0_O)        0.124     4.066 r  u_phy_modem/q_derot_q[14]_i_23/O
+                         net (fo=16, unplaced)        0.956     5.022    u_phy_modem/q_derot_q[14]_i_23_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     5.146 r  u_phy_modem/i_derot_q[7]_i_11/O
+                         net (fo=2, unplaced)         0.913     6.059    u_phy_modem/i_derot_q[7]_i_11_n_0
+                         LUT3 (Prop_lut3_I1_O)        0.153     6.212 r  u_phy_modem/i_derot_q[7]_i_2/O
+                         net (fo=2, unplaced)         0.500     6.712    u_phy_modem/i_derot_q[7]_i_2_n_0
+                         LUT4 (Prop_lut4_I3_O)        0.327     7.039 r  u_phy_modem/i_derot_q[7]_i_6/O
+                         net (fo=1, unplaced)         0.000     7.039    u_phy_modem/i_derot_q[7]_i_6_n_0
+                         CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401     7.440 r  u_phy_modem/i_derot_q_reg[7]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     7.440    u_phy_modem/i_derot_q_reg[7]_i_1_n_0
+                         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.348     7.788 r  u_phy_modem/i_derot_q_reg[11]_i_1/O[1]
+                         net (fo=1, unplaced)         0.000     7.788    u_phy_modem/i_derot_q_reg[11]_i_1_n_6
+                         FDCE                                         r  u_phy_modem/i_derot_q_reg[9]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_adc_iq rise edge)
+                                                      3.000     3.000 r  
+                                                      0.000     3.000 r  clk_adc_iq (IN)
+                         net (fo=1613, unset)         0.924     3.924    u_phy_modem/clk_adc_iq
+                         FDCE                                         r  u_phy_modem/i_derot_q_reg[9]/C
+                         clock pessimism              0.000     3.924    
+                         clock uncertainty           -0.185     3.739    
+                         FDCE (Setup_fdce_C_D)        0.095     3.834    u_phy_modem/i_derot_q_reg[9]
+  -------------------------------------------------------------------
+                         required time                          3.834    
+                         arrival time                          -7.788    
+  -------------------------------------------------------------------
+                         slack                                 -3.954    
 
 
 

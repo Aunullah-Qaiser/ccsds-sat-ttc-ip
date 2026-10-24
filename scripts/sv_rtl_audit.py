@@ -91,6 +91,7 @@ SV_TB_MANIFEST: List[str] = [
     "tb_stage8_all_protocols_channel_loopback.sv",
     "tb_stage9_external_ref_check.sv",
     "tb_stage10_full_matrix_link_stress.sv",
+    "tb_stage11_top_to_top_rf_link.sv",
 ]
 
 
@@ -314,7 +315,7 @@ def audit_symbols_and_struct_fields(rtl_dir: Path, tb_dir: Path) -> List[str]:
         "ccsds_pkg"
     }
 
-    all_files = sorted(list(rtl_dir.glob("*.sv")) + (list(tb_dir.glob("*.sv")) if tb_dir.exists() else []))
+    all_files = resolve_sv_files(rtl_dir)
     module_names = set()
     for p in all_files:
         c = strip_all(p.read_text(encoding="utf-8"))

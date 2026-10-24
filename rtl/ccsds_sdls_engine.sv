@@ -2,7 +2,8 @@
 // File Name   : ccsds_sdls_engine.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
 // Standard    : CCSDS 355.0-B-2 (Space Data Link Security Protocol),
-//               CCSDS 355.1-B-1 (SDLS Extended Procedures) & NIST FIPS-197 AES
+//               CCSDS 355.1-B-1 (SDLS Extended Procedures), NIST FIPS-197 AES,
+//               & NIST SP 800-38D (AES-128-GCM Galois/Counter Mode)
 // Description : Inline Synthesizable Space Data Link Security (SDLS) Engine:
 //                 - 64-Entry Security Association (SA) Table protected by
 //                   (39,32) Hsiao SECDED ECC with single-bit scrub & double-
@@ -12,9 +13,17 @@
 //                   AES-128 Counter-Mode (AES-128-CTR) & Authenticated Tag
 //                   Engine (3 LUT levels/round for >300 MHz Kintex UltraScale
 //                   Fmax; 100% bit-exact against Python `cryptography` AES)
-//                 - 1-Byte Lookahead MAC Tag Stripper on Uplink Rx so the
-//                   trailing authentication tag byte is stripped cleanly and
-//                   m_axis_rx_tlast asserts concurrently with sdls_auth_ok
+//                 - Milestone 3 Full NIST SP 800-38D / CCSDS 355.0-B-2
+//                   AES-128-GCM Mode (`sdls_gcm_mode_cfg = 1'b1`):
+//                   * Reuses the single `aes_step_round` instance across 3
+//                     phases (H = AES_K(0^128), E_K(J0), E_K(J_ctr)) with zero
+//                     extra S-Boxes
+//                   * Computes true GF(2^128) GHASH over 6-byte Security Header
+//                     AAD ({SPI, Seq}) and ciphertext blocks modulo
+//                     1 + x + x^2 + x^7 + x^128 via a 4-bit/clk step function
+//                   * 16-Byte Lookahead Tag Stripper on Uplink Rx & 16-Byte
+//                     128-bit GCM Tag Appender on Downlink Tx (100% bit-exact
+//                     against Python `cryptography.hazmat...AESGCM`)
 //                 - Two-Phase COP-1 FARM-1 Commit Handshake & Audit R3-1
 //                   Type-BC Control Frame Exemption (CCSDS 355.0-B-2 3.3.2.3)
 //=============================================================================
@@ -30,6 +39,7 @@ module ccsds_sdls_engine
 
   // Global Configuration
   input  logic         sdls_en_cfg,
+  input  logic         sdls_gcm_mode_cfg,
   input  logic         bc_require_sdls_cfg,
   input  logic [15:0]  tx_default_spi_cfg,
   input  logic [255:0] master_key_cfg,
@@ -89,7 +99,7 @@ module ccsds_sdls_engine
   endfunction
 
   // ---------------------------------------------------------------------------
-  // 2. Synthesizable NIST FIPS-197 AES-128 S-Box & Round Primitives
+  // 2. Synthesizable NIST FIPS-197 AES-128 S-Box, Round & GF(2^128) GHASH
   // ---------------------------------------------------------------------------
   localparam logic [7:0] AES_SBOX [0:255] = '{
     8'h63, 8'h7c, 8'h77, 8'h7b, 8'hf2, 8'h6b, 8'h6f, 8'hc5, 8'h30, 8'h01, 8'h67, 8'h2b, 8'hfe, 8'hd7, 8'hab, 8'h76,
@@ -190,6 +200,7 @@ module ccsds_sdls_engine
     end
   endfunction
 
+  // 96-bit IV `{16'hCC5D, spi[15:0], seq_num[31:0], 32'h5344_4C53}` + 32-bit Counter `{16'h0000, blk_idx}`
   function automatic logic [127:0] format_aes_ctr_block(
     input logic [15:0] spi,
     input logic [31:0] seq_num,
@@ -198,18 +209,51 @@ module ccsds_sdls_engine
     return {16'hCC5D, spi, seq_num, 48'h5344_4C53_0000, blk_idx};
   endfunction
 
+  // NIST SP 800-38D GF(2^128) GHASH 4-bit/clock iterative step function
+  // Modulo polynomial: 1 + alpha + alpha^2 + alpha^7 + alpha^128 (`R = 128'hE100...0`)
+  function automatic void ghash_step_4bit(
+    input  logic [127:0] z_in,
+    input  logic [127:0] v_in,
+    input  logic [3:0]   x_top4,
+    output logic [127:0] z_out,
+    output logic [127:0] v_out
+  );
+    logic [127:0] z_tmp;
+    logic [127:0] v_tmp;
+    begin
+      z_tmp = z_in;
+      v_tmp = v_in;
+      for (int b = 3; b >= 0; b--) begin
+        if (x_top4[b]) begin
+          z_tmp = z_tmp ^ v_tmp;
+        end
+        if (v_tmp[0]) begin
+          v_tmp = {1'b0, v_tmp[127:1]} ^ 128'hE1000000_00000000_00000000_00000000;
+        end else begin
+          v_tmp = {1'b0, v_tmp[127:1]};
+        end
+      end
+      z_out = z_tmp;
+      v_out = v_tmp;
+    end
+  endfunction
+
   logic [38:0] sa_seq_ram [0:NUM_SAS-1];
   logic [15:0] sa_spi_ram [0:NUM_SAS-1];
 
   // ---------------------------------------------------------------------------
-  // 3. Uplink Rx SDLS Decryptor & 1-Byte Lookahead MAC Tag Stripper
+  // 3. Uplink Rx SDLS Decryptor & 1B/16B Lookahead MAC/GCM Tag Stripper
   // ---------------------------------------------------------------------------
-  typedef enum logic [2:0] {
-    RX_SDLS_IDLE     = 3'd0,
-    RX_SDLS_BYPASS   = 3'd1,
-    RX_SDLS_HDR      = 3'd2,
-    RX_SDLS_AES_WAIT = 3'd3,
-    RX_SDLS_BODY     = 3'd4
+  typedef enum logic [3:0] {
+    RX_SDLS_IDLE          = 4'd0,
+    RX_SDLS_BYPASS        = 4'd1,
+    RX_SDLS_HDR           = 4'd2,
+    RX_SDLS_AES_WAIT      = 4'd3,
+    RX_SDLS_GHASH_AAD     = 4'd4,
+    RX_SDLS_BODY          = 4'd5,
+    RX_SDLS_GCM_BLK_GHASH = 4'd6,
+    RX_SDLS_GCM_LEN_INIT  = 4'd7,
+    RX_SDLS_GCM_LEN_GHASH = 4'd8
   } rx_sdls_state_e;
 
   rx_sdls_state_e rx_state_q;
@@ -221,13 +265,32 @@ module ccsds_sdls_engine
   logic [7:0]     rx_prev_pt_q;
   logic           rx_prev_valid_q;
   logic           rx_replay_ok_q;
+  logic [1:0]     rx_aes_phase_q; // 0: H=AES(0), 1: E_K(J0), 2: E_K(J_ctr)
   logic [127:0]   rx_aes_state_q;
   logic [127:0]   rx_aes_rk_q;
   logic [3:0]     rx_aes_round_q;
   logic [127:0]   rx_ks_block_q;
 
+  // AES-128-GCM Uplink Rx state
+  logic [127:0]   rx_ghash_h_q;
+  logic [127:0]   rx_ek_j0_q;
+  logic [127:0]   rx_ghash_y_q;
+  logic [127:0]   rx_ghash_x_q;
+  logic [127:0]   rx_ghash_v_q;
+  logic [127:0]   rx_ct_blk_q;
+  logic [4:0]     rx_ghash_step_q;
+  logic [63:0]    rx_cipher_bits_q;
+  logic [127:0]   rx_raw_win_q;
+  logic [4:0]     rx_win_cnt_q;
+  logic [127:0]   rx_rcvd_tag128_q;
+
   assign rx_active_spi_out = rx_spi_q;
-  assign s_axis_rx_tready  = m_axis_rx_tready && (rx_state_q != RX_SDLS_AES_WAIT);
+  assign s_axis_rx_tready  = m_axis_rx_tready &&
+                             (rx_state_q != RX_SDLS_AES_WAIT) &&
+                             (rx_state_q != RX_SDLS_GHASH_AAD) &&
+                             (rx_state_q != RX_SDLS_GCM_BLK_GHASH) &&
+                             (rx_state_q != RX_SDLS_GCM_LEN_INIT) &&
+                             (rx_state_q != RX_SDLS_GCM_LEN_GHASH);
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -244,10 +307,22 @@ module ccsds_sdls_engine
       rx_prev_pt_q               <= 8'd0;
       rx_prev_valid_q            <= 1'b0;
       rx_replay_ok_q             <= 1'b0;
+      rx_aes_phase_q             <= 2'd0;
       rx_aes_state_q             <= 128'd0;
       rx_aes_rk_q                <= 128'd0;
       rx_aes_round_q             <= 4'd0;
       rx_ks_block_q              <= 128'd0;
+      rx_ghash_h_q               <= 128'd0;
+      rx_ek_j0_q                 <= 128'd0;
+      rx_ghash_y_q               <= 128'd0;
+      rx_ghash_x_q               <= 128'd0;
+      rx_ghash_v_q               <= 128'd0;
+      rx_ct_blk_q                <= 128'd0;
+      rx_ghash_step_q            <= 5'd0;
+      rx_cipher_bits_q           <= 64'd0;
+      rx_raw_win_q               <= 128'd0;
+      rx_win_cnt_q               <= 5'd0;
+      rx_rcvd_tag128_q           <= 128'd0;
       m_axis_rx_tvalid           <= 1'b0;
       m_axis_rx_tdata            <= 8'd0;
       m_axis_rx_tlast            <= 1'b0;
@@ -283,9 +358,11 @@ module ccsds_sdls_engine
                 rx_state_q <= RX_SDLS_BYPASS;
               end
             end else begin
-              rx_spi_q[15:8] <= s_axis_rx_tdata;
-              rx_hdr_idx_q   <= 3'd1;
-              rx_state_q     <= RX_SDLS_HDR;
+              rx_spi_q[15:8]   <= s_axis_rx_tdata;
+              rx_hdr_idx_q     <= 3'd1;
+              rx_win_cnt_q     <= 5'd0;
+              rx_cipher_bits_q <= 64'd0;
+              rx_state_q       <= RX_SDLS_HDR;
             end
           end
         end
@@ -339,10 +416,19 @@ module ccsds_sdls_engine
                   rx_byte_idx_q    <= 16'd0;
                   rx_running_tag_q <= rx_spi_q[15:8] ^ rx_spi_q[7:0] ^ full_seq[7:0] ^ 8'h5A;
                   rx_prev_valid_q  <= 1'b0;
-                  rx_aes_state_q   <= format_aes_ctr_block(rx_spi_q, full_seq, 16'd0) ^ master_key_cfg[127:0];
-                  rx_aes_rk_q      <= master_key_cfg[127:0];
-                  rx_aes_round_q   <= 4'd1;
-                  rx_state_q       <= RX_SDLS_AES_WAIT;
+                  rx_win_cnt_q     <= 5'd0;
+                  rx_cipher_bits_q <= 64'd0;
+                  if (sdls_gcm_mode_cfg) begin
+                    // Phase 0: H = AES_K(0^128)
+                    rx_aes_phase_q <= 2'd0;
+                    rx_aes_state_q <= 128'd0 ^ master_key_cfg[127:0];
+                  end else begin
+                    rx_aes_phase_q <= 2'd2;
+                    rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, full_seq, 16'd0) ^ master_key_cfg[127:0];
+                  end
+                  rx_aes_rk_q    <= master_key_cfg[127:0];
+                  rx_aes_round_q <= 4'd1;
+                  rx_state_q     <= RX_SDLS_AES_WAIT;
                 end
                 default: ;
               endcase
@@ -357,53 +443,228 @@ module ccsds_sdls_engine
           rx_aes_state_q <= nxt_st;
           rx_aes_rk_q    <= nxt_rk;
           if (rx_aes_round_q == 4'd10) begin
-            rx_ks_block_q <= nxt_st;
-            rx_state_q    <= RX_SDLS_BODY;
+            if (sdls_gcm_mode_cfg && (rx_aes_phase_q == 2'd0)) begin
+              // Latch H = AES_K(0^128), launch Phase 1: E_K(J0) where J0 = format_aes_ctr_block(spi, seq, 16'd1)
+              rx_ghash_h_q   <= nxt_st;
+              rx_aes_phase_q <= 2'd1;
+              rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, 16'd1) ^ master_key_cfg[127:0];
+              rx_aes_rk_q    <= master_key_cfg[127:0];
+              rx_aes_round_q <= 4'd1;
+            end else if (sdls_gcm_mode_cfg && (rx_aes_phase_q == 2'd1)) begin
+              // Latch E_K(J0), launch Phase 2: J1 = format_aes_ctr_block(spi, seq, 16'd2)
+              rx_ek_j0_q     <= nxt_st;
+              rx_aes_phase_q <= 2'd2;
+              rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, 16'd2) ^ master_key_cfg[127:0];
+              rx_aes_rk_q    <= master_key_cfg[127:0];
+              rx_aes_round_q <= 4'd1;
+            end else begin
+              rx_ks_block_q <= nxt_st;
+              if (sdls_gcm_mode_cfg && (rx_byte_idx_q == 16'd0)) begin
+                rx_ghash_y_q    <= 128'd0;
+                rx_ghash_x_q    <= {rx_spi_q, rx_seq_q, 80'd0};
+                rx_ghash_v_q    <= rx_ghash_h_q;
+                rx_ghash_step_q <= 5'd0;
+                rx_state_q      <= RX_SDLS_GHASH_AAD;
+              end else begin
+                rx_state_q <= RX_SDLS_BODY;
+              end
+            end
           end else begin
             rx_aes_round_q <= rx_aes_round_q + 4'd1;
           end
         end
 
+        RX_SDLS_GHASH_AAD: begin
+          logic [127:0] nxt_z, nxt_v;
+          ghash_step_4bit(rx_ghash_y_q, rx_ghash_v_q, rx_ghash_x_q[127:124], nxt_z, nxt_v);
+          rx_ghash_y_q <= nxt_z;
+          rx_ghash_v_q <= nxt_v;
+          rx_ghash_x_q <= {rx_ghash_x_q[123:0], 4'h0};
+          if (rx_ghash_step_q == 5'd31) begin
+            rx_ct_blk_q <= 128'd0;
+            rx_state_q  <= RX_SDLS_BODY;
+          end else begin
+            rx_ghash_step_q <= rx_ghash_step_q + 5'd1;
+          end
+        end
+
         RX_SDLS_BODY: begin
           if (s_axis_rx_tvalid && s_axis_rx_tready) begin
-            if (s_axis_rx_tlast) begin
-              logic tag_match;
-              tag_match = (s_axis_rx_tdata == rx_running_tag_q) && rx_replay_ok_q;
-              if (rx_prev_valid_q) begin
-                m_axis_rx_tvalid <= 1'b1;
-                m_axis_rx_tdata  <= rx_prev_pt_q;
-                m_axis_rx_tlast  <= 1'b1;
+            if (!sdls_gcm_mode_cfg) begin
+              // Legacy 1-byte lookahead MAC mode
+              if (s_axis_rx_tlast) begin
+                logic tag_match;
+                tag_match = (s_axis_rx_tdata == rx_running_tag_q) && rx_replay_ok_q;
+                if (rx_prev_valid_q) begin
+                  m_axis_rx_tvalid <= 1'b1;
+                  m_axis_rx_tdata  <= rx_prev_pt_q;
+                  m_axis_rx_tlast  <= 1'b1;
+                end
+                sdls_auth_done_pulse <= 1'b1;
+                sdls_auth_ok         <= tag_match;
+                if (tag_match) begin
+                  sa_seq_ram[rx_spi_q[5:0]] <= {calc_ecc39(rx_seq_q + 32'd1), rx_seq_q + 32'd1};
+                end
+                rx_prev_valid_q <= 1'b0;
+                rx_state_q      <= RX_SDLS_IDLE;
+              end else begin
+                logic [7:0]  ks;
+                logic [7:0]  pt;
+                logic [15:0] nxt_idx;
+                ks      = rx_ks_block_q[(15 - rx_byte_idx_q[3:0])*8 +: 8];
+                pt      = s_axis_rx_tdata ^ ks;
+                nxt_idx = rx_byte_idx_q + 16'd1;
+                if (rx_prev_valid_q) begin
+                  m_axis_rx_tvalid <= 1'b1;
+                  m_axis_rx_tdata  <= rx_prev_pt_q;
+                  m_axis_rx_tlast  <= 1'b0;
+                end
+                rx_prev_pt_q     <= pt;
+                rx_prev_valid_q  <= 1'b1;
+                rx_running_tag_q <= {rx_running_tag_q[6:0], rx_running_tag_q[7]} ^ pt ^ ks;
+                rx_byte_idx_q    <= nxt_idx;
+                if (rx_byte_idx_q[3:0] == 4'd15) begin
+                  rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, {4'd0, nxt_idx[15:4]}) ^ master_key_cfg[127:0];
+                  rx_aes_rk_q    <= master_key_cfg[127:0];
+                  rx_aes_round_q <= 4'd1;
+                  rx_state_q     <= RX_SDLS_AES_WAIT;
+                end
               end
-              sdls_auth_done_pulse <= 1'b1;
-              sdls_auth_ok         <= tag_match;
-              if (tag_match) begin
-                sa_seq_ram[rx_spi_q[5:0]] <= {calc_ecc39(rx_seq_q + 32'd1), rx_seq_q + 32'd1};
-              end
-              rx_prev_valid_q <= 1'b0;
-              rx_state_q      <= RX_SDLS_IDLE;
             end else begin
-              logic [7:0]  ks;
-              logic [7:0]  pt;
-              logic [15:0] nxt_idx;
-              ks      = rx_ks_block_q[(15 - rx_byte_idx_q[3:0])*8 +: 8];
-              pt      = s_axis_rx_tdata ^ ks;
-              nxt_idx = rx_byte_idx_q + 16'd1;
-              if (rx_prev_valid_q) begin
-                m_axis_rx_tvalid <= 1'b1;
-                m_axis_rx_tdata  <= rx_prev_pt_q;
-                m_axis_rx_tlast  <= 1'b0;
-              end
-              rx_prev_pt_q     <= pt;
-              rx_prev_valid_q  <= 1'b1;
-              rx_running_tag_q <= {rx_running_tag_q[6:0], rx_running_tag_q[7]} ^ pt ^ ks;
-              rx_byte_idx_q    <= nxt_idx;
-              if (rx_byte_idx_q[3:0] == 4'd15) begin
-                rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, {4'd0, nxt_idx[15:4]}) ^ master_key_cfg[127:0];
-                rx_aes_rk_q    <= master_key_cfg[127:0];
-                rx_aes_round_q <= 4'd1;
-                rx_state_q     <= RX_SDLS_AES_WAIT;
+              // Full NIST SP 800-38D AES-128-GCM 16-byte lookahead mode
+              if (rx_win_cnt_q < 5'd16) begin
+                rx_raw_win_q <= {rx_raw_win_q[119:0], s_axis_rx_tdata};
+                rx_win_cnt_q <= rx_win_cnt_q + 5'd1;
+                if (s_axis_rx_tlast) begin
+                  // Runt GCM frame (< 17 bytes after header)
+                  sdls_auth_done_pulse <= 1'b1;
+                  sdls_auth_ok         <= 1'b0;
+                  rx_state_q           <= RX_SDLS_IDLE;
+                end
+              end else begin
+                logic [7:0]  c_byte;
+                logic [7:0]  ks;
+                logic [7:0]  pt;
+                logic [15:0] nxt_idx;
+                c_byte  = rx_raw_win_q[127:120];
+                ks      = rx_ks_block_q[(15 - rx_byte_idx_q[3:0])*8 +: 8];
+                pt      = c_byte ^ ks;
+                nxt_idx = rx_byte_idx_q + 16'd1;
+
+                rx_ct_blk_q[(15 - rx_byte_idx_q[3:0])*8 +: 8] <= c_byte;
+                rx_cipher_bits_q <= rx_cipher_bits_q + 64'd8;
+                rx_byte_idx_q    <= nxt_idx;
+
+                if (!s_axis_rx_tlast) begin
+                  rx_raw_win_q     <= {rx_raw_win_q[119:0], s_axis_rx_tdata};
+                  m_axis_rx_tvalid <= 1'b1;
+                  m_axis_rx_tdata  <= pt;
+                  m_axis_rx_tlast  <= 1'b0;
+                  if (rx_byte_idx_q[3:0] == 4'd15) begin
+                    logic [127:0] full_ct_blk;
+                    full_ct_blk     = {rx_ct_blk_q[127:8], c_byte};
+                    rx_ghash_x_q    <= rx_ghash_y_q ^ full_ct_blk;
+                    rx_ghash_y_q    <= 128'd0;
+                    rx_ghash_v_q    <= rx_ghash_h_q;
+                    rx_ghash_step_q <= 5'd0;
+                    rx_aes_state_q  <= format_aes_ctr_block(rx_spi_q, rx_seq_q, {4'd0, nxt_idx[15:4]} + 16'd2) ^ master_key_cfg[127:0];
+                    rx_aes_rk_q     <= master_key_cfg[127:0];
+                    rx_aes_round_q  <= 4'd1;
+                    rx_state_q      <= RX_SDLS_GCM_BLK_GHASH;
+                  end
+                end else begin
+                  // Final wire byte arrived: `c_byte` is final ciphertext byte, `{rx_raw_win_q[119:0], s_axis_rx_tdata}` is 128-bit GCM Tag
+                  logic [127:0] last_ct_blk;
+                  last_ct_blk = 128'd0;
+                  for (int k = 0; k < 16; k++) begin
+                    if (k < rx_byte_idx_q[3:0]) begin
+                      last_ct_blk[(15 - k)*8 +: 8] = rx_ct_blk_q[(15 - k)*8 +: 8];
+                    end else if (k == rx_byte_idx_q[3:0]) begin
+                      last_ct_blk[(15 - k)*8 +: 8] = c_byte;
+                    end
+                  end
+                  rx_prev_pt_q     <= pt;
+                  rx_prev_valid_q  <= 1'b1;
+                  rx_rcvd_tag128_q <= {rx_raw_win_q[119:0], s_axis_rx_tdata};
+                  rx_ghash_x_q     <= rx_ghash_y_q ^ last_ct_blk;
+                  rx_ghash_y_q     <= 128'd0;
+                  rx_ghash_v_q     <= rx_ghash_h_q;
+                  rx_ghash_step_q  <= 5'd0;
+                  rx_state_q       <= RX_SDLS_GCM_LEN_INIT;
+                end
               end
             end
+          end
+        end
+
+        RX_SDLS_GCM_BLK_GHASH: begin
+          logic [127:0] nxt_z, nxt_v;
+          ghash_step_4bit(rx_ghash_y_q, rx_ghash_v_q, rx_ghash_x_q[127:124], nxt_z, nxt_v);
+          rx_ghash_y_q <= nxt_z;
+          rx_ghash_v_q <= nxt_v;
+          rx_ghash_x_q <= {rx_ghash_x_q[123:0], 4'h0};
+          if (rx_aes_round_q <= 4'd10) begin
+            logic [127:0] nxt_st, nxt_rk;
+            aes_step_round(rx_aes_state_q, rx_aes_rk_q, rx_aes_round_q, nxt_st, nxt_rk);
+            rx_aes_state_q <= nxt_st;
+            rx_aes_rk_q    <= nxt_rk;
+            if (rx_aes_round_q == 4'd10) begin
+              rx_ks_block_q <= nxt_st;
+            end
+            rx_aes_round_q <= rx_aes_round_q + 4'd1;
+          end
+          if (rx_ghash_step_q == 5'd31) begin
+            rx_ct_blk_q <= 128'd0;
+            rx_state_q  <= RX_SDLS_BODY;
+          end else begin
+            rx_ghash_step_q <= rx_ghash_step_q + 5'd1;
+          end
+        end
+
+        RX_SDLS_GCM_LEN_INIT: begin
+          logic [127:0] nxt_z, nxt_v;
+          ghash_step_4bit(rx_ghash_y_q, rx_ghash_v_q, rx_ghash_x_q[127:124], nxt_z, nxt_v);
+          rx_ghash_y_q <= nxt_z;
+          rx_ghash_v_q <= nxt_v;
+          rx_ghash_x_q <= {rx_ghash_x_q[123:0], 4'h0};
+          if (rx_ghash_step_q == 5'd31) begin
+            rx_ghash_x_q    <= nxt_z ^ {64'd48, rx_cipher_bits_q};
+            rx_ghash_y_q    <= 128'd0;
+            rx_ghash_v_q    <= rx_ghash_h_q;
+            rx_ghash_step_q <= 5'd0;
+            rx_state_q      <= RX_SDLS_GCM_LEN_GHASH;
+          end else begin
+            rx_ghash_step_q <= rx_ghash_step_q + 5'd1;
+          end
+        end
+
+        RX_SDLS_GCM_LEN_GHASH: begin
+          if (rx_ghash_step_q < 5'd31) begin
+            logic [127:0] nxt_z, nxt_v;
+            ghash_step_4bit(rx_ghash_y_q, rx_ghash_v_q, rx_ghash_x_q[127:124], nxt_z, nxt_v);
+            rx_ghash_y_q    <= nxt_z;
+            rx_ghash_v_q    <= nxt_v;
+            rx_ghash_x_q    <= {rx_ghash_x_q[123:0], 4'h0};
+            rx_ghash_step_q <= rx_ghash_step_q + 5'd1;
+          end else if (m_axis_rx_tready) begin
+            logic [127:0] nxt_z, nxt_v;
+            logic [127:0] calc_tag128;
+            logic         tag_match;
+            ghash_step_4bit(rx_ghash_y_q, rx_ghash_v_q, rx_ghash_x_q[127:124], nxt_z, nxt_v);
+            calc_tag128 = nxt_z ^ rx_ek_j0_q;
+            tag_match   = (calc_tag128 == rx_rcvd_tag128_q) && rx_replay_ok_q;
+            if (rx_prev_valid_q) begin
+              m_axis_rx_tvalid <= 1'b1;
+              m_axis_rx_tdata  <= rx_prev_pt_q;
+              m_axis_rx_tlast  <= 1'b1;
+            end
+            sdls_auth_done_pulse <= 1'b1;
+            sdls_auth_ok         <= tag_match;
+            if (tag_match) begin
+              sa_seq_ram[rx_spi_q[5:0]] <= {calc_ecc39(rx_seq_q + 32'd1), rx_seq_q + 32'd1};
+            end
+            rx_prev_valid_q <= 1'b0;
+            rx_state_q      <= RX_SDLS_IDLE;
           end
         end
 
@@ -413,33 +674,53 @@ module ccsds_sdls_engine
   end
 
   // ---------------------------------------------------------------------------
-  // 4. Downlink Tx SDLS AES-128-CTR Encryptor & Tag Appender
+  // 4. Downlink Tx SDLS AES-128-CTR / AES-128-GCM Encryptor & Tag Appender
   // ---------------------------------------------------------------------------
-  typedef enum logic [2:0] {
-    TX_SDLS_IDLE     = 3'd0,
-    TX_SDLS_HDR      = 3'd1,
-    TX_SDLS_AES_WAIT = 3'd2,
-    TX_SDLS_BODY     = 3'd3,
-    TX_SDLS_TAG      = 3'd4
+  typedef enum logic [3:0] {
+    TX_SDLS_IDLE          = 4'd0,
+    TX_SDLS_HDR           = 4'd1,
+    TX_SDLS_AES_WAIT      = 4'd2,
+    TX_SDLS_GHASH_AAD     = 4'd3,
+    TX_SDLS_BODY          = 4'd4,
+    TX_SDLS_GCM_BLK_GHASH = 4'd5,
+    TX_SDLS_GCM_LEN_INIT  = 4'd6,
+    TX_SDLS_GCM_LEN_GHASH = 4'd7,
+    TX_SDLS_TAG           = 4'd8
   } tx_sdls_state_e;
 
   tx_sdls_state_e tx_state_q;
   logic [2:0]     tx_hdr_idx_q;
+  logic [3:0]     tx_tag_idx_q;
   logic [31:0]    tx_seq_cnt_q;
   logic [15:0]    tx_byte_idx_q;
   logic [7:0]     tx_running_tag_q;
   logic [7:0]     tx_first_byte_q;
   logic           tx_first_last_q;
+  logic [1:0]     tx_aes_phase_q; // 0: H=AES(0), 1: E_K(J0), 2: E_K(J_ctr)
   logic [127:0]   tx_aes_state_q;
   logic [127:0]   tx_aes_rk_q;
   logic [3:0]     tx_aes_round_q;
   logic [127:0]   tx_ks_block_q;
 
+  // AES-128-GCM Downlink Tx state
+  logic [127:0]   tx_ghash_h_q;
+  logic [127:0]   tx_ek_j0_q;
+  logic [127:0]   tx_ghash_y_q;
+  logic [127:0]   tx_ghash_x_q;
+  logic [127:0]   tx_ghash_v_q;
+  logic [127:0]   tx_ct_blk_q;
+  logic [4:0]     tx_ghash_step_q;
+  logic [63:0]    tx_cipher_bits_q;
+  logic [127:0]   tx_gcm_tag128_q;
+
+  logic tx_out_ready;
+  assign tx_out_ready = !m_axis_tx_tvalid || m_axis_tx_tready;
+
   always_comb begin
     if (!sdls_en_cfg) begin
-      s_axis_tx_tready = m_axis_tx_tready;
+      s_axis_tx_tready = tx_out_ready;
     end else begin
-      s_axis_tx_tready = (tx_state_q == TX_SDLS_IDLE || tx_state_q == TX_SDLS_BODY) && m_axis_tx_tready;
+      s_axis_tx_tready = (tx_state_q == TX_SDLS_IDLE || tx_state_q == TX_SDLS_BODY) && tx_out_ready;
     end
   end
 
@@ -447,15 +728,26 @@ module ccsds_sdls_engine
     if (!rst_n) begin
       tx_state_q       <= TX_SDLS_IDLE;
       tx_hdr_idx_q     <= 3'd0;
+      tx_tag_idx_q     <= 4'd0;
       tx_seq_cnt_q     <= 32'd1;
       tx_byte_idx_q    <= 16'd0;
       tx_running_tag_q <= 8'd0;
       tx_first_byte_q  <= 8'd0;
       tx_first_last_q  <= 1'b0;
+      tx_aes_phase_q   <= 2'd0;
       tx_aes_state_q   <= 128'd0;
       tx_aes_rk_q      <= 128'd0;
       tx_aes_round_q   <= 4'd0;
       tx_ks_block_q    <= 128'd0;
+      tx_ghash_h_q     <= 128'd0;
+      tx_ek_j0_q       <= 128'd0;
+      tx_ghash_y_q     <= 128'd0;
+      tx_ghash_x_q     <= 128'd0;
+      tx_ghash_v_q     <= 128'd0;
+      tx_ct_blk_q      <= 128'd0;
+      tx_ghash_step_q  <= 5'd0;
+      tx_cipher_bits_q <= 64'd0;
+      tx_gcm_tag128_q  <= 128'd0;
       m_axis_tx_tvalid <= 1'b0;
       m_axis_tx_tdata  <= 8'd0;
       m_axis_tx_tlast  <= 1'b0;
@@ -466,7 +758,7 @@ module ccsds_sdls_engine
       end
 
       if (!sdls_en_cfg) begin
-        if (s_axis_tx_tvalid && m_axis_tx_tready) begin
+        if (s_axis_tx_tvalid && tx_out_ready) begin
           m_axis_tx_tvalid <= 1'b1;
           m_axis_tx_tdata  <= s_axis_tx_tdata;
           m_axis_tx_tlast  <= s_axis_tx_tlast;
@@ -474,16 +766,24 @@ module ccsds_sdls_engine
       end else begin
         case (tx_state_q)
           TX_SDLS_IDLE: begin
-            if (s_axis_tx_tvalid && m_axis_tx_tready) begin
+            if (s_axis_tx_tvalid && tx_out_ready) begin
               tx_first_byte_q  <= s_axis_tx_tdata;
               tx_first_last_q  <= s_axis_tx_tlast;
               m_axis_tx_tvalid <= 1'b1;
               m_axis_tx_tdata  <= tx_default_spi_cfg[15:8];
               m_axis_tx_tlast  <= 1'b0;
               tx_hdr_idx_q     <= 3'd1;
+              tx_byte_idx_q    <= 16'd0;
+              tx_cipher_bits_q <= 64'd0;
               tx_running_tag_q <= tx_default_spi_cfg[15:8] ^ tx_default_spi_cfg[7:0] ^
                                   tx_seq_cnt_q[7:0] ^ 8'h5A;
-              tx_aes_state_q   <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, 16'd0) ^ master_key_cfg[127:0];
+              if (sdls_gcm_mode_cfg) begin
+                tx_aes_phase_q <= 2'd0;
+                tx_aes_state_q <= 128'd0 ^ master_key_cfg[127:0];
+              end else begin
+                tx_aes_phase_q <= 2'd2;
+                tx_aes_state_q <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, 16'd0) ^ master_key_cfg[127:0];
+              end
               tx_aes_rk_q      <= master_key_cfg[127:0];
               tx_aes_round_q   <= 4'd1;
               tx_state_q       <= TX_SDLS_HDR;
@@ -491,7 +791,7 @@ module ccsds_sdls_engine
           end
 
           TX_SDLS_HDR: begin
-            if (m_axis_tx_tready) begin
+            if (tx_out_ready) begin
               logic [127:0] nxt_st, nxt_rk;
               aes_step_round(tx_aes_state_q, tx_aes_rk_q, tx_aes_round_q, nxt_st, nxt_rk);
               tx_aes_state_q <= nxt_st;
@@ -521,56 +821,215 @@ module ccsds_sdls_engine
             tx_aes_state_q <= nxt_st;
             tx_aes_rk_q    <= nxt_rk;
             if (tx_aes_round_q == 4'd10) begin
-              tx_ks_block_q <= nxt_st;
-              if (tx_hdr_idx_q == 3'd6) begin
-                if (m_axis_tx_tready) begin
-                  logic [7:0] ks0;
-                  ks0              = nxt_st[127:120];
-                  m_axis_tx_tvalid <= 1'b1;
-                  m_axis_tx_tdata  <= tx_first_byte_q ^ ks0;
-                  m_axis_tx_tlast  <= 1'b0;
-                  tx_running_tag_q <= {tx_running_tag_q[6:0], tx_running_tag_q[7]} ^ tx_first_byte_q ^ ks0;
-                  tx_byte_idx_q    <= 16'd1;
-                  tx_hdr_idx_q     <= 3'd7;
-                  tx_state_q       <= tx_first_last_q ? TX_SDLS_TAG : TX_SDLS_BODY;
-                end
+              if (sdls_gcm_mode_cfg && (tx_aes_phase_q == 2'd0)) begin
+                tx_ghash_h_q   <= nxt_st;
+                tx_aes_phase_q <= 2'd1;
+                tx_aes_state_q <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, 16'd1) ^ master_key_cfg[127:0];
+                tx_aes_rk_q    <= master_key_cfg[127:0];
+                tx_aes_round_q <= 4'd1;
+              end else if (sdls_gcm_mode_cfg && (tx_aes_phase_q == 2'd1)) begin
+                tx_ek_j0_q     <= nxt_st;
+                tx_aes_phase_q <= 2'd2;
+                tx_aes_state_q <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, 16'd2) ^ master_key_cfg[127:0];
+                tx_aes_rk_q    <= master_key_cfg[127:0];
+                tx_aes_round_q <= 4'd1;
               end else begin
-                tx_state_q <= TX_SDLS_BODY;
+                tx_ks_block_q <= nxt_st;
+                if (sdls_gcm_mode_cfg && (tx_hdr_idx_q == 3'd6)) begin
+                  tx_ghash_y_q    <= 128'd0;
+                  tx_ghash_x_q    <= {tx_default_spi_cfg, tx_seq_cnt_q, 80'd0};
+                  tx_ghash_v_q    <= tx_ghash_h_q;
+                  tx_ghash_step_q <= 5'd0;
+                  tx_state_q      <= TX_SDLS_GHASH_AAD;
+                end else if (tx_hdr_idx_q == 3'd6) begin
+                  if (tx_out_ready) begin
+                    logic [7:0] ks0;
+                    ks0              = nxt_st[127:120];
+                    m_axis_tx_tvalid <= 1'b1;
+                    m_axis_tx_tdata  <= tx_first_byte_q ^ ks0;
+                    m_axis_tx_tlast  <= 1'b0;
+                    tx_running_tag_q <= {tx_running_tag_q[6:0], tx_running_tag_q[7]} ^ tx_first_byte_q ^ ks0;
+                    tx_byte_idx_q    <= 16'd1;
+                    tx_hdr_idx_q     <= 3'd7;
+                    tx_tag_idx_q     <= 4'd0;
+                    tx_state_q       <= tx_first_last_q ? TX_SDLS_TAG : TX_SDLS_BODY;
+                  end
+                end else begin
+                  tx_state_q <= TX_SDLS_BODY;
+                end
               end
             end else begin
               tx_aes_round_q <= tx_aes_round_q + 4'd1;
             end
           end
 
-          TX_SDLS_BODY: begin
-            if (s_axis_tx_tvalid && m_axis_tx_tready) begin
-              logic [7:0]  ks;
-              logic [15:0] nxt_idx;
-              ks               = tx_ks_block_q[(15 - tx_byte_idx_q[3:0])*8 +: 8];
-              nxt_idx          = tx_byte_idx_q + 16'd1;
+          TX_SDLS_GHASH_AAD: begin
+            if (tx_ghash_step_q < 5'd31) begin
+              logic [127:0] nxt_z, nxt_v;
+              ghash_step_4bit(tx_ghash_y_q, tx_ghash_v_q, tx_ghash_x_q[127:124], nxt_z, nxt_v);
+              tx_ghash_y_q    <= nxt_z;
+              tx_ghash_v_q    <= nxt_v;
+              tx_ghash_x_q    <= {tx_ghash_x_q[123:0], 4'h0};
+              tx_ghash_step_q <= tx_ghash_step_q + 5'd1;
+            end else if (tx_out_ready) begin
+              logic [127:0] nxt_z, nxt_v;
+              logic [7:0]   ks0;
+              logic [7:0]   c0;
+              ghash_step_4bit(tx_ghash_y_q, tx_ghash_v_q, tx_ghash_x_q[127:124], nxt_z, nxt_v);
+              tx_ghash_y_q     <= nxt_z;
+              ks0              = tx_ks_block_q[127:120];
+              c0               = tx_first_byte_q ^ ks0;
               m_axis_tx_tvalid <= 1'b1;
-              m_axis_tx_tdata  <= s_axis_tx_tdata ^ ks;
+              m_axis_tx_tdata  <= c0;
               m_axis_tx_tlast  <= 1'b0;
-              tx_running_tag_q <= {tx_running_tag_q[6:0], tx_running_tag_q[7]} ^ s_axis_tx_tdata ^ ks;
-              tx_byte_idx_q    <= nxt_idx;
-              if (s_axis_tx_tlast) begin
-                tx_state_q <= TX_SDLS_TAG;
-              end else if (tx_byte_idx_q[3:0] == 4'd15) begin
-                tx_aes_state_q <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, {4'd0, nxt_idx[15:4]}) ^ master_key_cfg[127:0];
-                tx_aes_rk_q    <= master_key_cfg[127:0];
-                tx_aes_round_q <= 4'd1;
-                tx_state_q     <= TX_SDLS_AES_WAIT;
+              tx_ct_blk_q      <= {c0, 120'd0};
+              tx_cipher_bits_q <= 64'd8;
+              tx_byte_idx_q    <= 16'd1;
+              tx_hdr_idx_q     <= 3'd7;
+              if (tx_first_last_q) begin
+                tx_ghash_x_q    <= nxt_z ^ {c0, 120'd0};
+                tx_ghash_y_q    <= 128'd0;
+                tx_ghash_v_q    <= tx_ghash_h_q;
+                tx_ghash_step_q <= 5'd0;
+                tx_state_q      <= TX_SDLS_GCM_LEN_INIT;
+              end else begin
+                tx_state_q <= TX_SDLS_BODY;
               end
             end
           end
 
-          TX_SDLS_TAG: begin
-            if (m_axis_tx_tready) begin
+          TX_SDLS_BODY: begin
+            if (s_axis_tx_tvalid && tx_out_ready) begin
+              logic [7:0]  ks;
+              logic [7:0]  c_byte;
+              logic [15:0] nxt_idx;
+              ks               = tx_ks_block_q[(15 - tx_byte_idx_q[3:0])*8 +: 8];
+              c_byte           = s_axis_tx_tdata ^ ks;
+              nxt_idx          = tx_byte_idx_q + 16'd1;
               m_axis_tx_tvalid <= 1'b1;
-              m_axis_tx_tdata  <= tx_running_tag_q;
-              m_axis_tx_tlast  <= 1'b1;
-              tx_seq_cnt_q     <= tx_seq_cnt_q + 32'd1;
-              tx_state_q       <= TX_SDLS_IDLE;
+              m_axis_tx_tdata  <= c_byte;
+              m_axis_tx_tlast  <= 1'b0;
+              tx_running_tag_q <= {tx_running_tag_q[6:0], tx_running_tag_q[7]} ^ s_axis_tx_tdata ^ ks;
+              tx_ct_blk_q[(15 - tx_byte_idx_q[3:0])*8 +: 8] <= c_byte;
+              tx_cipher_bits_q <= tx_cipher_bits_q + 64'd8;
+              tx_byte_idx_q    <= nxt_idx;
+              if (s_axis_tx_tlast) begin
+                tx_tag_idx_q <= 4'd0;
+                if (!sdls_gcm_mode_cfg) begin
+                  tx_state_q <= TX_SDLS_TAG;
+                end else begin
+                  logic [127:0] last_ct_blk;
+                  last_ct_blk = 128'd0;
+                  for (int k = 0; k < 16; k++) begin
+                    if (k < tx_byte_idx_q[3:0]) begin
+                      last_ct_blk[(15 - k)*8 +: 8] = tx_ct_blk_q[(15 - k)*8 +: 8];
+                    end else if (k == tx_byte_idx_q[3:0]) begin
+                      last_ct_blk[(15 - k)*8 +: 8] = c_byte;
+                    end
+                  end
+                  tx_ghash_x_q    <= tx_ghash_y_q ^ last_ct_blk;
+                  tx_ghash_y_q    <= 128'd0;
+                  tx_ghash_v_q    <= tx_ghash_h_q;
+                  tx_ghash_step_q <= 5'd0;
+                  tx_state_q      <= TX_SDLS_GCM_LEN_INIT;
+                end
+              end else if (tx_byte_idx_q[3:0] == 4'd15) begin
+                if (sdls_gcm_mode_cfg) begin
+                  logic [127:0] full_ct_blk;
+                  full_ct_blk     = {tx_ct_blk_q[127:8], c_byte};
+                  tx_ghash_x_q    <= tx_ghash_y_q ^ full_ct_blk;
+                  tx_ghash_y_q    <= 128'd0;
+                  tx_ghash_v_q    <= tx_ghash_h_q;
+                  tx_ghash_step_q <= 5'd0;
+                  tx_aes_state_q  <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, {4'd0, nxt_idx[15:4]} + 16'd2) ^ master_key_cfg[127:0];
+                  tx_aes_rk_q     <= master_key_cfg[127:0];
+                  tx_aes_round_q  <= 4'd1;
+                  tx_state_q      <= TX_SDLS_GCM_BLK_GHASH;
+                end else begin
+                  tx_aes_state_q <= format_aes_ctr_block(tx_default_spi_cfg, tx_seq_cnt_q, {4'd0, nxt_idx[15:4]}) ^ master_key_cfg[127:0];
+                  tx_aes_rk_q    <= master_key_cfg[127:0];
+                  tx_aes_round_q <= 4'd1;
+                  tx_state_q     <= TX_SDLS_AES_WAIT;
+                end
+              end
+            end
+          end
+
+          TX_SDLS_GCM_BLK_GHASH: begin
+            logic [127:0] nxt_z, nxt_v;
+            ghash_step_4bit(tx_ghash_y_q, tx_ghash_v_q, tx_ghash_x_q[127:124], nxt_z, nxt_v);
+            tx_ghash_y_q <= nxt_z;
+            tx_ghash_v_q <= nxt_v;
+            tx_ghash_x_q <= {tx_ghash_x_q[123:0], 4'h0};
+            if (tx_aes_round_q <= 4'd10) begin
+              logic [127:0] nxt_st, nxt_rk;
+              aes_step_round(tx_aes_state_q, tx_aes_rk_q, tx_aes_round_q, nxt_st, nxt_rk);
+              tx_aes_state_q <= nxt_st;
+              tx_aes_rk_q    <= nxt_rk;
+              if (tx_aes_round_q == 4'd10) begin
+                tx_ks_block_q <= nxt_st;
+              end
+              tx_aes_round_q <= tx_aes_round_q + 4'd1;
+            end
+            if (tx_ghash_step_q == 5'd31) begin
+              tx_ct_blk_q <= 128'd0;
+              tx_state_q  <= TX_SDLS_BODY;
+            end else begin
+              tx_ghash_step_q <= tx_ghash_step_q + 5'd1;
+            end
+          end
+
+          TX_SDLS_GCM_LEN_INIT: begin
+            logic [127:0] nxt_z, nxt_v;
+            ghash_step_4bit(tx_ghash_y_q, tx_ghash_v_q, tx_ghash_x_q[127:124], nxt_z, nxt_v);
+            tx_ghash_y_q <= nxt_z;
+            tx_ghash_v_q <= nxt_v;
+            tx_ghash_x_q <= {tx_ghash_x_q[123:0], 4'h0};
+            if (tx_ghash_step_q == 5'd31) begin
+              tx_ghash_x_q    <= nxt_z ^ {64'd48, tx_cipher_bits_q};
+              tx_ghash_y_q    <= 128'd0;
+              tx_ghash_v_q    <= tx_ghash_h_q;
+              tx_ghash_step_q <= 5'd0;
+              tx_state_q      <= TX_SDLS_GCM_LEN_GHASH;
+            end else begin
+              tx_ghash_step_q <= tx_ghash_step_q + 5'd1;
+            end
+          end
+
+          TX_SDLS_GCM_LEN_GHASH: begin
+            logic [127:0] nxt_z, nxt_v;
+            ghash_step_4bit(tx_ghash_y_q, tx_ghash_v_q, tx_ghash_x_q[127:124], nxt_z, nxt_v);
+            tx_ghash_y_q <= nxt_z;
+            tx_ghash_v_q <= nxt_v;
+            tx_ghash_x_q <= {tx_ghash_x_q[123:0], 4'h0};
+            if (tx_ghash_step_q == 5'd31) begin
+              tx_gcm_tag128_q <= nxt_z ^ tx_ek_j0_q;
+              tx_tag_idx_q    <= 4'd0;
+              tx_state_q      <= TX_SDLS_TAG;
+            end else begin
+              tx_ghash_step_q <= tx_ghash_step_q + 5'd1;
+            end
+          end
+
+          TX_SDLS_TAG: begin
+            if (tx_out_ready) begin
+              m_axis_tx_tvalid <= 1'b1;
+              if (!sdls_gcm_mode_cfg) begin
+                m_axis_tx_tdata <= tx_running_tag_q;
+                m_axis_tx_tlast <= 1'b1;
+                tx_seq_cnt_q    <= tx_seq_cnt_q + 32'd1;
+                tx_state_q      <= TX_SDLS_IDLE;
+              end else begin
+                m_axis_tx_tdata <= tx_gcm_tag128_q[(15 - tx_tag_idx_q)*8 +: 8];
+                if (tx_tag_idx_q == 4'd15) begin
+                  m_axis_tx_tlast <= 1'b1;
+                  tx_seq_cnt_q    <= tx_seq_cnt_q + 32'd1;
+                  tx_state_q      <= TX_SDLS_IDLE;
+                end else begin
+                  m_axis_tx_tlast <= 1'b0;
+                  tx_tag_idx_q    <= tx_tag_idx_q + 4'd1;
+                end
+              end
             end
           end
 

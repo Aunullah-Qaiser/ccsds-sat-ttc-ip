@@ -11,6 +11,10 @@
 //                   Byte 0, while completely stripping Idle Space Packets
 //                   (APID == 11'h7FF) and inter-packet idle fill octets (0xE0/0x55).
 //                 - Supports First Header Pointer (FHP) resynchronization.
+//                 - Fix CR-30 (clk_sys Fmax Optimization): Decouples 48-bit
+//                   hdr_shift_q[47:0]/CE from s_axis_tdata idle-byte compare
+//                   and eliminates the 17-bit +1 adder on ph.pkt_data_len by
+//                   counting rem_body_bytes_q from pkt_data_len down to 0.
 // =============================================================================
 `timescale 1ns / 1ps
 
@@ -52,7 +56,7 @@ module ccsds_pkt_reassembler
   logic [47:0]          hdr_shift_q;
   logic [39:0]          hdr_emit_shift_q;
   logic [2:0]           hdr_idx_q;
-  logic [16:0]          rem_body_bytes_q;
+  logic [15:0]          rem_body_bytes_q;
   logic [10:0]          skip_cnt_q;
   logic                 is_idle_apid_q;
   ccsds_space_pkt_hdr_t cur_pkt_hdr_q;
@@ -66,7 +70,7 @@ module ccsds_pkt_reassembler
       hdr_shift_q             <= 48'd0;
       hdr_emit_shift_q        <= 40'd0;
       hdr_idx_q               <= 3'd0;
-      rem_body_bytes_q        <= 17'd0;
+      rem_body_bytes_q        <= 16'd0;
       skip_cnt_q              <= 11'd0;
       is_idle_apid_q          <= 1'b0;
       cur_pkt_hdr_q           <= '0;
@@ -117,44 +121,43 @@ module ccsds_pkt_reassembler
           end
 
           REASM_COLLECT_HDR: begin
+            logic [47:0] nxt_hdr48;
+            // Unconditional shift decouples hdr_shift_q[47:0]/CE from s_axis_tdata (Fix CR-30)
+            nxt_hdr48   = {hdr_shift_q[39:0], s_axis_tdata};
+            hdr_shift_q <= nxt_hdr48;
+
             if ((hdr_idx_q == 3'd0) && ((s_axis_tdata == 8'hE0) || (s_axis_tdata == 8'h55))) begin
               hdr_idx_q <= 3'd0;
-            end else begin
-              logic [47:0] nxt_hdr48;
-              nxt_hdr48   = {hdr_shift_q[39:0], s_axis_tdata};
-              hdr_shift_q <= nxt_hdr48;
+            end else if (hdr_idx_q == 3'd5) begin
+              ccsds_space_pkt_hdr_t ph;
+              logic                 idle_pkt;
+              ph               = ccsds_space_pkt_hdr_t'(nxt_hdr48);
+              cur_pkt_hdr_q    <= ph;
+              idle_pkt         = (ph.apid == 11'h7FF);
+              is_idle_apid_q   <= idle_pkt;
+              rem_body_bytes_q <= ph.pkt_data_len; // Direct wire load (0 CARRY8 levels on s_axis_tdata!)
+              hdr_idx_q        <= 3'd0;
 
-              if (hdr_idx_q == 3'd5) begin
-                ccsds_space_pkt_hdr_t ph;
-                logic                 idle_pkt;
-                ph               = ccsds_space_pkt_hdr_t'(nxt_hdr48);
-                cur_pkt_hdr_q    <= ph;
-                idle_pkt         = (ph.apid == 11'h7FF);
-                is_idle_apid_q   <= idle_pkt;
-                rem_body_bytes_q <= {1'b0, ph.pkt_data_len} + 17'd1;
-                hdr_idx_q        <= 3'd0;
-
-                if (ph.pkt_vn != 3'b000) begin
-                  pkt_len_err_pulse <= 1'b1;
-                  if (fhp_resync_en) begin
-                    state_q    <= REASM_SKIP_TO_FHP;
-                    skip_cnt_q <= 11'h7FF;
-                  end else begin
-                    state_q <= REASM_COLLECT_HDR;
-                  end
-                end else if (idle_pkt) begin
-                  // Idle Space Packet (APID=0x7FF): emit 0 header bytes and discard body
-                  state_q <= REASM_DATA_BODY;
+              if (ph.pkt_vn != 3'b000) begin
+                pkt_len_err_pulse <= 1'b1;
+                if (fhp_resync_en) begin
+                  state_q    <= REASM_SKIP_TO_FHP;
+                  skip_cnt_q <= 11'h7FF;
                 end else begin
-                  // Valid user Space Packet: emit Header Byte 0 now and Header Bytes 1..5 next
-                  m_axis_pkt_tdata  <= nxt_hdr48[47:40];
-                  m_axis_pkt_tvalid <= 1'b1;
-                  hdr_emit_shift_q  <= nxt_hdr48[39:0];
-                  state_q           <= REASM_EMIT_HDR_1_5;
+                  state_q <= REASM_COLLECT_HDR;
                 end
+              end else if (idle_pkt) begin
+                // Idle Space Packet (APID=0x7FF): emit 0 header bytes and discard body
+                state_q <= REASM_DATA_BODY;
               end else begin
-                hdr_idx_q <= hdr_idx_q + 3'd1;
+                // Valid user Space Packet: emit Header Byte 0 now and Header Bytes 1..5 next
+                m_axis_pkt_tdata  <= nxt_hdr48[47:40];
+                m_axis_pkt_tvalid <= 1'b1;
+                hdr_emit_shift_q  <= nxt_hdr48[39:0];
+                state_q           <= REASM_EMIT_HDR_1_5;
               end
+            end else begin
+              hdr_idx_q <= hdr_idx_q + 3'd1;
             end
           end
 
@@ -162,15 +165,14 @@ module ccsds_pkt_reassembler
             if (!is_idle_apid_q) begin
               m_axis_pkt_tdata  <= s_axis_tdata;
               m_axis_pkt_tvalid <= 1'b1;
-              m_axis_pkt_tlast  <= (rem_body_bytes_q == 17'd1);
+              m_axis_pkt_tlast  <= (rem_body_bytes_q == 16'd0);
             end
-            if (rem_body_bytes_q <= 17'd1) begin
-              rem_body_bytes_q        <= 17'd0;
+            if (rem_body_bytes_q == 16'd0) begin
               pkt_completed_pulse     <= !is_idle_apid_q;
               idle_pkt_stripped_pulse <= is_idle_apid_q;
               state_q                 <= REASM_COLLECT_HDR;
             end else begin
-              rem_body_bytes_q <= rem_body_bytes_q - 17'd1;
+              rem_body_bytes_q <= rem_body_bytes_q - 16'd1;
             end
           end
 

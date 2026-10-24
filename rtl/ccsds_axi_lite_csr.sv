@@ -8,7 +8,9 @@
 //                 - 32-bit AXI4-Lite slave interface (0x00..0x7C register map).
 //                 - Triple-Modular Redundant (TMR) storage with continuous
 //                   auto-scrubbing for mission-critical configuration registers
-//                   (SCID, Role/Protocol/FEC modes, SDLS enable, COP-1 window).
+//                   (SCID, Role/Protocol/FEC modes, SDLS enable, AES-GCM mode,
+//                   COP-1 window, 4-SPS SRRC, Closed-Loop Gardner TED, Ka-Band
+//                   Turnaround, and FLL-Assisted Costas Loop).
 //                 - 48-bit CCSDS Unsegmented Time Code (CUC: 32b Coarse Seconds
 //                   + 16b Fine Sub-seconds) synchronized to 1 PPS input for
 //                   downlink TM/AOS/USLP Secondary Header OBT stamping.
@@ -73,6 +75,10 @@ module ccsds_axi_lite_csr
   output logic        sdls_en_cfg,
   output logic        bc_require_sdls_cfg,
   output logic        srrc_4sps_en_cfg,
+  output logic        gardner_ted_en_cfg,
+  output logic [1:0]  turnaround_kaband_cfg,
+  output logic        sdls_gcm_mode_cfg,
+  output logic        fll_assist_en_cfg,
   output logic [7:0]  window_half_w_cfg,
   output logic [3:0]  rs_interleave_i_cfg,
   output logic [7:0]  rs_virt_fill_q_cfg,
@@ -91,8 +97,10 @@ module ccsds_axi_lite_csr
   // 0x00 : CORE_ID_VER        (RO) 32'hCC5D_0230 (CCSDS-SAT-TTC-IP v2.3)
   // 0x04 : CTRL_SCID_PROTO    (RW, TMR) [9:0]=SCID, [15:12]=PROTO, [19:16]=FEC, [20]=OCF, [21]=FECF,
   //                                     [22]=CRC32, [23]=AOS_FHEC, [24]=TC_SEG_HDR, [25]=OBT_EN,
-  //                                     [26]=SDLS_EN, [27]=BC_REQ_SDLS
-  // 0x08 : CTRL_USLP_RS_CFG   (RW, TMR) [15:0]=USLP_SCID, [19:16]=RS_I, [27:20]=RS_Q
+  //                                     [26]=SDLS_EN, [27]=BC_REQ_SDLS, [28]=SRRC_4SPS_EN,
+  //                                     [29]=GARDNER_TED_EN, [31:30]=TURNAROUND_KABAND_CFG
+  // 0x08 : CTRL_USLP_RS_CFG   (RW, TMR) [15:0]=USLP_SCID, [19:16]=RS_I, [27:20]=RS_Q,
+  //                                     [28]=SDLS_GCM_MODE_CFG, [29]=FLL_ASSIST_EN_CFG
   // 0x0C : CTRL_COP1_TFDF_CFG (RW, TMR) [7:0]=WIN_W, [18:8]=TFDF_LEN, [24]=IRQ_EN
   // 0x10 : OBT_COARSE_SEC     (RW) 32-bit CUC Coarse Seconds
   // 0x14 : OBT_FINE_SUBSEC    (RW) [15:0] 16-bit CUC Fine Sub-seconds
@@ -141,10 +149,14 @@ module ccsds_axi_lite_csr
     sdls_en_cfg            = voted_scid_proto[26];
     bc_require_sdls_cfg    = voted_scid_proto[27];
     srrc_4sps_en_cfg       = voted_scid_proto[28];
+    gardner_ted_en_cfg     = voted_scid_proto[29];
+    turnaround_kaband_cfg  = voted_scid_proto[31:30];
 
     uslp_scid_cfg          = voted_uslp_rs[15:0];
     rs_interleave_i_cfg    = voted_uslp_rs[19:16];
     rs_virt_fill_q_cfg     = voted_uslp_rs[27:20];
+    sdls_gcm_mode_cfg      = voted_uslp_rs[28];
+    fll_assist_en_cfg      = voted_uslp_rs[29];
 
     window_half_w_cfg      = voted_cop1_tfdf[7:0];
     tfdf_byte_len_cfg      = voted_cop1_tfdf[18:8];

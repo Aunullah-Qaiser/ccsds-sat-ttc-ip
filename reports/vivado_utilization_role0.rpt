@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Sat Oct 24 07:49:08 2026
+| Date         : Sun Oct 25 00:06:13 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_utilization -hierarchical -file reports/vivado_utilization_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -22,26 +22,26 @@ Table of Contents
 +------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
 |        Instance        |               Module               | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
 +------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
-| ccsds_sat_ttc_top      |                              (top) |      14028 |      12828 |    1200 |    0 | 10331 |      0 |      0 |          0 |
-|   (ccsds_sat_ttc_top)  |                              (top) |          0 |          0 |       0 |    0 |    52 |      0 |      0 |          0 |
-|   u_asm_corr           |               ccsds_asm_correlator |        165 |        165 |       0 |    0 |    73 |      0 |      0 |          0 |
-|   u_bch_dec            |                  ccsds_bch6356_dec |        195 |        195 |       0 |    0 |   150 |      0 |      0 |          0 |
-|   u_csr                |                 ccsds_axi_lite_csr |       1086 |       1086 |       0 |    0 |   438 |      0 |      0 |          0 |
-|   u_dl_framer          |           ccsds_tm_aos_uslp_framer |        671 |        671 |       0 |    0 |   407 |      0 |      0 |          0 |
-|   u_farm1              |                    ccsds_farm1_tmr |        433 |        433 |       0 |    0 |   341 |      0 |      0 |          0 |
+| ccsds_sat_ttc_top      |                              (top) |      17064 |      15864 |    1200 |    0 | 12499 |      0 |      0 |          0 |
+|   (ccsds_sat_ttc_top)  |                              (top) |          4 |          4 |       0 |    0 |    57 |      0 |      0 |          0 |
+|   u_asm_corr           |               ccsds_asm_correlator |        169 |        169 |       0 |    0 |    73 |      0 |      0 |          0 |
+|   u_bch_dec            |                  ccsds_bch6356_dec |        211 |        211 |       0 |    0 |   150 |      0 |      0 |          0 |
+|   u_csr                |                 ccsds_axi_lite_csr |        839 |        839 |       0 |    0 |   438 |      0 |      0 |          0 |
+|   u_dl_framer          |           ccsds_tm_aos_uslp_framer |        594 |        594 |       0 |    0 |   407 |      0 |      0 |          0 |
+|   u_farm1              |                    ccsds_farm1_tmr |        431 |        431 |       0 |    0 |   341 |      0 |      0 |          0 |
 |   u_hcpd               |                    ccsds_hcpd_ctrl |        107 |        107 |       0 |    0 |   141 |      0 |      0 |          0 |
-|   u_phy_modem          |                    ccsds_phy_modem |       1407 |       1407 |       0 |    0 |  1369 |      0 |      0 |          0 |
-|   u_pn_ranging         |                   ccsds_pn_ranging |        242 |        242 |       0 |    0 |   120 |      0 |      0 |          0 |
-|   u_prox1_plcw         |              ccsds_prox1_plcw_ctrl |         29 |         29 |       0 |    0 |    35 |      0 |      0 |          0 |
-|   u_reassembler        |              ccsds_pkt_reassembler |        116 |        116 |       0 |    0 |   125 |      0 |      0 |          0 |
-|   u_rs_enc             |             ccsds_dl_rs255_223_enc |        682 |        682 |       0 |    0 |  2079 |      0 |      0 |          0 |
-|   u_rx_commit_cdc_fifo |                 ccsds_cdc_fifo_ecc |        256 |        112 |     144 |    0 |    41 |      0 |      0 |          0 |
-|   u_sdls               |                  ccsds_sdls_engine |       5113 |       5113 |       0 |    0 |  3527 |      0 |      0 |          0 |
-|   u_short_ldpc_dec     |            ccsds_ul_short_ldpc_dec |       1081 |       1081 |       0 |    0 |   620 |      0 |      0 |          0 |
-|   u_turbo_ldpc_enc     |            ccsds_dl_turbo_ldpc_enc |        200 |        200 |       0 |    0 |   347 |      0 |      0 |          0 |
-|   u_tx_hwm_cdc_fifo    | ccsds_cdc_fifo_ecc__parameterized0 |        254 |         94 |     160 |    0 |    21 |      0 |      0 |          0 |
-|   u_ul_deframer        |             ccsds_tc_uslp_deframer |        681 |        681 |       0 |    0 |   296 |      0 |      0 |          0 |
-|   u_vc_arb             |               ccsds_vc_arbiter_mux |       1315 |        419 |     896 |    0 |   149 |      0 |      0 |          0 |
+|   u_phy_modem          |                    ccsds_phy_modem |       1681 |       1681 |       0 |    0 |  1488 |      0 |      0 |          0 |
+|   u_pn_ranging         |                   ccsds_pn_ranging |        237 |        237 |       0 |    0 |   120 |      0 |      0 |          0 |
+|   u_prox1_plcw         |              ccsds_prox1_plcw_ctrl |         30 |         30 |       0 |    0 |    35 |      0 |      0 |          0 |
+|   u_reassembler        |              ccsds_pkt_reassembler |        108 |        108 |       0 |    0 |   124 |      0 |      0 |          0 |
+|   u_rs_enc             |             ccsds_dl_rs255_223_enc |        695 |        695 |       0 |    0 |  2076 |      0 |      0 |          0 |
+|   u_rx_commit_cdc_fifo |                 ccsds_cdc_fifo_ecc |        249 |        105 |     144 |    0 |    41 |      0 |      0 |          0 |
+|   u_sdls               |                  ccsds_sdls_engine |       7919 |       7919 |       0 |    0 |  5571 |      0 |      0 |          0 |
+|   u_short_ldpc_dec     |            ccsds_ul_short_ldpc_dec |       1080 |       1080 |       0 |    0 |   620 |      0 |      0 |          0 |
+|   u_turbo_ldpc_enc     |            ccsds_dl_turbo_ldpc_enc |        522 |        522 |       0 |    0 |   349 |      0 |      0 |          0 |
+|   u_tx_hwm_cdc_fifo    | ccsds_cdc_fifo_ecc__parameterized0 |        255 |         95 |     160 |    0 |    21 |      0 |      0 |          0 |
+|   u_ul_deframer        |             ccsds_tc_uslp_deframer |        629 |        629 |       0 |    0 |   296 |      0 |      0 |          0 |
+|   u_vc_arb             |               ccsds_vc_arbiter_mux |       1308 |        412 |     896 |    0 |   151 |      0 |      0 |          0 |
 +------------------------+------------------------------------+------------+------------+---------+------+-------+--------+--------+------------+
 
 

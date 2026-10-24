@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Sat Oct 24 07:49:23 2026
+| Date         : Sun Oct 25 00:06:28 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_timing -from [get_clocks clk_tc_safe] -to [get_clocks clk_tc_safe] -max_paths 5 -nworst 1 -file reports/vivado_crit_path_clk_tc_safe_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -37,30 +37,30 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.973     0.973    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
                          net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
-                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
-                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
-                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/clcw_scheduled_out[report_value][1]_i_19/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/clcw_scheduled_out[report_value][1]_i_19_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/clcw_scheduled_out[report_value][1]_i_8/O
                          net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
                          LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
                          net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
                          CARRY4 (Prop_carry4_S[1]_O[3])
                                                       0.640     5.452 f  u_ul_deframer/farm_accept_pulse_reg_i_8/O[3]
-                         net (fo=6, unplaced)         0.650     6.102    u_csr/O[3]
-                         LUT6 (Prop_lut6_I4_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
+                         net (fo=6, unplaced)         0.650     6.102    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT6 (Prop_lut6_I5_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
                          net (fo=1, unplaced)         0.639     7.048    u_csr/state_tmr[2][1][1]_i_43_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])
                                                       0.507     7.555 f  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
                          net (fo=1, unplaced)         0.918     8.473    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
                          LUT6 (Prop_lut6_I5_O)        0.124     8.597 f  u_ul_deframer/state_tmr[2][1][1]_i_13/O
                          net (fo=3, unplaced)         0.467     9.064    u_farm1/p_36_out
-                         LUT6 (Prop_lut6_I1_O)        0.124     9.188 f  u_farm1/state_tmr[2][1][0]_i_4/O
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.188 f  u_farm1/state_tmr[2][1][0]_i_4/O
                          net (fo=1, unplaced)         0.449     9.637    u_ul_deframer/nxt_st[0]
                          LUT6 (Prop_lut6_I4_O)        0.124     9.761 f  u_ul_deframer/state_tmr[2][1][0]_i_2/O
                          net (fo=26, unplaced)        0.515    10.276    u_ul_deframer/u_farm1/st_val[0]
@@ -72,7 +72,7 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.924     4.924    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/clcw_scheduled_out_reg[lockout]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
@@ -109,34 +109,34 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.973     0.973    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
                          net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
-                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
-                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
-                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/clcw_scheduled_out[report_value][1]_i_19/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/clcw_scheduled_out[report_value][1]_i_19_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/clcw_scheduled_out[report_value][1]_i_8/O
                          net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
                          LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
                          net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
                          CARRY4 (Prop_carry4_S[1]_O[3])
                                                       0.640     5.452 f  u_ul_deframer/farm_accept_pulse_reg_i_8/O[3]
-                         net (fo=6, unplaced)         0.650     6.102    u_csr/O[3]
-                         LUT6 (Prop_lut6_I4_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
+                         net (fo=6, unplaced)         0.650     6.102    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT6 (Prop_lut6_I5_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
                          net (fo=1, unplaced)         0.639     7.048    u_csr/state_tmr[2][1][1]_i_43_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])
                                                       0.507     7.555 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
                          net (fo=1, unplaced)         0.918     8.473    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
                          LUT6 (Prop_lut6_I5_O)        0.124     8.597 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
                          net (fo=3, unplaced)         0.467     9.064    u_farm1/p_36_out
-                         LUT6 (Prop_lut6_I1_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
                          net (fo=1, unplaced)         0.449     9.637    u_ul_deframer/nxt_st[0]
                          LUT6 (Prop_lut6_I4_O)        0.124     9.761 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
                          net (fo=26, unplaced)        0.515    10.276    u_ul_deframer/u_farm1/st_val[0]
-                         LUT6 (Prop_lut6_I2_O)        0.124    10.400 r  u_ul_deframer/clcw_scheduled_out[wait_flag]_i_1/O
+                         LUT6 (Prop_lut6_I1_O)        0.124    10.400 r  u_ul_deframer/clcw_scheduled_out[wait_flag]_i_1/O
                          net (fo=1, unplaced)         0.000    10.400    u_farm1/clcw_scheduled_out_reg[wait_flag]_0
                          FDCE                                         r  u_farm1/clcw_scheduled_out_reg[wait_flag]/D
   -------------------------------------------------------------------    -------------------
@@ -144,7 +144,7 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.924     4.924    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/clcw_scheduled_out_reg[wait_flag]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
@@ -181,30 +181,30 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.973     0.973    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
                          net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
-                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
-                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
-                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/clcw_scheduled_out[report_value][1]_i_19/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/clcw_scheduled_out[report_value][1]_i_19_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/clcw_scheduled_out[report_value][1]_i_8/O
                          net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
                          LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
                          net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
                          CARRY4 (Prop_carry4_S[1]_O[3])
                                                       0.640     5.452 f  u_ul_deframer/farm_accept_pulse_reg_i_8/O[3]
-                         net (fo=6, unplaced)         0.650     6.102    u_csr/O[3]
-                         LUT6 (Prop_lut6_I4_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
+                         net (fo=6, unplaced)         0.650     6.102    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT6 (Prop_lut6_I5_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
                          net (fo=1, unplaced)         0.639     7.048    u_csr/state_tmr[2][1][1]_i_43_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])
                                                       0.507     7.555 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
                          net (fo=1, unplaced)         0.918     8.473    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
                          LUT6 (Prop_lut6_I5_O)        0.124     8.597 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
                          net (fo=3, unplaced)         0.467     9.064    u_farm1/p_36_out
-                         LUT6 (Prop_lut6_I1_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
                          net (fo=1, unplaced)         0.449     9.637    u_ul_deframer/nxt_st[0]
                          LUT6 (Prop_lut6_I4_O)        0.124     9.761 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
                          net (fo=26, unplaced)        0.515    10.276    u_ul_deframer/u_farm1/st_val[0]
@@ -216,7 +216,7 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.924     4.924    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/state_tmr_reg[0][0][0]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
@@ -253,23 +253,23 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.973     0.973    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
                          net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
-                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
-                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
-                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/clcw_scheduled_out[report_value][1]_i_19/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/clcw_scheduled_out[report_value][1]_i_19_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/clcw_scheduled_out[report_value][1]_i_8/O
                          net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
                          LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
                          net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
                          CARRY4 (Prop_carry4_S[1]_O[3])
                                                       0.640     5.452 f  u_ul_deframer/farm_accept_pulse_reg_i_8/O[3]
-                         net (fo=6, unplaced)         0.650     6.102    u_csr/O[3]
-                         LUT6 (Prop_lut6_I4_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
+                         net (fo=6, unplaced)         0.650     6.102    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT6 (Prop_lut6_I5_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
                          net (fo=1, unplaced)         0.639     7.048    u_csr/state_tmr[2][1][1]_i_43_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])
                                                       0.507     7.555 f  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
@@ -288,7 +288,7 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.924     4.924    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/state_tmr_reg[0][0][1]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    
@@ -325,30 +325,30 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       0.000     0.000 r  
                                                       0.000     0.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.973     0.973    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.973     0.973    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/v_r_tmr_reg[1][7][1]/C
   -------------------------------------------------------------------    -------------------
                          FDCE (Prop_fdce_C_Q)         0.496     1.469 r  u_farm1/v_r_tmr_reg[1][7][1]/Q
                          net (fo=4, unplaced)         0.989     2.458    u_farm1/v_r_tmr[1][7]_20[1]
-                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/v_r_tmr[1][0][1]_i_21/O
-                         net (fo=1, unplaced)         0.000     2.753    u_farm1/v_r_tmr[1][0][1]_i_21_n_0
-                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/v_r_tmr_reg[1][0][1]_i_11/O
-                         net (fo=1, unplaced)         0.905     3.903    u_farm1/v_r_tmr_reg[1][0][1]_i_11_n_0
-                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/v_r_tmr[1][0][1]_i_6/O
+                         LUT6 (Prop_lut6_I0_O)        0.295     2.753 r  u_farm1/clcw_scheduled_out[report_value][1]_i_19/O
+                         net (fo=1, unplaced)         0.000     2.753    u_farm1/clcw_scheduled_out[report_value][1]_i_19_n_0
+                         MUXF7 (Prop_muxf7_I1_O)      0.245     2.998 r  u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15/O
+                         net (fo=1, unplaced)         0.905     3.903    u_farm1/clcw_scheduled_out_reg[report_value][1]_i_15_n_0
+                         LUT3 (Prop_lut3_I0_O)        0.298     4.201 r  u_farm1/clcw_scheduled_out[report_value][1]_i_8/O
                          net (fo=8, unplaced)         0.487     4.688    u_ul_deframer/vote8_return[1]
                          LUT2 (Prop_lut2_I1_O)        0.124     4.812 r  u_ul_deframer/farm_accept_pulse_i_14/O
                          net (fo=1, unplaced)         0.000     4.812    u_ul_deframer/farm_accept_pulse_i_14_n_0
                          CARRY4 (Prop_carry4_S[1]_O[3])
                                                       0.640     5.452 f  u_ul_deframer/farm_accept_pulse_reg_i_8/O[3]
-                         net (fo=6, unplaced)         0.650     6.102    u_csr/O[3]
-                         LUT6 (Prop_lut6_I4_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
+                         net (fo=6, unplaced)         0.650     6.102    u_csr/state_tmr_reg[2][1][1]_i_32_0[3]
+                         LUT6 (Prop_lut6_I5_O)        0.307     6.409 r  u_csr/state_tmr[2][1][1]_i_43/O
                          net (fo=1, unplaced)         0.639     7.048    u_csr/state_tmr[2][1][1]_i_43_n_0
                          CARRY4 (Prop_carry4_DI[1]_CO[3])
                                                       0.507     7.555 r  u_csr/state_tmr_reg[2][1][1]_i_32/CO[3]
                          net (fo=1, unplaced)         0.918     8.473    u_ul_deframer/state_tmr[2][1][1]_i_5_0[0]
                          LUT6 (Prop_lut6_I5_O)        0.124     8.597 r  u_ul_deframer/state_tmr[2][1][1]_i_13/O
                          net (fo=3, unplaced)         0.467     9.064    u_farm1/p_36_out
-                         LUT6 (Prop_lut6_I1_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
+                         LUT6 (Prop_lut6_I0_O)        0.124     9.188 r  u_farm1/state_tmr[2][1][0]_i_4/O
                          net (fo=1, unplaced)         0.449     9.637    u_ul_deframer/nxt_st[0]
                          LUT6 (Prop_lut6_I4_O)        0.124     9.761 r  u_ul_deframer/state_tmr[2][1][0]_i_2/O
                          net (fo=26, unplaced)        0.515    10.276    u_ul_deframer/u_farm1/st_val[0]
@@ -360,7 +360,7 @@ Slack (VIOLATED) :        -5.599ns  (required time - arrival time)
                          (clock clk_tc_safe rise edge)
                                                       4.000     4.000 r  
                                                       0.000     4.000 r  clk_tc_safe (IN)
-                         net (fo=5213, unset)         0.924     4.924    u_farm1/clk_tc_safe
+                         net (fo=7257, unset)         0.924     4.924    u_farm1/clk_tc_safe
                          FDCE                                         r  u_farm1/state_tmr_reg[0][1][0]/C
                          clock pessimism              0.000     4.924    
                          clock uncertainty           -0.185     4.739    

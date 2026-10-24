@@ -7,21 +7,23 @@ Description : Stage 9 External Reference Interoperability Generator & Verifier
               using:
                 - University of Stuttgart IRS `spacepackets` library
                   (https://github.com/us-irs/spacepackets-py, `pip install spacepackets`)
-                - PyCA `cryptography` NIST FIPS-197 AES-128 library
-                  (`from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes`)
+                - PyCA `cryptography` NIST FIPS-197 AES-128 & NIST SP 800-38D AES-128-GCM
+                  (`from cryptography.hazmat.primitives.ciphers.aead import AESGCM`)
               Modes:
                 1. --generate : Generates external golden hex stimulus files in
-                                `sim_waves/` for Vivado xsim:
-                                  - ext_ref_ul_cltu.hex           (42B CLTU with TC + SP)
-                                  - ext_ref_ul_uslp.hex           (31B USLP Ext Frame + SP)
-                                  - ext_ref_dl_pkt.hex            (16B Telemetry Space Packet)
-                                  - ext_ref_sdls_rx_frame.hex     (21B AES-128-CTR SDLS Frame)
-                                  - ext_ref_rs_corrupted_cw.hex   (60B RS(255,223) CW w/ 2 byte errors)
-                                  - ext_ref_ldpc128_noisy_cbs.hex (32B = Two (128,64) LDPC CBs w/ 2 bit errors each)
-                2. --verify   : Reads the raw hex output files dumped by Vivado
-                                xsim and validates them against `spacepackets`,
-                                `cryptography` AES-128, Dual-Basis RS(255,223),
-                                and CCSDS 231.1-O-1 Table 2-1/2-4 (128,64) LDPC.
+                                `sim_waves/` for Vivado xsim / iverilog:
+                                  - ext_ref_ul_cltu.hex            (42B CLTU with TC + SP)
+                                  - ext_ref_ul_uslp.hex            (31B USLP Ext Frame + SP)
+                                  - ext_ref_dl_pkt.hex             (16B Telemetry Space Packet)
+                                  - ext_ref_sdls_rx_frame.hex      (21B AES-128-CTR SDLS Frame)
+                                  - ext_ref_sdls_gcm_rx_frame.hex  (36B AES-128-GCM SDLS Frame w/ 16B GHASH Tag)
+                                  - ext_ref_rs_corrupted_cw.hex    (60B RS(255,223) CW w/ 2 byte errors)
+                                  - ext_ref_ldpc128_noisy_cbs.hex  (32B = Two (128,64) LDPC CBs w/ 2 bit errors each)
+                2. --verify   : Reads the raw hex output files dumped by RTL sim
+                                and validates them against `spacepackets`,
+                                `cryptography` AES-128-CTR & AES-128-GCM (GHASH),
+                                Dual-Basis RS(255,223), and CCSDS 231.1-O-1
+                                Table 2-1/2-4 (128,64) LDPC.
 ===============================================================================
 """
 
@@ -30,8 +32,9 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -132,6 +135,36 @@ def sdls_aes128_ctr_decrypt_and_verify(key16: bytes, sdls_frame: bytes) -> Tuple
 
     assert rx_tag == calc_tag, f"SDLS Tag mismatch: got 0x{rx_tag:02X}, expected 0x{calc_tag:02X}"
     return spi, seq_num, bytes(pt)
+
+
+def sdls_aes128_gcm_encrypt(key16: bytes, spi: int, seq_num: int, plaintext: bytes) -> bytes:
+    """Encrypts and authenticates an SDLS frame using PyCA `cryptography` NIST SP 800-38D AES-128-GCM."""
+    aad = spi.to_bytes(2, "big") + seq_num.to_bytes(4, "big")
+    iv96 = (
+        bytes.fromhex("CC5D")
+        + spi.to_bytes(2, "big")
+        + seq_num.to_bytes(4, "big")
+        + bytes.fromhex("53444C53")
+    )
+    ct_and_tag16 = AESGCM(key16).encrypt(iv96, plaintext, aad)
+    return aad + ct_and_tag16
+
+
+def sdls_aes128_gcm_decrypt_and_verify(key16: bytes, sdls_frame: bytes) -> Tuple[int, int, bytes]:
+    """Verifies the 128-bit GHASH authentication tag and decrypts an SDLS frame using PyCA `AESGCM`."""
+    assert len(sdls_frame) >= 22
+    spi = int.from_bytes(sdls_frame[0:2], "big")
+    seq_num = int.from_bytes(sdls_frame[2:6], "big")
+    aad = sdls_frame[0:6]
+    ct_and_tag16 = sdls_frame[6:]
+    iv96 = (
+        bytes.fromhex("CC5D")
+        + spi.to_bytes(2, "big")
+        + seq_num.to_bytes(4, "big")
+        + bytes.fromhex("53444C53")
+    )
+    pt = AESGCM(key16).decrypt(iv96, ct_and_tag16, aad)
+    return spi, seq_num, pt
 
 
 def build_ccsds_space_packet(is_tc: bool, apid: int, seq_count: int, payload: bytes) -> Tuple[bytes, str]:
@@ -310,13 +343,10 @@ def generate_vectors() -> dict:
     write_hex_file(WAVES_DIR / "ext_ref_rs_corrupted_cw.hex", bytes(corrupted_cw))
 
     # 6. Step 3C: Two 128-bit CCSDS 231.1-O-1 Table 2-1 (128,64) LDPC Codeblocks (32 bytes)
-    #    wrapping a 16-byte Space Packet (APID=0x245, Seq=105, Body="LDPC128_OK"),
-    #    with 2 corrupted bits injected into EACH 128-bit codeblock!
     ldpc_sp, _ = build_ccsds_space_packet(is_tc=True, apid=0x245, seq_count=105, payload=b"LDPC128_OK")
     assert len(ldpc_sp) == 16
     cb0 = bytearray(encode_ccsds_ldpc128_block(ldpc_sp[0:8]))
     cb1 = bytearray(encode_ccsds_ldpc128_block(ldpc_sp[8:16]))
-    # Flip 2 bits in Codeblock 0 (byte 1 bit 2, byte 5 bit 6) and 2 bits in Codeblock 1 (byte 0 bit 4, byte 6 bit 1)
     cb0[1] ^= 0x04
     cb0[5] ^= 0x40
     cb1[0] ^= 0x10
@@ -324,14 +354,20 @@ def generate_vectors() -> dict:
     write_hex_file(WAVES_DIR / "ext_ref_ldpc128_noisy_cbs.hex", bytes(cb0 + cb1))
     write_hex_file(WAVES_DIR / "ext_ref_expected_ldpc_pkt.hex", ldpc_sp)
 
+    # 7. Milestone 3: Full NIST SP 800-38D / CCSDS 355.0-B-2 AES-128-GCM Encrypted Frame (36 bytes: 6B SecHdr + 14B CT + 16B GHASH Tag)
+    sdls_gcm_rx_frame = sdls_aes128_gcm_encrypt(NIST_FIPS197_KEY16, spi=0x0009, seq_num=0x00000001, plaintext=sdls_sp)
+    assert len(sdls_gcm_rx_frame) == 36
+    write_hex_file(WAVES_DIR / "ext_ref_sdls_gcm_rx_frame.hex", sdls_gcm_rx_frame)
+
     info = {
         "generator_library": src_lib,
-        "aes_library": "cryptography.hazmat.primitives.ciphers.algorithms.AES (NIST FIPS-197 AES-128)",
+        "aes_library": "cryptography.hazmat.primitives.ciphers.aead.AESGCM (NIST FIPS-197 & SP 800-38D)",
         "have_spacepackets_installed": HAVE_SPACEPACKETS,
         "ul_cltu_bytes": len(cltu),
         "uslp_frame_bytes": len(uslp_frame),
         "dl_space_pkt_bytes": len(dl_sp),
         "sdls_aes128_rx_frame_bytes": len(sdls_rx_frame),
+        "sdls_aes128_gcm_rx_frame_bytes": len(sdls_gcm_rx_frame),
         "rs_corrupted_cw_bytes": len(corrupted_cw),
         "ldpc128_noisy_cbs_bytes": len(cb0 + cb1),
         "ldpc128_injected_errors": "CB0: 2 bit flips (byte[1]^=0x04, byte[5]^=0x40); CB1: 2 bit flips (byte[0]^=0x10, byte[6]^=0x02)",
@@ -352,6 +388,8 @@ def verify_rtl_outputs() -> dict:
     rs_corr_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_rs_corrected_pkt.hex")
     ldpc_dec_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_ldpc_decoded_pkt.hex")
     dl_ldpc_cw_out = read_hex_file(WAVES_DIR / "rtl_out_dl_ldpc_cw.hex")
+    sdls_gcm_rx_pkt_out = read_hex_file(WAVES_DIR / "rtl_out_sdls_gcm_rx_pkt.hex")
+    sdls_gcm_tx_frame_out = read_hex_file(WAVES_DIR / "rtl_out_sdls_gcm_tx_frame.hex")
 
     # 1. Verify Uplink Reassembled Space Packet from CLTU->BCH->TC->Reassembler
     res_ul = unpack_and_verify_space_packet(
@@ -406,6 +444,18 @@ def verify_rtl_outputs() -> dict:
         f"DL LDPC(128,64) CW mismatch: {dl_ldpc_cw_out.hex()} != {exp_dl_ldpc_cw.hex()}"
     )
 
+    # 7A. Verify Uplink SDLS AES-128-GCM Decrypted Space Packet from RTL
+    res_sdls_gcm_rx = unpack_and_verify_space_packet(
+        sdls_gcm_rx_pkt_out, exp_is_tc=True, exp_apid=0x245, exp_seq=99, exp_payload=b"AES_CMD!"
+    )
+
+    # 7B. Decrypt & Verify Downlink 38-byte SDLS AES-128-GCM Frame (with 16-byte GHASH Tag) emitted by RTL using PyCA `AESGCM`
+    gcm_tx_spi, gcm_tx_seq, gcm_tx_decrypted_sp = sdls_aes128_gcm_decrypt_and_verify(NIST_FIPS197_KEY16, sdls_gcm_tx_frame_out)
+    assert gcm_tx_spi == 0x0007 and gcm_tx_seq == 2
+    res_sdls_gcm_tx = unpack_and_verify_space_packet(
+        gcm_tx_decrypted_sp, exp_is_tc=False, exp_apid=0x109, exp_seq=88, exp_payload=b"TLM_OBC_OK"
+    )
+
     summary = {
         "status": "PASS",
         "have_spacepackets_installed": HAVE_SPACEPACKETS,
@@ -433,6 +483,14 @@ def verify_rtl_outputs() -> dict:
             "noisy_codeblocks_decoded": 2,
             "injected_bit_errors_healed": 4,
             "dl_ldpc128_table2_1_cw_hex": dl_ldpc_cw_out.hex().upper(),
+        },
+        "test7_milestone3_sdls_nist_aes128_gcm_ghash": {
+            "ul_decrypt_from_python_aesgcm": res_sdls_gcm_rx,
+            "dl_encrypt_verified_by_python_aesgcm": res_sdls_gcm_tx,
+            "tx_spi_hex": f"0x{gcm_tx_spi:04X}",
+            "tx_seq_num": gcm_tx_seq,
+            "gcm_tag_bits": 128,
+            "rtl_tx_gcm_tag_hex": sdls_gcm_tx_frame_out[-16:].hex().upper(),
         },
     }
     print(json.dumps(summary, indent=2))

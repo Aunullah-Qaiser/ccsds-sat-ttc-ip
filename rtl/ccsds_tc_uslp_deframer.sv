@@ -184,7 +184,8 @@ module ccsds_tc_uslp_deframer
           crc16_q              <= INIT_CRC16_CCITT;
           crc32_q              <= INIT_CRC32_PROX1;
           frame_rollback_pulse <= (state_q != DEFRAME_IDLE_OR_HDR0);
-        end else if (s_axis_tlast) begin
+        end else if (s_axis_tlast &&
+                     !((state_q == DEFRAME_BODY_AND_CRC) && ((byte_cnt_q + 16'd1) == total_frame_bytes_q))) begin
           if (state_q != DEFRAME_IDLE_OR_HDR0) begin
             frame_rollback_pulse <= 1'b1;
           end

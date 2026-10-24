@@ -324,6 +324,7 @@ module tb_stage9_external_ref_check;
   logic                 sdls_m_rx_tvalid, sdls_m_rx_tready, sdls_m_rx_tlast;
   logic                 sdls_pkt_tvalid, sdls_pkt_tlast;
   logic                 sdls_auth_done, sdls_auth_ok;
+  logic                 sdls_gcm_mode_in;
   logic [15:0]          sdls_active_spi;
   logic                 sdls_s_tx_tvalid, sdls_s_tx_tready, sdls_s_tx_tlast;
   logic [7:0]           sdls_s_tx_tdata, sdls_m_tx_tdata;
@@ -334,6 +335,7 @@ module tb_stage9_external_ref_check;
     .clk                        (clk),
     .rst_n                      (rst_n),
     .sdls_en_cfg                (1'b1),
+    .sdls_gcm_mode_cfg          (sdls_gcm_mode_in),
     .bc_require_sdls_cfg        (1'b0),
     .tx_default_spi_cfg         (16'h0007),
     .master_key_cfg             (NIST_FIPS197_KEY256),
@@ -541,6 +543,7 @@ module tb_stage9_external_ref_check;
   logic [7:0] ext_rs_corr_cw_mem     [0:59];
   logic [7:0] ext_ldpc_noisy_cbs_mem [0:31];
   logic [7:0] ext_exp_ldpc_pkt       [0:15];
+  logic [7:0] ext_sdls_gcm_rx_mem    [0:35];
 
   logic [7:0] rtl_ul_pkt_out         [0:13];
   logic [7:0] rtl_uslp_pkt_out       [0:13];
@@ -550,9 +553,12 @@ module tb_stage9_external_ref_check;
   logic [7:0] rtl_rs_corr_pkt_out    [0:15];
   logic [7:0] rtl_ldpc_pkt_out       [0:15];
   logic [7:0] rtl_dl_ldpc_cw_out     [0:15];
+  logic [7:0] rtl_sdls_gcm_rx_pkt    [0:13];
+  logic [7:0] rtl_sdls_gcm_tx_frame  [0:37];
 
   integer ul_pkt_cnt, uslp_pkt_cnt, dl_cadu_cnt, sdls_rx_pkt_cnt, sdls_tx_cnt;
   integer rs_pkt_cnt, ldpc_pkt_cnt, ldpc_conv_cnt, dl_ldpc_cw_cnt;
+  integer sdls_gcm_rx_pkt_cnt, sdls_gcm_tx_cnt;
   logic   ul_crc_ok_latched, ul_farm_acc_latched, uslp_crc_ok_latched;
   logic   sdls_auth_done_latched, sdls_auth_ok_latched, rs_tm_crc_ok_latched;
 
@@ -567,6 +573,8 @@ module tb_stage9_external_ref_check;
       ldpc_pkt_cnt           <= 0;
       ldpc_conv_cnt          <= 0;
       dl_ldpc_cw_cnt         <= 0;
+      sdls_gcm_rx_pkt_cnt    <= 0;
+      sdls_gcm_tx_cnt        <= 0;
       ul_crc_ok_latched      <= 1'b0;
       ul_farm_acc_latched    <= 1'b0;
       uslp_crc_ok_latched    <= 1'b0;
@@ -599,17 +607,27 @@ module tb_stage9_external_ref_check;
         rtl_dl_cadu_out[dl_cadu_cnt] <= dl_cadu_tdata;
         dl_cadu_cnt                  <= dl_cadu_cnt + 1;
       end
-      if (sdls_pkt_tvalid && (sdls_rx_pkt_cnt < 14)) begin
-        rtl_sdls_rx_pkt[sdls_rx_pkt_cnt] <= sdls_pkt_tdata;
-        sdls_rx_pkt_cnt                  <= sdls_rx_pkt_cnt + 1;
+      if (sdls_pkt_tvalid) begin
+        if (!sdls_gcm_mode_in && (sdls_rx_pkt_cnt < 14)) begin
+          rtl_sdls_rx_pkt[sdls_rx_pkt_cnt] <= sdls_pkt_tdata;
+          sdls_rx_pkt_cnt                  <= sdls_rx_pkt_cnt + 1;
+        end else if (sdls_gcm_mode_in && (sdls_gcm_rx_pkt_cnt < 14)) begin
+          rtl_sdls_gcm_rx_pkt[sdls_gcm_rx_pkt_cnt] <= sdls_pkt_tdata;
+          sdls_gcm_rx_pkt_cnt                      <= sdls_gcm_rx_pkt_cnt + 1;
+        end
       end
       if (sdls_auth_done) begin
         sdls_auth_done_latched <= 1'b1;
         sdls_auth_ok_latched   <= sdls_auth_ok;
       end
       if (sdls_m_tx_tvalid) begin
-        rtl_sdls_tx_frame[sdls_tx_cnt] <= sdls_m_tx_tdata;
-        sdls_tx_cnt                    <= sdls_tx_cnt + 1;
+        if (!sdls_gcm_mode_in && (sdls_tx_cnt < 23)) begin
+          rtl_sdls_tx_frame[sdls_tx_cnt] <= sdls_m_tx_tdata;
+          sdls_tx_cnt                    <= sdls_tx_cnt + 1;
+        end else if (sdls_gcm_mode_in && (sdls_gcm_tx_cnt < 38)) begin
+          rtl_sdls_gcm_tx_frame[sdls_gcm_tx_cnt] <= sdls_m_tx_tdata;
+          sdls_gcm_tx_cnt                        <= sdls_gcm_tx_cnt + 1;
+        end
       end
       if (rs_pkt_tvalid && (rs_pkt_cnt < 16)) begin
         rtl_rs_corr_pkt_out[rs_pkt_cnt] <= rs_pkt_tdata;
@@ -645,6 +663,7 @@ module tb_stage9_external_ref_check;
     $readmemh("sim_waves/ext_ref_rs_corrupted_cw.hex",    ext_rs_corr_cw_mem);
     $readmemh("sim_waves/ext_ref_ldpc128_noisy_cbs.hex",  ext_ldpc_noisy_cbs_mem);
     $readmemh("sim_waves/ext_ref_expected_ldpc_pkt.hex",  ext_exp_ldpc_pkt);
+    $readmemh("sim_waves/ext_ref_sdls_gcm_rx_frame.hex",  ext_sdls_gcm_rx_mem);
 
     rst_n             = 1'b0;
     ul_sym_llr_in     = 4'sd7;
@@ -655,6 +674,7 @@ module tb_stage9_external_ref_check;
     dl_s_pkt_tdata    = 8'h00;
     dl_s_pkt_tvalid   = 1'b0;
     dl_s_pkt_tlast    = 1'b0;
+    sdls_gcm_mode_in  = 1'b0;
     sdls_s_rx_tvalid  = 1'b0;
     sdls_s_rx_tdata   = 8'h00;
     sdls_s_rx_tlast   = 1'b0;
@@ -935,7 +955,86 @@ module tb_stage9_external_ref_check;
 
     $display("[TB-STAGE9][EXT-REF-6 PASS] Step 3C Official CCSDS 231.1-O-1 (128,64) LDPC Decoder healed 4 bit errors across 2 codeblocks and recovered Space Packet (APID=0x%03X, Seq=%0d, Body=\"LDPC128_OK\")!",
              ldpc_parsed_pkt_hdr.apid, ldpc_parsed_pkt_hdr.pkt_seq_cnt);
-    $display("[TB-STAGE9 PASS] All 6 External Reference Interoperability Subtests (Steps 2, 3A, 3B & 3C) passed in RTL!");
+
+    // =========================================================================
+    // SUBTEST 7 (Milestone 3): Full NIST SP 800-38D AES-128-GCM (GHASH) <-> RTL
+    // =========================================================================
+    $display("[TB-STAGE9][EXT-REF-7] Streaming 36-byte AES-128-GCM Frame (14B CT + 16B GHASH Tag from Python AESGCM) into ccsds_sdls_engine...");
+    sdls_gcm_mode_in = 1'b1;
+    @(posedge clk);
+    #1;
+    for (int i = 0; i < 36; i++) begin
+      sdls_s_rx_tvalid = 1'b1;
+      sdls_s_rx_tdata  = ext_sdls_gcm_rx_mem[i];
+      sdls_s_rx_tlast  = (i == 35);
+      @(posedge clk);
+      while (!sdls_s_rx_tready) @(posedge clk);
+      #1;
+    end
+    sdls_s_rx_tvalid = 1'b0;
+    sdls_s_rx_tlast  = 1'b0;
+    repeat (120) @(posedge clk);
+    #1;
+
+    assert (sdls_auth_done_latched == 1'b1 && sdls_auth_ok_latched == 1'b1)
+      else $fatal(1, "SDLS AES-128-GCM GHASH authentication failed on valid Python AESGCM frame!");
+    assert (sdls_gcm_rx_pkt_cnt == 14)
+      else $fatal(1, $sformatf("Expected 14 decrypted Space Packet bytes from SDLS AES-128-GCM, got %0d", sdls_gcm_rx_pkt_cnt));
+    for (int i = 0; i < 14; i++) begin
+      assert (rtl_sdls_gcm_rx_pkt[i] == ext_exp_sdls_pkt[i])
+        else $fatal(1, $sformatf("SDLS AES-128-GCM Decrypted byte[%0d] mismatch: got 0x%02X, expected 0x%02X",
+                                 i, rtl_sdls_gcm_rx_pkt[i], ext_exp_sdls_pkt[i]));
+    end
+
+    // Verify 1-bit tamper in the 128-bit GHASH Tag (with fresh Seq=2) is rejected!
+    for (int i = 0; i < 36; i++) begin
+      sdls_s_rx_tvalid = 1'b1;
+      if (i == 5) begin
+        sdls_s_rx_tdata = 8'h02; // Seq = 2 (passes anti-replay, fails 128-bit GHASH tag)
+      end else if (i == 35) begin
+        sdls_s_rx_tdata = ext_sdls_gcm_rx_mem[i] ^ 8'h01; // Flip 1 bit in 128-bit GCM tag
+      end else begin
+        sdls_s_rx_tdata = ext_sdls_gcm_rx_mem[i];
+      end
+      sdls_s_rx_tlast  = (i == 35);
+      @(posedge clk);
+      while (!sdls_s_rx_tready) @(posedge clk);
+      #1;
+    end
+    sdls_s_rx_tvalid = 1'b0;
+    sdls_s_rx_tlast  = 1'b0;
+    repeat (120) @(posedge clk);
+    #1;
+    assert (sdls_auth_ok_latched == 1'b0)
+      else $fatal(1, "SDLS AES-128-GCM failed to reject tampered 128-bit GHASH tag!");
+
+    // Downlink Tx AES-128-GCM Encryption + 128-bit GHASH Tag Generation (38 bytes: 6B SecHdr + 16B CT + 16B Tag)
+    for (int i = 0; i < 16; i++) begin
+      sdls_s_tx_tvalid = 1'b1;
+      sdls_s_tx_tdata  = ext_dl_pkt_mem[i];
+      sdls_s_tx_tlast  = (i == 15);
+      @(posedge clk);
+      while (!sdls_s_tx_tready) @(posedge clk);
+      #1;
+    end
+    sdls_s_tx_tvalid = 1'b0;
+    sdls_s_tx_tlast  = 1'b0;
+    while (sdls_gcm_tx_cnt < 38) @(posedge clk);
+    repeat (4) @(posedge clk);
+    #1;
+    assert (sdls_gcm_tx_cnt == 38)
+      else $fatal(1, $sformatf("Expected 38 SDLS AES-128-GCM Tx bytes (6B SecHdr + 16B CT + 16B GHASH Tag), got %0d", sdls_gcm_tx_cnt));
+
+    fd = $fopen("sim_waves/rtl_out_sdls_gcm_rx_pkt.hex", "w");
+    for (int i = 0; i < 14; i++) $fdisplay(fd, "%02X", rtl_sdls_gcm_rx_pkt[i]);
+    $fclose(fd);
+
+    fd = $fopen("sim_waves/rtl_out_sdls_gcm_tx_frame.hex", "w");
+    for (int i = 0; i < 38; i++) $fdisplay(fd, "%02X", rtl_sdls_gcm_tx_frame[i]);
+    $fclose(fd);
+    $display("[TB-STAGE9][EXT-REF-7 PASS] Milestone 3 Full NIST SP 800-38D AES-128-GCM (GHASH) 128-bit Tag Decrypt/Encrypt + Tag Tamper Rejection verified with 0 errors!");
+
+    $display("[TB-STAGE9 PASS] All 7 External Reference Interoperability Subtests (Steps 2, 3A, 3B, 3C & Milestone 3 AES-128-GCM) passed in RTL!");
     $finish;
   end
 

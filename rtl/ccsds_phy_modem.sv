@@ -7,19 +7,26 @@
 //                   Raised-Cosine (SRRC) LUT6 Polyphase Tx Pulse-Shaping FIR
 //                   (Fix CR-28: <= 3 logic levels/stage) & 4-Stage Pipelined
 //                   Canonical Signed-Digit (CSD) 17-Tap Symmetric Folded Rx
-//                   Matched SRRC Filter (srrc_4sps_en_cfg, Fix CR-22 / CR-26)
+//                   Matched SRRC Filter (srrc_4sps_en_cfg, Fix CR-22 / CR-26 /
+//                   CR-29)
+//                 - 3-Stage Pipelined Closed-Loop Gardner / Nyquist Zero-ISI
+//                   Symbol Timing Recovery Engine (gardner_ted_en_cfg, v2.27.0)
+//                   tracking arbitrary 4-SPS symbol timing phase offsets
+//                   tau in {0, 1, 2, 3} under CFO and AWGN in <= 3 CARRY8 levels
 //                 - 2-Stage Pipelined (Stage B1 Derotator -> Stage B2 Costas PI
 //                   Loop) 64-Entry Q3 One's-Complement Wire-Mux Sin/Cos NCO
 //                   Complex Derotator + Carry-Free XOR 2nd-Order PI Costas Loop
-//                   tracking static phase offset and continuous Carrier
+//                   + Milestone 4 Sign-Quantized Differential Cross-Product
+//                   FLL-Assisted Wide-CFO Pull-In Discriminator (fll_assist_en_cfg,
+//                   v2.28.0) tracking static phase offset and continuous Carrier
 //                   Frequency Offset (CFO) / Doppler shift across BPSK, QPSK,
-//                   OQPSK, and PCM/PM (Fix CR-21 / CR-25 / CR-26 / CR-27:
-//                   <= 6 logic levels/stage for >160 MHz Kintex UltraScale Fmax)
+//                   OQPSK, and PCM/PM
 //                 - Receiver NRZ-L, NRZ-M (differential), and Bi-Phi-L
 //                   (Manchester) line decoder (Fix CR-20)
-//                 - Single-DSP Fixed-Point Q32 Coherent Turnaround NCO scaling
-//                   registered Rx carrier frequency by S-band (240/221) or
-//                   X-band (880/749) with ZERO combinational division logic
+//                 - Multiplier-Free Fixed-Point Q32 Coherent Turnaround NCO
+//                   scaling registered Rx carrier frequency by S-band (240/221),
+//                   X-band (880/749), Ka-band Cat-B Deep Space (3344/749), or
+//                   Ka-band Cat-A Near-Earth (3360/749) per CCSDS 401.0-B-32
 //                 - Downlink BPSK / QPSK / OQPSK / PCM-PM Baseband Modulator
 //                   with Regenerative PN Ranging Quadrature Overlay
 //=============================================================================
@@ -32,11 +39,14 @@ module ccsds_phy_modem
   input  logic               rst_n,
 
   // Mode Configuration
-  input  logic [1:0]         mod_mode_cfg,        // 0=BPSK, 1=QPSK, 2=OQPSK, 3=PCM/PM
-  input  logic [1:0]         line_code_cfg,       // 0=NRZ-L, 1=NRZ-M, 2=BI_PHI_L
-  input  logic               turnaround_xband_cfg,// 0=S-band (240/221), 1=X-band (880/749)
+  input  logic [1:0]         mod_mode_cfg,          // 0=BPSK, 1=QPSK, 2=OQPSK, 3=PCM/PM
+  input  logic [1:0]         line_code_cfg,         // 0=NRZ-L, 1=NRZ-M, 2=BI_PHI_L
+  input  logic               turnaround_xband_cfg,  // 0=S-band (240/221), 1=X-band (880/749) when kaband==0
+  input  logic [1:0]         turnaround_kaband_cfg, // 0=Use S/X-band, 1=Ka Cat-B (3344/749), 2=Ka Cat-A (3360/749)
   input  logic               pn_ranging_en_cfg,
-  input  logic               srrc_4sps_en_cfg,    // 1=Enable 17-tap 4-SPS SRRC (alpha=0.35) Tx/Rx FIR
+  input  logic               srrc_4sps_en_cfg,      // 1=Enable 17-tap 4-SPS SRRC (alpha=0.35) Tx/Rx FIR
+  input  logic               gardner_ted_en_cfg,    // 1=Enable Closed-Loop 4-SPS Gardner Symbol Timing Recovery
+  input  logic               fll_assist_en_cfg,     // 1=Enable Milestone 4 FLL-Assisted Costas Wide-CFO Pull-In
   input  logic               tx_pn_chip_in,
 
   // Uplink Baseband IQ ADC Input
@@ -50,6 +60,7 @@ module ccsds_phy_modem
   output logic signed [7:0]  wideband_pn_sample_out,
   output logic               carrier_lock_out,
   output logic               symbol_lock_out,
+  output logic [1:0]         gardner_strobe_phase_out,
   output logic [31:0]        tx_nco_fcw_out,
 
   // Downlink Byte Stream Input
@@ -63,17 +74,15 @@ module ccsds_phy_modem
   output logic               tx_iq_valid_out
 );
 
-  // Q32 Fixed-Point Turnaround Multipliers (Zero Combinational Division):
-  //   round(2^32 * 240 / 221) = 64'h0000_0001_1602_5117
-  //   round(2^32 * 880 / 749) = 64'h0000_0001_2CC6_3CD5
-  localparam logic [63:0] TURNAROUND_SBAND_Q32 = 64'h0000_0001_1602_5117;
-  localparam logic [63:0] TURNAROUND_XBAND_Q32 = 64'h0000_0001_2CC6_3CD5;
-
-  // Pre-scaled Multiplier-Free Polyphase Tx SRRC Taps: round(1024 * SRRC_TAPS / 512)
-  localparam logic signed [11:0] SRRC_TX_TAPS [0:16] = '{
-    12'sd58,  -12'sd22,  -12'sd138, -12'sd194, -12'sd86,   12'sd212,  12'sd624,  12'sd982,
-    12'sd1124, 12'sd982,  12'sd624,  12'sd106*2, -12'sd86, -12'sd194, -12'sd138, -12'sd22, 12'sd58
-  };
+  // Nominal Q28 Coherent Turnaround Base FCWs (floor(2^28 * Ratio) per CCSDS 401.0-B-32):
+  //   S-Band  (240 / 221)  : 32'h1160_2511
+  //   X-Band  (880 / 749)  : 32'h12CC_63CD
+  //   Ka-Band (3344 / 749) : 32'h476E_814E (Deep-Space Category B)
+  //   Ka-Band (3360 / 749) : 32'h47C6_00DA (Near-Earth Category A)
+  localparam logic [31:0] FCW_NOM_SBAND       = 32'h1160_2511;
+  localparam logic [31:0] FCW_NOM_XBAND       = 32'h12CC_63CD;
+  localparam logic [31:0] FCW_NOM_KABAND_3344 = 32'h476E_814E;
+  localparam logic [31:0] FCW_NOM_KABAND_3360 = 32'h47C6_00DA;
 
   // 64-Entry Q3 CSD Sin/Cos NCO Lookup Tables (8 = +1.0)
   localparam logic signed [4:0] COS_LUT_Q3 [0:63] = '{
@@ -240,20 +249,36 @@ module ccsds_phy_modem
   logic signed [11:0] rx_srrc_i_q  [0:15];
   logic signed [11:0] rx_srrc_q_q  [0:15];
   logic               s1_valid_q;
+  logic [1:0]         s1_ph_q;
   logic signed [12:0] s1_sum_i_q   [0:8];
   logic signed [12:0] s1_sum_q_q   [0:8];
   logic               s2_valid_q;
+  logic [1:0]         s2_ph_q;
   logic signed [23:0] s2_prod_i_q  [0:8];
   logic signed [23:0] s2_prod_q_q  [0:8];
   logic               s3_valid_q;
+  logic [1:0]         s3_ph_q;
   logic signed [24:0] s3_grp_i_q   [0:2];
   logic signed [24:0] s3_grp_q_q   [0:2];
   logic signed [13:0] mf_i_q;
   logic signed [13:0] mf_q_q;
-  logic               mf_strobe_q;
+  logic               mf_valid_q;
+  logic [1:0]         mf_phase_q;
+
+  // 3-Stage Pipelined Gardner / Nyquist Zero-ISI Symbol Timing Recovery Registers
+  logic               t1_valid_q;
+  logic [1:0]         t1_ph_q;
+  logic signed [14:0] t1_env_q;
+  logic [15:0]        gardner_err_q [0:3];
+  logic [7:0]         gardner_win_cnt_q;
+  logic [1:0]         gardner_phase_q;
+
   logic               b1_valid_q;
   logic signed [14:0] i_derot_q;
   logic signed [14:0] q_derot_q;
+  logic               prev_i_sign_q;
+  logic               prev_q_sign_q;
+  logic signed [15:0] fll_disc_q;
   logic [7:0]         rx_samp_cnt_q;
   logic [15:0]        rx_phase_q16;
   logic signed [15:0] rx_freq_q16;
@@ -265,10 +290,11 @@ module ccsds_phy_modem
   logic [7:0]         rx_shift_byte_q;
   logic               rx_nrzm_prev_q;
 
-  assign carrier_lock_out       = carrier_lock_q;
-  assign symbol_lock_out        = symbol_lock_q;
-  assign tx_nco_fcw_out         = tx_nco_fcw_q;
-  assign wideband_pn_sample_out = rx_q_in[11:4];
+  assign carrier_lock_out         = carrier_lock_q;
+  assign symbol_lock_out          = symbol_lock_q;
+  assign gardner_strobe_phase_out = gardner_phase_q;
+  assign tx_nco_fcw_out           = tx_nco_fcw_q;
+  assign wideband_pn_sample_out   = rx_q_in[11:4];
 
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -276,9 +302,12 @@ module ccsds_phy_modem
         rx_srrc_i_q[k] <= 12'sd0;
         rx_srrc_q_q[k] <= 12'sd0;
       end
-      s1_valid_q       <= 1'b0;
-      s2_valid_q       <= 1'b0;
-      s3_valid_q       <= 1'b0;
+      s1_valid_q        <= 1'b0;
+      s1_ph_q           <= 2'd0;
+      s2_valid_q        <= 1'b0;
+      s2_ph_q           <= 2'd0;
+      s3_valid_q        <= 1'b0;
+      s3_ph_q           <= 2'd0;
       for (int k = 0; k < 9; k++) begin
         s1_sum_i_q[k]  <= 13'sd0;
         s1_sum_q_q[k]  <= 13'sd0;
@@ -289,26 +318,39 @@ module ccsds_phy_modem
         s3_grp_i_q[k]  <= 25'sd0;
         s3_grp_q_q[k]  <= 25'sd0;
       end
-      mf_i_q           <= 14'sd0;
-      mf_q_q           <= 14'sd0;
-      mf_strobe_q      <= 1'b0;
-      b1_valid_q       <= 1'b0;
-      i_derot_q        <= 15'sd0;
-      q_derot_q        <= 15'sd0;
-      rx_samp_cnt_q    <= 8'd0;
-      rx_phase_q16     <= 16'd0;
-      rx_freq_q16      <= 16'sd0;
-      rx_nco_fcw_q     <= 32'h1000_0000;
-      tx_nco_fcw_q     <= 32'h1160_2511;
-      carrier_lock_q   <= 1'b0;
-      symbol_lock_q    <= 1'b0;
-      rx_bit_cnt_q     <= 3'd0;
-      rx_shift_byte_q  <= 8'd0;
-      rx_nrzm_prev_q   <= 1'b0;
-      rx_sym_valid_out <= 1'b0;
-      rx_sym_byte_out  <= 8'd0;
+      mf_i_q            <= 14'sd0;
+      mf_q_q            <= 14'sd0;
+      mf_valid_q        <= 1'b0;
+      mf_phase_q        <= 2'd0;
+      t1_valid_q        <= 1'b0;
+      t1_ph_q           <= 2'd0;
+      t1_env_q          <= 15'sd0;
+      for (int k = 0; k < 4; k++) begin
+        gardner_err_q[k] <= 16'd0;
+      end
+      gardner_win_cnt_q <= 8'd0;
+      gardner_phase_q   <= 2'd0;
+      b1_valid_q        <= 1'b0;
+      i_derot_q         <= 15'sd0;
+      q_derot_q         <= 15'sd0;
+      prev_i_sign_q     <= 1'b0;
+      prev_q_sign_q     <= 1'b0;
+      fll_disc_q        <= 16'sd0;
+      rx_samp_cnt_q     <= 8'd0;
+      rx_phase_q16      <= 16'd0;
+      rx_freq_q16       <= 16'sd0;
+      rx_nco_fcw_q      <= 32'h1000_0000;
+      tx_nco_fcw_q      <= FCW_NOM_SBAND;
+      carrier_lock_q    <= 1'b0;
+      symbol_lock_q     <= 1'b0;
+      rx_bit_cnt_q      <= 3'd0;
+      rx_shift_byte_q   <= 8'd0;
+      rx_nrzm_prev_q    <= 1'b0;
+      rx_sym_valid_out  <= 1'b0;
+      rx_sym_byte_out   <= 8'd0;
     end else begin
-      logic [63:0]        prod_q32;
+      logic signed [31:0] df32, turn_delta32;
+      logic [1:0]         active_strobe_ph;
       logic               b1_strobe_now;
       logic [15:0]        base_phase_q16;
       logic signed [15:0] prop_step_s16, int_step_s16, nxt_freq_q16;
@@ -317,17 +359,31 @@ module ccsds_phy_modem
       s1_valid_q       <= 1'b0;
       s2_valid_q       <= 1'b0;
       s3_valid_q       <= 1'b0;
-      mf_strobe_q      <= 1'b0;
+      mf_valid_q       <= 1'b0;
+      t1_valid_q       <= 1'b0;
       b1_valid_q       <= 1'b0;
 
-      // Decoupled Single-Cycle Q32 Turnaround NCO Multiplier (from registered rx_nco_fcw_q)
-      if (turnaround_xband_cfg) begin
-        prod_q32     = 64'(rx_nco_fcw_q) * TURNAROUND_XBAND_Q32;
-        tx_nco_fcw_q <= prod_q32[63:32];
-      end else begin
-        prod_q32     = 64'(rx_nco_fcw_q) * TURNAROUND_SBAND_Q32;
-        tx_nco_fcw_q <= prod_q32[63:32];
-      end
+      // Multiplier-Free CSD Coherent Turnaround NCO Scaling (S-Band, X-Band, Ka-Band 3344/749 & 3360/749)
+      df32 = {{16{rx_freq_q16[15]}}, rx_freq_q16};
+      unique case (turnaround_kaband_cfg)
+        2'd1: begin // Ka-Band Deep-Space Category B (3344 / 749 = 4.4646)
+          turn_delta32 = (df32 <<< 2) + (df32 >>> 1) - (df32 >>> 5);
+          tx_nco_fcw_q <= FCW_NOM_KABAND_3344 + 32'(turn_delta32);
+        end
+        2'd2, 2'd3: begin // Ka-Band Near-Earth Category A (3360 / 749 = 4.4860)
+          turn_delta32 = (df32 <<< 2) + (df32 >>> 1) - (df32 >>> 6);
+          tx_nco_fcw_q <= FCW_NOM_KABAND_3360 + 32'(turn_delta32);
+        end
+        default: begin // S-Band (240 / 221 = 1.0860) or X-Band (880 / 749 = 1.1749)
+          if (turnaround_xband_cfg) begin
+            turn_delta32 = df32 + (df32 >>> 3) + (df32 >>> 4);
+            tx_nco_fcw_q <= FCW_NOM_XBAND + 32'(turn_delta32);
+          end else begin
+            turn_delta32 = df32 + (df32 >>> 4) + (df32 >>> 5);
+            tx_nco_fcw_q <= FCW_NOM_SBAND + 32'(turn_delta32);
+          end
+        end
+      endcase
 
       if (rx_iq_valid_in) begin
         // Shift 17-tap Rx Matched SRRC delay line
@@ -339,13 +395,18 @@ module ccsds_phy_modem
         end
 
         if (!srrc_4sps_en_cfg) begin
-          rx_samp_cnt_q <= 8'd0;
+          rx_samp_cnt_q     <= 8'd0;
+          gardner_win_cnt_q <= 8'd0;
+          gardner_phase_q   <= 2'd0;
+          for (int k = 0; k < 4; k++) begin
+            gardner_err_q[k] <= 16'd0;
+          end
         end else begin
-          logic signed [25:0] acc_mf_i, acc_mf_q;
-          rx_samp_cnt_q <= (rx_samp_cnt_q == 8'd19) ? 8'd16 : (rx_samp_cnt_q + 8'd1);
+          rx_samp_cnt_q <= (rx_samp_cnt_q == 8'd23) ? 8'd20 : (rx_samp_cnt_q + 8'd1);
 
-          // Stage A1 (2 CARRY8 levels): Register 9 symmetric folded 13-bit pre-sums
-          s1_valid_q    <= (rx_samp_cnt_q >= 8'd16) && (rx_samp_cnt_q[1:0] == 2'd0);
+          // Stage A1 (2 CARRY8 levels): Register 9 symmetric folded 13-bit pre-sums across all 4 SPS phases
+          s1_valid_q    <= (rx_samp_cnt_q >= 8'd16);
+          s1_ph_q       <= rx_samp_cnt_q[1:0];
           s1_sum_i_q[0] <= $signed({rx_i_in[11], rx_i_in})               + $signed({rx_srrc_i_q[15][11], rx_srrc_i_q[15]});
           s1_sum_i_q[1] <= $signed({rx_srrc_i_q[0][11], rx_srrc_i_q[0]}) + $signed({rx_srrc_i_q[14][11], rx_srrc_i_q[14]});
           s1_sum_i_q[2] <= $signed({rx_srrc_i_q[1][11], rx_srrc_i_q[1]}) + $signed({rx_srrc_i_q[13][11], rx_srrc_i_q[13]});
@@ -366,42 +427,89 @@ module ccsds_phy_modem
           s1_sum_q_q[7] <= $signed({rx_srrc_q_q[6][11], rx_srrc_q_q[6]}) + $signed({rx_srrc_q_q[8][11],  rx_srrc_q_q[8]});
           s1_sum_q_q[8] <= $signed({rx_srrc_q_q[7][11], rx_srrc_q_q[7]});
 
-          // Stage A2 (<= 4 CARRY8 levels): Register 9 multiplier-free CSD shift-add products
-          s2_valid_q <= s1_valid_q;
-          for (int k = 0; k < 9; k++) begin
-            s2_prod_i_q[k] <= csd_srrc_tap(s1_sum_i_q[k], k);
-            s2_prod_q_q[k] <= csd_srrc_tap(s1_sum_q_q[k], k);
-          end
-
-          // Stage A3 (<= 4 CARRY8 levels): Register three 3-input partial group sums
-          s3_valid_q    <= s2_valid_q;
-          s3_grp_i_q[0] <= ($signed({s2_prod_i_q[0][23], s2_prod_i_q[0]}) + $signed({s2_prod_i_q[1][23], s2_prod_i_q[1]})) +
-                            $signed({s2_prod_i_q[2][23], s2_prod_i_q[2]});
-          s3_grp_i_q[1] <= ($signed({s2_prod_i_q[3][23], s2_prod_i_q[3]}) + $signed({s2_prod_i_q[4][23], s2_prod_i_q[4]})) +
-                            $signed({s2_prod_i_q[5][23], s2_prod_i_q[5]});
-          s3_grp_i_q[2] <= ($signed({s2_prod_i_q[6][23], s2_prod_i_q[6]}) + $signed({s2_prod_i_q[7][23], s2_prod_i_q[7]})) +
-                            $signed({s2_prod_i_q[8][23], s2_prod_i_q[8]});
-
-          s3_grp_q_q[0] <= ($signed({s2_prod_q_q[0][23], s2_prod_q_q[0]}) + $signed({s2_prod_q_q[1][23], s2_prod_q_q[1]})) +
-                            $signed({s2_prod_q_q[2][23], s2_prod_q_q[2]});
-          s3_grp_q_q[1] <= ($signed({s2_prod_q_q[3][23], s2_prod_q_q[3]}) + $signed({s2_prod_q_q[4][23], s2_prod_q_q[4]})) +
-                            $signed({s2_prod_q_q[5][23], s2_prod_q_q[5]});
-          s3_grp_q_q[2] <= ($signed({s2_prod_q_q[6][23], s2_prod_q_q[6]}) + $signed({s2_prod_q_q[7][23], s2_prod_q_q[7]})) +
-                            $signed({s2_prod_q_q[8][23], s2_prod_q_q[8]});
-
-          // Stage A4 (<= 4 CARRY8 levels): Final 3-input sum into mf_i_q / mf_q_q
-          mf_strobe_q <= s3_valid_q;
-          acc_mf_i    = ($signed({s3_grp_i_q[0][24], s3_grp_i_q[0]}) + $signed({s3_grp_i_q[1][24], s3_grp_i_q[1]})) +
-                         $signed({s3_grp_i_q[2][24], s3_grp_i_q[2]});
-          acc_mf_q    = ($signed({s3_grp_q_q[0][24], s3_grp_q_q[0]}) + $signed({s3_grp_q_q[1][24], s3_grp_q_q[1]})) +
-                         $signed({s3_grp_q_q[2][24], s3_grp_q_q[2]});
-          mf_i_q      <= $signed(acc_mf_i[24:11]);
-          mf_q_q      <= $signed(acc_mf_q[24:11]);
         end
       end
 
+      // Free-running SRRC Matched Filter Pipeline Stages A2..A4 (Fix CR-29: drains ph=1..3 cleanly when rx_iq_valid_in pauses between bytes)
+      if (srrc_4sps_en_cfg) begin
+        logic signed [25:0] acc_mf_i, acc_mf_q;
+
+        // Stage A2 (<= 4 CARRY8 levels): Register 9 multiplier-free CSD shift-add products
+        s2_valid_q <= s1_valid_q;
+        s2_ph_q    <= s1_ph_q;
+        for (int k = 0; k < 9; k++) begin
+          s2_prod_i_q[k] <= csd_srrc_tap(s1_sum_i_q[k], k);
+          s2_prod_q_q[k] <= csd_srrc_tap(s1_sum_q_q[k], k);
+        end
+
+        // Stage A3 (<= 4 CARRY8 levels): Register three 3-input partial group sums
+        s3_valid_q    <= s2_valid_q;
+        s3_ph_q       <= s2_ph_q;
+        s3_grp_i_q[0] <= ($signed({s2_prod_i_q[0][23], s2_prod_i_q[0]}) + $signed({s2_prod_i_q[1][23], s2_prod_i_q[1]})) +
+                          $signed({s2_prod_i_q[2][23], s2_prod_i_q[2]});
+        s3_grp_i_q[1] <= ($signed({s2_prod_i_q[3][23], s2_prod_i_q[3]}) + $signed({s2_prod_i_q[4][23], s2_prod_i_q[4]})) +
+                          $signed({s2_prod_i_q[5][23], s2_prod_i_q[5]});
+        s3_grp_i_q[2] <= ($signed({s2_prod_i_q[6][23], s2_prod_i_q[6]}) + $signed({s2_prod_i_q[7][23], s2_prod_i_q[7]})) +
+                          $signed({s2_prod_i_q[8][23], s2_prod_i_q[8]});
+
+        s3_grp_q_q[0] <= ($signed({s2_prod_q_q[0][23], s2_prod_q_q[0]}) + $signed({s2_prod_q_q[1][23], s2_prod_q_q[1]})) +
+                          $signed({s2_prod_q_q[2][23], s2_prod_q_q[2]});
+        s3_grp_q_q[1] <= ($signed({s2_prod_q_q[3][23], s2_prod_q_q[3]}) + $signed({s2_prod_q_q[4][23], s2_prod_q_q[4]})) +
+                          $signed({s2_prod_q_q[5][23], s2_prod_q_q[5]});
+        s3_grp_q_q[2] <= ($signed({s2_prod_q_q[6][23], s2_prod_q_q[6]}) + $signed({s2_prod_q_q[7][23], s2_prod_q_q[7]})) +
+                          $signed({s2_prod_q_q[8][23], s2_prod_q_q[8]});
+
+        // Stage A4 (<= 4 CARRY8 levels): Final 3-input sum into mf_i_q / mf_q_q
+        mf_valid_q <= s3_valid_q;
+        mf_phase_q <= s3_ph_q;
+        acc_mf_i   = ($signed({s3_grp_i_q[0][24], s3_grp_i_q[0]}) + $signed({s3_grp_i_q[1][24], s3_grp_i_q[1]})) +
+                      $signed({s3_grp_i_q[2][24], s3_grp_i_q[2]});
+        acc_mf_q   = ($signed({s3_grp_q_q[0][24], s3_grp_q_q[0]}) + $signed({s3_grp_q_q[1][24], s3_grp_q_q[1]})) +
+                      $signed({s3_grp_q_q[2][24], s3_grp_q_q[2]});
+        mf_i_q     <= $signed(acc_mf_i[24:11]);
+        mf_q_q     <= $signed(acc_mf_q[24:11]);
+      end
+
+      // -----------------------------------------------------------------------
+      // Closed-Loop 4-SPS Gardner / Nyquist Zero-ISI Symbol Timing Recovery
+      //   - Stage T1 (3 logic levels): Multiplier-free octant complex envelope
+      //   - Stage T2 (3 logic levels): Constant-modulus ISI error accumulator
+      //   - Stage T3 (3 logic levels): End-of-window (mf_phase_q == 3) tournament
+      // -----------------------------------------------------------------------
+      if (mf_valid_q && gardner_ted_en_cfg) begin
+        logic signed [14:0] abs_i15, abs_q15, hi15, lo15;
+        abs_i15    = mf_i_q[13] ? $signed({1'b0, ~mf_i_q}) : $signed({1'b0, mf_i_q});
+        abs_q15    = mf_q_q[13] ? $signed({1'b0, ~mf_q_q}) : $signed({1'b0, mf_q_q});
+        hi15       = (abs_i15 >= abs_q15) ? abs_i15 : abs_q15;
+        lo15       = (abs_i15 >= abs_q15) ? abs_q15 : abs_i15;
+        t1_valid_q <= (gardner_win_cnt_q >= 8'd1);
+        t1_ph_q    <= mf_phase_q;
+        t1_env_q   <= hi15 + (lo15 >>> 1);
+
+        if (mf_phase_q == 2'd3) begin
+          if (gardner_win_cnt_q < 8'd255) begin
+            gardner_win_cnt_q <= gardner_win_cnt_q + 8'd1;
+          end
+          if (gardner_win_cnt_q >= 8'd8) begin
+            logic [1:0] min02, min13;
+            min02           = (gardner_err_q[0] <= gardner_err_q[2]) ? 2'd0 : 2'd2;
+            min13           = (gardner_err_q[1] <= gardner_err_q[3]) ? 2'd1 : 2'd3;
+            gardner_phase_q <= (gardner_err_q[min02] <= gardner_err_q[min13]) ? min02 : min13;
+          end
+        end
+      end
+
+      if (t1_valid_q && gardner_ted_en_cfg) begin
+        logic signed [14:0] target_a15, diff_a15, abs_err15;
+        target_a15 = ((mod_mode_cfg == 2'd0) && !pn_ranging_en_cfg) ? 15'sd1060 : 15'sd1590;
+        diff_a15   = t1_env_q - target_a15;
+        abs_err15  = diff_a15[14] ? ~diff_a15 : diff_a15;
+        gardner_err_q[t1_ph_q] <= gardner_err_q[t1_ph_q] + {5'd0, abs_err15[13:3]};
+      end
+
       // Pipeline Stage B1 (<= 6 logic levels): One's-Complement Wire-Mux Q3 CSD Complex NCO Derotator
-      b1_strobe_now = srrc_4sps_en_cfg ? mf_strobe_q : rx_iq_valid_in;
+      active_strobe_ph = gardner_ted_en_cfg ? gardner_phase_q : 2'd0;
+      b1_strobe_now    = srrc_4sps_en_cfg ? (mf_valid_q && (mf_phase_q == active_strobe_ph)) : rx_iq_valid_in;
       if (b1_strobe_now) begin
         logic signed [13:0] raw_i, raw_q;
         logic signed [10:0] in_i11, in_q11;
@@ -420,24 +528,37 @@ module ccsds_phy_modem
         b1_valid_q <= 1'b1;
       end
 
-      // Pipeline Stage B2 (<= 5 logic levels): Carry-Free XOR Costas Phase Detector + PI Loop + Slicer
+      // Pipeline Stage B2 (<= 5 logic levels): Carry-Free XOR Costas Phase Detector + FLL-Assisted PI Loop + Slicer
       base_phase_q16 = rx_phase_q16 + (b1_strobe_now ? 16'(rx_freq_q16) : 16'd0);
       if (b1_valid_q) begin
         logic signed [14:0] term_i, term_q, phase_err;
+        logic signed [14:0] cross_i, cross_q, fll_err;
         logic signed [15:0] phase_err_s16;
         logic               sliced_bit;
         logic               decoded_bit;
 
-        term_i = i_derot_q[14] ? ~q_derot_q : q_derot_q;
-        term_q = q_derot_q[14] ? ~i_derot_q : i_derot_q;
+        term_i  = i_derot_q[14] ? ~q_derot_q : q_derot_q;
+        term_q  = q_derot_q[14] ? ~i_derot_q : i_derot_q;
+        cross_i = prev_i_sign_q ? ~q_derot_q : q_derot_q;
+        cross_q = prev_q_sign_q ? ~i_derot_q : i_derot_q;
+
         if ((mod_mode_cfg == 2'd0) && !pn_ranging_en_cfg) begin
           phase_err = term_i;
+          fll_err   = cross_i;
+        end else if (mod_mode_cfg == 2'd2) begin
+          phase_err = (term_i - term_q) >>> 1;
+          fll_err   = 15'sd0;
         end else begin
           phase_err = (term_i - term_q) >>> 1;
+          fll_err   = (cross_i - cross_q) >>> 1;
         end
 
+        prev_i_sign_q <= i_derot_q[14];
+        prev_q_sign_q <= q_derot_q[14];
+        fll_disc_q    <= $signed({fll_err[14], fll_err});
+
         phase_err_s16 = $signed({phase_err[14], phase_err});
-        int_step_s16  = phase_err_s16 >>> 2;
+        int_step_s16  = fll_assist_en_cfg ? ((phase_err_s16 >>> 1) + (fll_disc_q >>> 3)) : (phase_err_s16 >>> 2);
         prop_step_s16 = phase_err_s16 <<< 1;
         nxt_freq_q16  = rx_freq_q16 + int_step_s16;
         rx_freq_q16   <= nxt_freq_q16;
@@ -473,11 +594,6 @@ module ccsds_phy_modem
 
   // ---------------------------------------------------------------------------
   // 2-Stage Pipelined Downlink Modulator & 17-Tap Polyphase SRRC Filter (CR-28)
-  //   - Tx Stage 1 (<= 3 logic levels):
-  //       * Path A (2 LUT levels): tx_cur_byte_q[tx_bit_idx_q] -> tx_sym_i_hist_q[0], tx_sym_q_hist_q[0]
-  //       * Path B (1 LUT6 + 2 CARRY8 = 3 levels): tx_sym_i_hist_q[0..4] -> tx_hist_sum_i_q, tx_hist_sum_q_q
-  //   - Tx Stage 2 (1 LUT4 + 2 CARRY8 = 3 logic levels):
-  //       * tx_tap0_lut4(tx_pipe_phase_q, tx_sym_i_hist_q[0]) + tx_hist_sum_i_q -> tx_i_out, tx_q_out
   // ---------------------------------------------------------------------------
   logic [7:0]         tx_cur_byte_q;
   logic [2:0]         tx_bit_idx_q;
@@ -556,9 +672,7 @@ module ccsds_phy_modem
           tx_bit_idx_q <= tx_bit_idx_q - 3'd1;
         end
       end else begin
-        // Tx Stage 1 (<= 3 logic levels):
-        //   - Path A: Shift new symbol into tx_sym_i_hist_q[0], tx_sym_q_hist_q[0] (2 LUT levels)
-        //   - Path B: Pre-sum history taps 1..4 from already-registered tx_sym_i_hist_q (1 LUT6 + 2 CARRY8)
+        // Tx Stage 1 (<= 3 logic levels)
         logic [1:0] h_i [1:4];
         logic [1:0] h_q [1:4];
 

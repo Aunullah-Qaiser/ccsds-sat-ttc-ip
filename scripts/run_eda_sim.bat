@@ -2,7 +2,7 @@
 REM ============================================================================
 REM File Name   : run_eda_sim.bat
 REM Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-REM Version     : v2.19 (Supports STAGE 2..9 + External Reference Check)
+REM Version     : v2.28.0 (Supports STAGE 2..11 + External Reference Check)
 REM Description : Native Windows Batch Runner for Xilinx Vivado (xsim),
 REM               Verilator, QuestaSim, and Icarus Verilog (No WSL required).
 REM ============================================================================
@@ -43,15 +43,18 @@ if "%STAGE%"=="2" (
 ) else if "%STAGE%"=="10" (
   set TB_TOP=tb_stage10_full_matrix_link_stress
   set TB_SRC=tb/tb_stage10_full_matrix_link_stress.sv
+) else if "%STAGE%"=="11" (
+  set TB_TOP=tb_stage11_top_to_top_rf_link
+  set TB_SRC=tb/tb_stage11_top_to_top_rf_link.sv
 ) else (
-  echo Unknown STAGE=%STAGE% ^(expected 2..10^)
+  echo Unknown STAGE=%STAGE% ^(expected 2..11^)
   exit /b 1
 )
 
 echo [CCSDS-SIM-WIN] Selected Simulator: %SIM% ^| Target Testbench: %TB_TOP%
 
 if "%STAGE%"=="9" (
-  echo [CCSDS-SIM-WIN] Generating external reference vectors via spacepackets-py...
+  echo [CCSDS-SIM-WIN] Generating external reference vectors via spacepackets-py / cryptography...
   python scripts/run_external_ref_check.py --generate
   if errorlevel 1 exit /b 1
 )
@@ -78,7 +81,7 @@ if "%SIM%"=="xsim" (
 )
 
 if "%STAGE%"=="9" (
-  echo [CCSDS-SIM-WIN] Verifying RTL output hex dumps against external spacepackets-py parser...
+  echo [CCSDS-SIM-WIN] Verifying RTL output hex dumps against external spacepackets-py and AESGCM...
   python scripts/run_external_ref_check.py --verify
   if errorlevel 1 exit /b 1
 )
