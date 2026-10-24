@@ -52,7 +52,8 @@ TB_STAGE5 := tb/tb_stage5_fec_hcpd.sv
 TB_STAGE6 := tb/tb_stage6_full_system.sv
 TB_STAGE7 := tb/tb_stage7_hw_egse_loopback.sv
 TB_STAGE8 := tb/tb_stage8_all_protocols_channel_loopback.sv
-TB_STAGE9 := tb/tb_stage9_external_ref_check.sv
+TB_STAGE9  := tb/tb_stage9_external_ref_check.sv
+TB_STAGE10 := tb/tb_stage10_full_matrix_link_stress.sv
 
 ifeq ($(STAGE),2)
   TB_TOP := tb_stage2_primitives
@@ -78,6 +79,9 @@ else ifeq ($(STAGE),8)
 else ifeq ($(STAGE),9)
   TB_TOP := tb_stage9_external_ref_check
   TB_SRC := $(TB_STAGE9)
+else ifeq ($(STAGE),10)
+  TB_TOP := tb_stage10_full_matrix_link_stress
+  TB_SRC := $(TB_STAGE10)
 endif
 
 .PHONY: all audit regression lint sim waveform-diff channel-sweep sta clean

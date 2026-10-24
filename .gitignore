@@ -2,6 +2,7 @@
 # Xilinx / AMD Vivado & xsim Artifacts
 # ==============================================================================
 xsim.dir/
+vivado_sta_work/
 .Xil/
 *.jou
 *.log
@@ -25,7 +26,7 @@ vsim.wlf
 *.out
 
 # ==============================================================================
-# Python & C++20 Co-Simulation Temp Artifacts
+# Python, C++20 Co-Simulation & Local Updater Temp Artifacts
 # ==============================================================================
 __pycache__/
 *.py[cod]
@@ -34,3 +35,6 @@ __pycache__/
 *.exe
 .pytest_cache/
 .venv/
+update_to_v*.py
+*.patch
+*.diff

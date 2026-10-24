@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Fri Oct 23 09:52:32 2026
+| Date         : Sat Oct 24 07:49:08 2026
 | Host         : Sagittarius running 64-bit major release  (build 9200)
 | Command      : report_utilization -file reports/vivado_utilization_summary_role0.rpt
 | Design       : ccsds_sat_ttc_top
@@ -28,20 +28,20 @@ Table of Contents
 1. Slice Logic
 --------------
 
-+----------------------------+-------+-------+------------+-----------+--------+
-|          Site Type         |  Used | Fixed | Prohibited | Available |  Util% |
-+----------------------------+-------+-------+------------+-----------+--------+
-| Slice LUTs*                | 23882 |     0 |          0 |     17600 | 135.69 |
-|   LUT as Logic             | 23578 |     0 |          0 |     17600 | 133.97 |
-|   LUT as Memory            |   304 |     0 |          0 |      6000 |   5.07 |
-|     LUT as Distributed RAM |   304 |     0 |            |           |        |
-|     LUT as Shift Register  |     0 |     0 |            |           |        |
-| Slice Registers            | 25401 |     0 |          0 |     35200 |  72.16 |
-|   Register as Flip Flop    | 25401 |     0 |          0 |     35200 |  72.16 |
-|   Register as Latch        |     0 |     0 |          0 |     35200 |   0.00 |
-| F7 Muxes                   |  6483 |     0 |          0 |      8800 |  73.67 |
-| F8 Muxes                   |  2992 |     0 |          0 |      4400 |  68.00 |
-+----------------------------+-------+-------+------------+-----------+--------+
++----------------------------+-------+-------+------------+-----------+-------+
+|          Site Type         |  Used | Fixed | Prohibited | Available | Util% |
++----------------------------+-------+-------+------------+-----------+-------+
+| Slice LUTs*                | 14028 |     0 |          0 |     17600 | 79.70 |
+|   LUT as Logic             | 12828 |     0 |          0 |     17600 | 72.89 |
+|   LUT as Memory            |  1200 |     0 |          0 |      6000 | 20.00 |
+|     LUT as Distributed RAM |  1200 |     0 |            |           |       |
+|     LUT as Shift Register  |     0 |     0 |            |           |       |
+| Slice Registers            | 10331 |     0 |          0 |     35200 | 29.35 |
+|   Register as Flip Flop    | 10331 |     0 |          0 |     35200 | 29.35 |
+|   Register as Latch        |     0 |     0 |          0 |     35200 |  0.00 |
+| F7 Muxes                   |  1293 |     0 |          0 |      8800 | 14.69 |
+| F8 Muxes                   |   387 |     0 |          0 |      4400 |  8.80 |
++----------------------------+-------+-------+------------+-----------+-------+
 * Warning! The Final LUT count, after physical optimizations and full implementation, is typically lower. Run opt_design after synthesis, if not already completed, for a more realistic count.
 Warning! LUT value is adjusted to account for LUT combining.
 
@@ -59,9 +59,9 @@ Warning! LUT value is adjusted to account for LUT combining.
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
 | 225   |          Yes |           - |          Set |
-| 8792  |          Yes |           - |        Reset |
+| 10106 |          Yes |           - |        Reset |
 | 0     |          Yes |         Set |            - |
-| 16384 |          Yes |       Reset |            - |
+| 0     |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -150,19 +150,18 @@ Warning! LUT value is adjusted to account for LUT combining.
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |
 +----------+-------+---------------------+
-| LUT6     | 17027 |                 LUT |
-| FDRE     | 16384 |        Flop & Latch |
-| FDCE     |  8792 |        Flop & Latch |
-| MUXF7    |  6483 |               MuxFx |
-| LUT2     |  3234 |                 LUT |
-| MUXF8    |  2992 |               MuxFx |
-| LUT5     |  2389 |                 LUT |
-| LUT3     |  1564 |                 LUT |
-| LUT4     |  1344 |                 LUT |
-| RAMD64E  |   304 |  Distributed Memory |
-| CARRY4   |   256 |          CarryLogic |
+| FDCE     | 10106 |        Flop & Latch |
+| LUT6     |  7773 |                 LUT |
+| LUT3     |  2290 |                 LUT |
+| LUT5     |  2128 |                 LUT |
+| LUT2     |  1339 |                 LUT |
+| LUT4     |  1306 |                 LUT |
+| MUXF7    |  1293 |               MuxFx |
+| RAMD64E  |  1200 |  Distributed Memory |
+| CARRY4   |   506 |          CarryLogic |
+| MUXF8    |   387 |               MuxFx |
 | FDPE     |   225 |        Flop & Latch |
-| LUT1     |    47 |                 LUT |
+| LUT1     |   103 |                 LUT |
 +----------+-------+---------------------+
 
 

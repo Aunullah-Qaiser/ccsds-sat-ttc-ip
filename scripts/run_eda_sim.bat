@@ -12,7 +12,7 @@ set SIM=%1
 if "%SIM%"=="" set SIM=xsim
 
 set STAGE=%2
-if "%STAGE%"=="" set STAGE=9
+if "%STAGE%"=="" set STAGE=10
 
 set RTL_SRCS=rtl/ccsds_pkg.sv rtl/ccsds_crc_universal.sv rtl/ccsds_lfsr_scrambler.sv rtl/ccsds_cdc_fifo_ecc.sv rtl/ccsds_gf256_math.sv rtl/ccsds_asm_correlator.sv rtl/ccsds_bch6356_dec.sv rtl/ccsds_farm1_tmr.sv rtl/ccsds_vc_arbiter_mux.sv rtl/ccsds_dl_rs255_223_enc.sv rtl/ccsds_tc_uslp_deframer.sv rtl/ccsds_tm_aos_uslp_framer.sv rtl/ccsds_pkt_reassembler.sv rtl/ccsds_prox1_plcw_ctrl.sv rtl/ccsds_axi_lite_csr.sv rtl/ccsds_conv_viterbi_codec.sv rtl/ccsds_ul_short_ldpc_dec.sv rtl/ccsds_dl_turbo_ldpc_enc.sv rtl/ccsds_hcpd_ctrl.sv rtl/ccsds_sdls_engine.sv rtl/ccsds_pn_ranging.sv rtl/ccsds_phy_modem.sv rtl/ccsds_bch6356_enc.sv rtl/ccsds_tc_cltu_framer.sv rtl/ccsds_fop1_engine.sv rtl/ccsds_tm_aos_deframer.sv rtl/ccsds_dl_rs255_223_dec.sv rtl/ccsds_channel_impairment_model.sv rtl/ccsds_sat_ttc_top.sv
 
@@ -40,8 +40,11 @@ if "%STAGE%"=="2" (
 ) else if "%STAGE%"=="9" (
   set TB_TOP=tb_stage9_external_ref_check
   set TB_SRC=tb/tb_stage9_external_ref_check.sv
+) else if "%STAGE%"=="10" (
+  set TB_TOP=tb_stage10_full_matrix_link_stress
+  set TB_SRC=tb/tb_stage10_full_matrix_link_stress.sv
 ) else (
-  echo Unknown STAGE=%STAGE% ^(expected 2..9^)
+  echo Unknown STAGE=%STAGE% ^(expected 2..10^)
   exit /b 1
 )
 

@@ -89,6 +89,8 @@ SV_TB_MANIFEST: List[str] = [
     "tb_stage6_full_system.sv",
     "tb_stage7_hw_egse_loopback.sv",
     "tb_stage8_all_protocols_channel_loopback.sv",
+    "tb_stage9_external_ref_check.sv",
+    "tb_stage10_full_matrix_link_stress.sv",
 ]
 
 
@@ -203,6 +205,18 @@ def audit_sv_file(sv_path: Path) -> Dict[str, object]:
         if "<=" in stmt_no_parens:
             errors.append(
                 f"{sv_path.name}: Non-blocking assignment '<=' found inside always_comb block"
+            )
+
+
+    # 8. Rule #8 (Fix CR-23): Forbid driving the same signal from both always_ff and initial blocks (VRFC 10-3818)
+    m_ff = re.search(r"always_ff\b(.*?)(?=\n\s*initial\b|\nendmodule)", clean, flags=re.DOTALL)
+    m_init = re.search(r"\n\s*initial\b(.*?)(?=\nendmodule)", clean, flags=re.DOTALL)
+    if m_ff and m_init:
+        ff_vars = set(re.findall(r"\b([a-zA-Z_]\w*)\s*(?:\[[^\]]*\])?\s*<=", m_ff.group(1)))
+        init_vars = set(re.findall(r"\b([a-zA-Z_]\w*)\s*(?:\[[^\]]*\])?\s*(?<![=!<>])=(?!=)", m_init.group(1)))
+        for ov in sorted(ff_vars & init_vars):
+            errors.append(
+                f"{sv_path.name}: Variable '{ov}' is driven in both always_ff and initial blocks (triggers Vivado VRFC 10-3818)"
             )
 
     struct_widths: Dict[str, int] = {}

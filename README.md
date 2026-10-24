@@ -89,11 +89,25 @@ pip install spacepackets cryptography
 | **EXT-REF-5** | Corrupted 60B Dual-Basis $\text{RS}(255,223)$ Codeword (`byte[7]^=0xA5, byte[14]^=0x3C`) | `ccsds_dl_rs255_223_dec` (Peterson-Berlekamp + Chien + Forney Corrector) | **PASS (`2` corrupted bytes healed)** |
 | **EXT-REF-6** | Two Noisy 128b CCSDS 231.1-O-1 Table 2-1/2-4 `(128,64)` LDPC CBs (`4` bit flips) | `ccsds_ul_short_ldpc_dec` & `ccsds_dl_turbo_ldpc_enc` (Table 2-1 $W_{64 \times 64}$ + Turbo 8-Prime) | **PASS (`4` bit errors healed)** |
 
-### Measured Xilinx Vivado 2022.2 Kintex UltraScale (`xcku040-ffva1156-2-e`) Post-Upgrade Sign-Off (`v2.23.0`)
+### Measured Xilinx Vivado 2022.2 Kintex UltraScale (`xcku040-ffva1156-2-e`) Post-Upgrade Sign-Off (`v2.26.9`)
 
-- **Top-Level Utilization (`ROLE_MODE = 0`):** `23,882 Total LUTs` (`23,578 Logic LUTs` + `304 Distributed LUTRAMs`), `25,401 Flip-Flops` (`9.87%` LUTs / `5.24%` FFs on `XCKU040`; `7.20%` LUTs / `3.83%` FFs on `XQRKU060`).
+- **Top-Level Utilization (`ROLE_MODE = 0`):** **`14,028 Total LUTs`** (`12,828 Logic LUTs` + `1,200 Distributed LUTRAMs`, `0 SRLs`), **`10,331 Flip-Flops`**, `0 BRAM`, `0 DSP48E2` (**`5.79%` LUTs / `2.13%` FFs on `XCKU040`**; **`4.23%` LUTs / `1.56%` FFs on `XQRKU060`**).
 - **Measured True-$F_{\max}$ Across All 4 Clock Domains (`WNS > 0, TNS = 0.000 ns`):**
-  - `clk_sys` (`100.0 MHz` nominal): **`104.67 MHz`** (`ROLE_MODE=0`) / **`106.39 MHz`** (`ROLE_MODE=2`)
-  - `clk_adc_iq` (`120.0 MHz` nominal): **`166.53 MHz`** (`+38.8%` margin)
-  - `clk_tx_sym` (`50.0 MHz` nominal): **`174.19 MHz`** (`+248.4%` margin)
-  - `clk_tc_safe` (`16.0 MHz` nominal): **`104.18 MHz`** (`+551.1%` margin)
+  - `clk_sys` (`100.0 MHz` nominal): **`111.82 MHz`** (`8.943 ns`, 10 logic levels, **`+11.82%` margin**)
+  - `clk_adc_iq` (`120.0 MHz` nominal): **`140.17 MHz`** (`7.134 ns`, 8 logic levels, **`+16.81%` margin** with 17-tap 4-SPS SRRC FIR & 2nd-order PI Costas Loop)
+  - `clk_tx_sym` (`50.0 MHz` nominal): **`173.28 MHz`** (`5.771 ns`, 6 logic levels, **`+246.56%` margin**)
+  - `clk_tc_safe` (`16.0 MHz` nominal): **`104.18 MHz`** (`9.599 ns`, 11 logic levels, **`+551.13%` margin**)
+
+## Stage 10: Full-Matrix Configuration & Impaired-Channel Link-Closure Stress Suite (`v2.24.0`)
+
+Run the **5-Matrix End-to-End Configuration & Impaired-Channel Link-Closure Stress Testbench (`tb_stage10_full_matrix_link_stress.sv`)** in Vivado `xsim`:
+
+```powershell
+.\scripts\run_eda_sim.bat xsim 10
+```
+
+- **`MATRIX-1A, 1B & 1C`:** Sweeps all **12 Baseband PHY modes** (`BPSK`, `QPSK`, `OQPSK`, `PCM/PM` $\times$ `NRZ-L`, `NRZ-M`, `Bi-Phi-L`) under AWGN and $180^\circ$ phase inversion (`MATRIX-1A`), **PLUS Continuous Positive (`+384`) & Negative (`-384`) Carrier Frequency Offset (CFO / Doppler complex phasor rotation $e^{j\Delta\omega n}$, $\pm 2.11^\circ/\text{sample}$)** across all 4 modulations tracked by the 64-entry Q10 NCO Complex Derotator & 2nd-order PI Costas Loop (`MATRIX-1B`, Fix `CR-21`), PLUS **4-SPS 17-Tap Square-Root Raised-Cosine (SRRC, $\alpha=0.35$) Polyphase Tx Pulse-Shaping FIR + 17-Tap Symmetric Folded Rx Matched SRRC Filter (`MATRIX-1C`, Fix `CR-22`)**, plus **S/X-Band Turnaround** and **T2B/T4B PN Ranging**.
+- **`MATRIX-2`:** Proves **concatenated `Conv(K=7, r=1/2)` + `64-State Soft Viterbi` + `RS(255,223)` Peterson-Berlekamp** link closure when the channel injects both distributed symbol errors and a 2-byte burst error (`"CONCAT_FEC_OK!"`).
+- **`MATRIX-3`:** Verifies `AOS` $GF(2^4)$ `FHEC` and sweeps all 5 `ccsds_dl_turbo_ldpc_enc` modes (`LDPC(128,64)` + `Turbo r=1/2, 1/3, 1/4, 1/6`).
+- **`MATRIX-4`:** Proves encrypted **NIST FIPS-197 `AES-128-CTR` SDLS** over noisy `BCH(63,56)` ($180^\circ$ phase inversion + 1-bit SEC + 2-bit burst drop recovery via `CLCW.Retransmit=1` & `FOP-1` Go-Back-$N$).
+- **`MATRIX-5`:** Injects a simultaneous **Radiation SEU Storm** across `FARM-1` TMR, `HCPD` TMR, and `Hsiao SECDED FIFO` during an authenticated `EMERGENCY_VCID=63` command (`0xC0DE_CAFE_05FA_0010`).

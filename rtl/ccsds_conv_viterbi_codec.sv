@@ -121,8 +121,8 @@ module ccsds_conv_viterbi_codec
   );
     logic signed [5:0] d1;
     logic signed [5:0] d2;
-    d1 = exp1 ? (6'sd8 - 6'(llr1)) : (6'sd8 + 6'(llr1));
-    d2 = exp2 ? (6'sd8 - 6'(llr2_aligned)) : (6'sd8 + 6'(llr2_aligned));
+    d1 = exp1 ? (6'sd8 - $signed({{2{llr1[3]}}, llr1})) : (6'sd8 + $signed({{2{llr1[3]}}, llr1}));
+    d2 = exp2 ? (6'sd8 - $signed({{2{llr2_aligned[3]}}, llr2_aligned})) : (6'sd8 + $signed({{2{llr2_aligned[3]}}, llr2_aligned}));
     return 10'(unsigned'(d1 + d2));
   endfunction
 

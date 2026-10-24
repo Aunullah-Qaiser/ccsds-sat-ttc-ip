@@ -108,6 +108,7 @@ module ccsds_sat_ttc_top
   logic        csr_obt_sec_hdr_en;
   logic        csr_sdls_en;
   logic        csr_bc_req_sdls;
+  logic        csr_srrc_4sps_en;
   logic [7:0]  csr_win_half_w;
   logic [3:0]  csr_rs_interleave;
   logic [7:0]  csr_rs_q_fill;
@@ -193,6 +194,7 @@ module ccsds_sat_ttc_top
     .obt_sec_hdr_en_cfg          (csr_obt_sec_hdr_en),
     .sdls_en_cfg                 (csr_sdls_en),
     .bc_require_sdls_cfg         (csr_bc_req_sdls),
+    .srrc_4sps_en_cfg            (csr_srrc_4sps_en),
     .window_half_w_cfg           (csr_win_half_w),
     .rs_interleave_i_cfg         (csr_rs_interleave),
     .rs_virt_fill_q_cfg          (csr_rs_q_fill),
@@ -219,6 +221,17 @@ module ccsds_sat_ttc_top
   logic               tx_phy_tvalid;
   logic               tx_phy_tready;
   logic [7:0]         tx_phy_tdata;
+  (* ASYNC_REG = "TRUE" *) logic srrc_en_meta_q, srrc_en_sync_q;
+
+  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
+    if (!rst_n) begin
+      srrc_en_meta_q <= 1'b0;
+      srrc_en_sync_q <= 1'b0;
+    end else begin
+      srrc_en_meta_q <= csr_srrc_4sps_en;
+      srrc_en_sync_q <= srrc_en_meta_q;
+    end
+  end
 
   ccsds_phy_modem u_phy_modem (
     .clk                    (clk_adc_iq),
@@ -227,6 +240,7 @@ module ccsds_sat_ttc_top
     .line_code_cfg          (line_code_cfg),
     .turnaround_xband_cfg   (turnaround_xband_cfg),
     .pn_ranging_en_cfg      (pn_ranging_en_cfg),
+    .srrc_4sps_en_cfg       (srrc_en_sync_q),
     .tx_pn_chip_in          (tx_pn_chip),
     .rx_i_in                (rx_i_adc_in),
     .rx_q_in                (rx_q_adc_in),
@@ -259,8 +273,8 @@ module ccsds_sat_ttc_top
   );
 
   // 2-FF CDC Synchronizers from clk_adc_iq to clk_tc_safe
-  logic carrier_lock_meta_q, carrier_lock_sync_q;
-  logic symbol_lock_meta_q,  symbol_lock_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic carrier_lock_meta_q, carrier_lock_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic symbol_lock_meta_q,  symbol_lock_sync_q;
 
   always_ff @(posedge clk_tc_safe or negedge rst_n) begin
     if (!rst_n) begin

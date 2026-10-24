@@ -72,6 +72,7 @@ module ccsds_axi_lite_csr
   output logic        obt_sec_hdr_en_cfg,
   output logic        sdls_en_cfg,
   output logic        bc_require_sdls_cfg,
+  output logic        srrc_4sps_en_cfg,
   output logic [7:0]  window_half_w_cfg,
   output logic [3:0]  rs_interleave_i_cfg,
   output logic [7:0]  rs_virt_fill_q_cfg,
@@ -139,6 +140,7 @@ module ccsds_axi_lite_csr
     obt_sec_hdr_en_cfg     = voted_scid_proto[25];
     sdls_en_cfg            = voted_scid_proto[26];
     bc_require_sdls_cfg    = voted_scid_proto[27];
+    srrc_4sps_en_cfg       = voted_scid_proto[28];
 
     uslp_scid_cfg          = voted_uslp_rs[15:0];
     rs_interleave_i_cfg    = voted_uslp_rs[19:16];
