@@ -38,3 +38,9 @@ __pycache__/
 update_to_v*.py
 *.patch
 *.diff
+
+# Stale local patch logs and simulator VCD dumps
+v2_*.txt
+apply_v2_*.py
+*.vcd
+build/

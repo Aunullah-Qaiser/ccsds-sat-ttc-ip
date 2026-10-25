@@ -2,7 +2,7 @@
 REM ============================================================================
 REM File Name   : run_eda_sim.bat
 REM Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-REM Version     : v2.28.0 (Supports STAGE 2..11 + External Reference Check)
+REM Version     : v2.29.0 (Supports STAGE 2..11 + Real VCD & External Ref Checks)
 REM Description : Native Windows Batch Runner for Xilinx Vivado (xsim),
 REM               Verilator, QuestaSim, and Icarus Verilog (No WSL required).
 REM ============================================================================
@@ -12,7 +12,7 @@ set SIM=%1
 if "%SIM%"=="" set SIM=xsim
 
 set STAGE=%2
-if "%STAGE%"=="" set STAGE=10
+if "%STAGE%"=="" set STAGE=11
 
 set RTL_SRCS=rtl/ccsds_pkg.sv rtl/ccsds_crc_universal.sv rtl/ccsds_lfsr_scrambler.sv rtl/ccsds_cdc_fifo_ecc.sv rtl/ccsds_gf256_math.sv rtl/ccsds_asm_correlator.sv rtl/ccsds_bch6356_dec.sv rtl/ccsds_farm1_tmr.sv rtl/ccsds_vc_arbiter_mux.sv rtl/ccsds_dl_rs255_223_enc.sv rtl/ccsds_tc_uslp_deframer.sv rtl/ccsds_tm_aos_uslp_framer.sv rtl/ccsds_pkt_reassembler.sv rtl/ccsds_prox1_plcw_ctrl.sv rtl/ccsds_axi_lite_csr.sv rtl/ccsds_conv_viterbi_codec.sv rtl/ccsds_ul_short_ldpc_dec.sv rtl/ccsds_dl_turbo_ldpc_enc.sv rtl/ccsds_hcpd_ctrl.sv rtl/ccsds_sdls_engine.sv rtl/ccsds_pn_ranging.sv rtl/ccsds_phy_modem.sv rtl/ccsds_bch6356_enc.sv rtl/ccsds_tc_cltu_framer.sv rtl/ccsds_fop1_engine.sv rtl/ccsds_tm_aos_deframer.sv rtl/ccsds_dl_rs255_223_dec.sv rtl/ccsds_channel_impairment_model.sv rtl/ccsds_sat_ttc_top.sv
 
@@ -78,6 +78,12 @@ if "%SIM%"=="xsim" (
   vvp obj_%TB_TOP%.vvp
 ) else (
   python scripts/sv_rtl_audit.py
+)
+
+if "%STAGE%"=="8" (
+  echo [CCSDS-SIM-WIN] Verifying real Vivado xsim VCD dump ^(sim_waves/stage8_xsim_rtl.vcd^)...
+  python scripts/vcd_waveform_matcher.py --rtl-vcd sim_waves/stage8_xsim_rtl.vcd
+  if errorlevel 1 exit /b 1
 )
 
 if "%STAGE%"=="9" (

@@ -1,16 +1,18 @@
 # ==============================================================================
 # File Name   : run_vivado_synth_sta.tcl
-# Project     : CCSDS-SAT-TTC-IP (Stage 8 Pillar 4: Kintex UltraScale True-Fmax Push)
+# Project     : CCSDS-SAT-TTC-IP (Stage 8 Pillar 4: Vivado Synthesis, Utilization & True-Fmax STA)
 # Usage       : vivado -mode batch -source scripts/run_vivado_synth_sta.tcl -tclargs [ROLE_MODE]
-# Description : 1. Auto-detects the installed AMD Kintex UltraScale part in Vivado
-#                  (xqrku060-ffva1517-1-i, xcku060-ffva1517-2-i, xcku040-ffva1156-2-e)
+# Description : 1. Auto-detects the installed FPGA part in Vivado (e.g.,
+#                  xc7z010iclg225-1L on Vivado WebPACK/Standard or xqrku060/xcku040)
 #               2. Synthesizes ccsds_sat_ttc_top in Out-of-Context (OOC) mode
 #                  with -keep_equivalent_registers to preserve all 3x TMR voters
-#               3. Generates Nominal Timing, Hierarchical Utilization, and CDC reports
+#               3. Generates Nominal Timing (100/120/50/16 MHz), Hierarchical
+#                  Utilization, and CDC reports
 #               4. Executes an Overclocked True-Fmax Push (tightening clk_sys to
 #                  300 MHz / 3.333 ns and clk_adc_iq to 333.3 MHz / 3.000 ns) to
 #                  expose the true physical critical path and calculate exact
-#                  Fmax = 1000.0 / (T_target - WNS) for every clock domain!
+#                  Fmax = 1000.0 / (T_push - WNS_push) for every clock domain,
+#                  writing the measured results directly to JSON!
 # ==============================================================================
 
 set role_mode 0
@@ -20,8 +22,8 @@ if { $argc >= 1 } {
 
 file mkdir reports
 
-# 1. Auto-select installed Kintex UltraScale part in local Vivado installation
-set preferred_parts [list "xqrku060-ffva1517-1-i" "xcku060-ffva1517-2-i" "xcku040-ffva1156-2-e" "xcku035-fbva676-2-e"]
+# 1. Auto-select installed FPGA part in local Vivado installation
+set preferred_parts [list "xqrku060-ffva1517-1-i" "xcku060-ffva1517-2-i" "xcku040-ffva1156-2-e" "xcku035-fbva676-2-e" "xc7z010iclg225-1L"]
 set target_part ""
 foreach p $preferred_parts {
     if { [llength [get_parts $p]] > 0 } {
@@ -64,6 +66,22 @@ report_utilization -hierarchical -file "reports/vivado_utilization_role${role_mo
 report_utilization -file "reports/vivado_utilization_summary_role${role_mode}.rpt"
 report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10 -file "reports/vivado_timing_nominal_role${role_mode}.rpt"
 report_cdc -details -file "reports/vivado_cdc_role${role_mode}.rpt"
+
+# Capture nominal WNS before tightening clocks
+array set nom_wns_map {}
+foreach {clk_name nom_ns} {
+    clk_sys     10.000
+    clk_adc_iq   8.333
+    clk_tx_sym  20.000
+    clk_tc_safe 62.500
+} {
+    set npaths [get_timing_paths -from [get_clocks $clk_name] -to [get_clocks $clk_name] -max_paths 1]
+    if { [llength $npaths] > 0 } {
+        set nom_wns_map($clk_name) [get_property SLACK [lindex $npaths 0]]
+    } else {
+        set nom_wns_map($clk_name) 0.0
+    }
+}
 
 # 5. Overclocked True-Fmax & Critical-Path Discovery Push:
 #    Tighten clocks aggressively so Vivado reveals the exact limiting logic path

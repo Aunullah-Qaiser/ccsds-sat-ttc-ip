@@ -2,14 +2,14 @@
 # ==============================================================================
 # File Name   : run_eda_sim.sh
 # Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-# Version     : v2.18 (Supports STAGE 2..8 + Auto-Detects Windows Vivado)
+# Version     : v2.29.0 (Supports STAGE 2..11 + Real VCD & External Ref Checks)
 # Description : Unified RTL Simulator Runner for Verilator, Icarus Verilog,
 #               Xilinx Vivado (xsim), and Siemens QuestaSim.
 # ==============================================================================
 set -euo pipefail
 
 SIM="${1:-auto}"
-STAGE="${2:-8}"
+STAGE="${2:-11}"
 
 RTL_SRCS=(
   rtl/ccsds_pkg.sv
@@ -44,19 +44,25 @@ RTL_SRCS=(
 )
 
 case "${STAGE}" in
-  2) TB_TOP="tb_stage2_primitives";                     TB_SRC="tb/tb_stage2_primitives.sv" ;;
-  3) TB_TOP="tb_stage3_vertical_slice";                 TB_SRC="tb/tb_stage3_vertical_slice.sv" ;;
-  4) TB_TOP="tb_stage4_multiprotocol";                  TB_SRC="tb/tb_stage4_multiprotocol.sv" ;;
-  5) TB_TOP="tb_stage5_fec_hcpd";                       TB_SRC="tb/tb_stage5_fec_hcpd.sv" ;;
-  6) TB_TOP="tb_stage6_full_system";                    TB_SRC="tb/tb_stage6_full_system.sv" ;;
-  7) TB_TOP="tb_stage7_hw_egse_loopback";               TB_SRC="tb/tb_stage7_hw_egse_loopback.sv" ;;
-  8) TB_TOP="tb_stage8_all_protocols_channel_loopback"; TB_SRC="tb/tb_stage8_all_protocols_channel_loopback.sv" ;;
+  2)  TB_TOP="tb_stage2_primitives";                     TB_SRC="tb/tb_stage2_primitives.sv" ;;
+  3)  TB_TOP="tb_stage3_vertical_slice";                 TB_SRC="tb/tb_stage3_vertical_slice.sv" ;;
+  4)  TB_TOP="tb_stage4_multiprotocol";                  TB_SRC="tb/tb_stage4_multiprotocol.sv" ;;
+  5)  TB_TOP="tb_stage5_fec_hcpd";                       TB_SRC="tb/tb_stage5_fec_hcpd.sv" ;;
+  6)  TB_TOP="tb_stage6_full_system";                    TB_SRC="tb/tb_stage6_full_system.sv" ;;
+  7)  TB_TOP="tb_stage7_hw_egse_loopback";               TB_SRC="tb/tb_stage7_hw_egse_loopback.sv" ;;
+  8)  TB_TOP="tb_stage8_all_protocols_channel_loopback"; TB_SRC="tb/tb_stage8_all_protocols_channel_loopback.sv" ;;
   9)  TB_TOP="tb_stage9_external_ref_check";             TB_SRC="tb/tb_stage9_external_ref_check.sv" ;;
-  10) TB_TOP="tb_stage10_full_matrix_link_stress";       TB_SRC="tb/tb_stage10_full_matrix_link_stress.sv tb/tb_stage11_top_to_top_rf_link.sv" ;;
-  *) echo "Unknown STAGE=${STAGE} (expected 2..10)"; exit 1 ;;
+  10) TB_TOP="tb_stage10_full_matrix_link_stress";       TB_SRC="tb/tb_stage10_full_matrix_link_stress.sv" ;;
+  11) TB_TOP="tb_stage11_top_to_top_rf_link";            TB_SRC="tb/tb_stage11_top_to_top_rf_link.sv" ;;
+  *) echo "Unknown STAGE=${STAGE} (expected 2..11)"; exit 1 ;;
 esac
 
 mkdir -p sim_waves
+
+if [[ "${STAGE}" == "9" ]]; then
+  echo "[CCSDS-SIM] Generating Stage 9 external reference vectors via spacepackets-py / cryptography..."
+  python3 scripts/run_external_ref_check.py --generate
+fi
 
 if [[ "${SIM}" == "auto" ]]; then
   if command -v verilator >/dev/null 2>&1; then
@@ -68,7 +74,8 @@ if [[ "${SIM}" == "auto" ]]; then
   elif command -v iverilog >/dev/null 2>&1; then
     SIM="icarus"
   else
-    SIM="cosim"
+    echo "[CCSDS-SIM ERROR] No SystemVerilog simulator (verilator, xsim, questa, icarus) found in PATH!"
+    exit 1
   fi
 fi
 
@@ -76,9 +83,15 @@ echo "[CCSDS-SIM] Selected Simulator: ${SIM} | Target Testbench: ${TB_TOP}"
 
 case "${SIM}" in
   verilator)
-    verilator --binary --timing --trace -Irtl -Wno-BLKSEQ -Wno-UNUSED -Wno-UNDRIVEN -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC \
+    verilator --binary --timing --trace --assert -Irtl \
+      -Wno-TIMESCALEMOD -Wno-BLKSEQ -Wno-UNUSED -Wno-UNDRIVEN -Wno-UNOPTFLAT \
+      -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC -Wno-CASEINCOMPLETE -Wno-PINCONNECTEMPTY \
       --top-module "${TB_TOP}" "${RTL_SRCS[@]}" "${TB_SRC}"
-    "./obj_dir/V${TB_TOP}"
+    "./obj_dir/V${TB_TOP}" | tee "sim_waves/${TB_TOP}_sim.log"
+    if grep -Eq "Fatal:|%Error" "sim_waves/${TB_TOP}_sim.log"; then
+      echo "[CCSDS-SIM FAIL] Simulation reported Fatal/Error in ${TB_TOP}"
+      exit 1
+    fi
     ;;
   xsim)
     XVLOG_PATH="$(command -v xvlog || true)"
@@ -86,24 +99,44 @@ case "${SIM}" in
       echo "[CCSDS-SIM] Detected Windows Vivado installation; invoking xvlog.bat / xelab.bat / xsim.bat via cmd.exe..."
       cmd.exe /c "xvlog.bat -sv -i rtl ${RTL_SRCS[*]} ${TB_SRC}"
       cmd.exe /c "xelab.bat -timescale 1ns/1ps -debug typical ${TB_TOP} -s ${TB_TOP}_sim"
-      cmd.exe /c "xsim.bat ${TB_TOP}_sim -R"
+      cmd.exe /c "xsim.bat ${TB_TOP}_sim -R" | tee "sim_waves/${TB_TOP}_sim.log"
     else
       xvlog -sv -i rtl "${RTL_SRCS[@]}" "${TB_SRC}"
       xelab -timescale 1ns/1ps -debug typical "${TB_TOP}" -s "${TB_TOP}_sim"
-      xsim "${TB_TOP}_sim" -R
+      xsim "${TB_TOP}_sim" -R | tee "sim_waves/${TB_TOP}_sim.log"
+    fi
+    if grep -Eq "Fatal:|ERROR:" "sim_waves/${TB_TOP}_sim.log"; then
+      echo "[CCSDS-SIM FAIL] Vivado xsim reported Fatal/ERROR in ${TB_TOP}"
+      exit 1
     fi
     ;;
   questa)
     vlib work
     vlog -sv +incdir+rtl "${RTL_SRCS[@]}" "${TB_SRC}"
-    vsim -c -do "run -all; quit -f" "work.${TB_TOP}"
+    vsim -c -do "run -all; quit -f" "work.${TB_TOP}" | tee "sim_waves/${TB_TOP}_sim.log"
+    if grep -Eq "Fatal:|\\*\\* Error:" "sim_waves/${TB_TOP}_sim.log"; then
+      exit 1
+    fi
     ;;
   icarus)
     iverilog -g2012 -I rtl -s "${TB_TOP}" -o "obj_${TB_TOP}.vvp" "${RTL_SRCS[@]}" "${TB_SRC}"
-    vvp "obj_${TB_TOP}.vvp"
+    vvp "obj_${TB_TOP}.vvp" | tee "sim_waves/${TB_TOP}_sim.log"
+    if grep -Eq "Fatal:|ERROR:" "sim_waves/${TB_TOP}_sim.log"; then
+      exit 1
+    fi
     ;;
-  cosim)
-    python3 scripts/sv_rtl_audit.py
-    python3 scripts/run_regression_suite.py --stage "${STAGE}"
+  *)
+    echo "Unknown SIM=${SIM} (expected verilator, xsim, questa, icarus)"
+    exit 1
     ;;
 esac
+
+if [[ "${STAGE}" == "8" ]]; then
+  echo "[CCSDS-SIM] Verifying real simulator-dumped VCD (sim_waves/stage8_xsim_rtl.vcd)..."
+  python3 scripts/vcd_waveform_matcher.py --rtl-vcd sim_waves/stage8_xsim_rtl.vcd
+fi
+
+if [[ "${STAGE}" == "9" ]]; then
+  echo "[CCSDS-SIM] Verifying RTL output hex dumps against external spacepackets-py and AESGCM..."
+  python3 scripts/run_external_ref_check.py --verify
+fi

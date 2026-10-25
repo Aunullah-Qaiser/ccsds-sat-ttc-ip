@@ -1,39 +1,37 @@
 {
   "status": "PASS",
-  "python_golden_vcd": "stage8_python_golden.vcd",
+  "rtl_vcd_present": true,
   "rtl_sim_vcd": "stage8_xsim_rtl.vcd",
-  "digital_sequence_match_pct": 100.0,
-  "total_byte_mismatches": 0,
-  "max_handshake_cycle_delta_clks": 1,
-  "cycle_delta_bound_clks": 2,
-  "baseband_iq_cross_correlation_rho": 1.0,
-  "baseband_iq_rho_threshold": 0.995,
-  "baseband_evm_rms_pct": 0.0804,
-  "baseband_snr_evm_db": 61.9,
-  "protocols_verified_sequentially": {
-    "TC_TM": {
-      "python_golden_hex": "DEADBEEFDEADBEEF55AA55AA",
-      "rtl_sim_hex": "DEADBEEFDEADBEEF55AA55AA",
-      "byte_exact_match": true,
-      "bytes_compared": 12
+  "simulator_version": "2022.2",
+  "vcd_size_bytes": 110414,
+  "timestamps_parsed": 580,
+  "python_golden_expectations": {
+    "ul_cltu_len_bytes": 26,
+    "dl_frames_expected": 4,
+    "tm_obt_cuc_hex": "653000428000",
+    "tm_clcw_hex": "01040001",
+    "dl_tfdf_payloads_hex": {
+      "PROTO_TM": "10111213",
+      "PROTO_AOS": "20212223",
+      "PROTO_PROX1": "30313233",
+      "PROTO_USLP": "40414243"
     },
-    "AOS_FHEC": {
-      "python_golden_hex": "CAFEBABE",
-      "rtl_sim_hex": "CAFEBABE",
-      "byte_exact_match": true,
-      "bytes_compared": 4
-    },
-    "PROXIMITY_1": {
-      "python_golden_hex": "A55AA55A",
-      "rtl_sim_hex": "A55AA55A",
-      "byte_exact_match": true,
-      "bytes_compared": 4
-    },
-    "USLP": {
-      "python_golden_hex": "12345678",
-      "rtl_sim_hex": "12345678",
-      "byte_exact_match": true,
-      "bytes_compared": 4
+    "channel_sweep": {
+      "injected_byte_errs": 1,
+      "fop1_nnr_after_5a": 2,
+      "fop1_vs_before_rollback": 4,
+      "fop1_vs_after_rollback": 2,
+      "fop1_retx_cnt": 1,
+      "tmr_seu_corrected": 1
     }
+  },
+  "rtl_vcd_verification_checks": {
+    "dl_frames_emitted_eq_4": true,
+    "tm_obt_cuc_matched": true,
+    "tm_clcw_matched": true,
+    "channel_1bit_error_injected": true,
+    "fop1_nnr_advanced_to_2": true,
+    "fop1_go_back_n_rollback_4_to_2": true,
+    "farm1_tmr_seu_self_healed": true
   }
 }

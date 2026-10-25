@@ -1,20 +1,20 @@
 # ==============================================================================
 # File Name   : Makefile
 # Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-# Version     : v2.10 (Native Windows PowerShell/CMD + WSL + Linux Support)
+# Version     : v2.29.0 (Supports STAGE 2..11 across Vivado xsim, Verilator, Questa, Icarus)
 # Description : Turnkey Multi-Simulator Build, Lint & Verification Makefile
 #               Supporting:
 #                 1. Xilinx Vivado (SIM=xsim)   -- Windows xvlog.bat & Linux xvlog
-#                 2. Verilator (SIM=verilator)  -- Open-Source Cycle-Accurate Sim
+#                 2. Verilator (SIM=verilator)  -- Open-Source Cycle-Accurate RTL Sim
 #                 3. Icarus Verilog (SIM=icarus)-- IEEE 1800-2012 Event Sim
 #                 4. Siemens Questa (SIM=questa)-- vlog/vsim
-#                 5. 3-Pillar C++20/Python/AST Gate (make audit / make regression)
+#                 5. Static AST Audit & Reference Cross-Check (make audit / make regression)
 # ==============================================================================
 
 SIM   ?= xsim
-STAGE ?= 8
+STAGE ?= 11
 
-RTL_SRCS := \
+RTL_SYNTH_SRCS := \
 	rtl/ccsds_pkg.sv \
 	rtl/ccsds_crc_universal.sv \
 	rtl/ccsds_lfsr_scrambler.sv \
@@ -42,18 +42,20 @@ RTL_SRCS := \
 	rtl/ccsds_fop1_engine.sv \
 	rtl/ccsds_tm_aos_deframer.sv \
 	rtl/ccsds_dl_rs255_223_dec.sv \
-	rtl/ccsds_channel_impairment_model.sv \
 	rtl/ccsds_sat_ttc_top.sv
 
-TB_STAGE2 := tb/tb_stage2_primitives.sv
-TB_STAGE3 := tb/tb_stage3_vertical_slice.sv
-TB_STAGE4 := tb/tb_stage4_multiprotocol.sv
-TB_STAGE5 := tb/tb_stage5_fec_hcpd.sv
-TB_STAGE6 := tb/tb_stage6_full_system.sv
-TB_STAGE7 := tb/tb_stage7_hw_egse_loopback.sv
-TB_STAGE8 := tb/tb_stage8_all_protocols_channel_loopback.sv
+RTL_SRCS := $(RTL_SYNTH_SRCS) rtl/ccsds_channel_impairment_model.sv
+
+TB_STAGE2  := tb/tb_stage2_primitives.sv
+TB_STAGE3  := tb/tb_stage3_vertical_slice.sv
+TB_STAGE4  := tb/tb_stage4_multiprotocol.sv
+TB_STAGE5  := tb/tb_stage5_fec_hcpd.sv
+TB_STAGE6  := tb/tb_stage6_full_system.sv
+TB_STAGE7  := tb/tb_stage7_hw_egse_loopback.sv
+TB_STAGE8  := tb/tb_stage8_all_protocols_channel_loopback.sv
 TB_STAGE9  := tb/tb_stage9_external_ref_check.sv
 TB_STAGE10 := tb/tb_stage10_full_matrix_link_stress.sv
+TB_STAGE11 := tb/tb_stage11_top_to_top_rf_link.sv
 
 ifeq ($(STAGE),2)
   TB_TOP := tb_stage2_primitives
@@ -82,11 +84,14 @@ else ifeq ($(STAGE),9)
 else ifeq ($(STAGE),10)
   TB_TOP := tb_stage10_full_matrix_link_stress
   TB_SRC := $(TB_STAGE10)
+else ifeq ($(STAGE),11)
+  TB_TOP := tb_stage11_top_to_top_rf_link
+  TB_SRC := $(TB_STAGE11)
 endif
 
-.PHONY: all audit regression lint sim waveform-diff channel-sweep sta clean
+.PHONY: all audit regression lint sim waveform-diff channel-sweep hal-test sta clean
 
-all: audit regression
+all: audit regression hal-test
 
 audit:
 	python3 scripts/sv_rtl_audit.py
@@ -94,9 +99,16 @@ audit:
 regression:
 	python3 scripts/run_regression_suite.py --stage 8
 
+hal-test:
+	gcc -std=c11 -Wall -Wextra -Werror -Isw sw/ccsds_ttc_hal.c sw/test_ccsds_ttc_hal.c -o test_ccsds_ttc_hal
+	./test_ccsds_ttc_hal
+	rm -f test_ccsds_ttc_hal
+
 lint:
-	verilator --lint-only -Wall --Wno-fatal -Wno-BLKSEQ -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT -Wno-TIMESCALEMOD -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
-		-Irtl --top-module ccsds_sat_ttc_top $(RTL_SRCS)
+	verilator --lint-only -Wall \
+		-Wno-TIMESCALEMOD -Wno-UNUSED -Wno-BLKSEQ -Wno-UNOPTFLAT \
+		-Wno-WIDTHEXPAND -Wno-WIDTHTRUNC -Wno-CASEINCOMPLETE -Wno-PINCONNECTEMPTY \
+		-GROLE_MODE=2 -Irtl --top-module ccsds_sat_ttc_top $(RTL_SYNTH_SRCS)
 
 ifeq ($(OS),Windows_NT)
 sim:
@@ -107,7 +119,7 @@ sim:
 endif
 
 waveform-diff:
-	python3 scripts/vcd_waveform_matcher.py
+	python3 scripts/vcd_waveform_matcher.py --rtl-vcd sim_waves/stage8_xsim_rtl.vcd
 
 channel-sweep:
 	python3 scripts/run_channel_ber_sweep.py
@@ -120,4 +132,4 @@ else
 endif
 
 clean:
-	rm -rf obj_dir xsim.dir work *.jou *.log *.pb *.wdb simv*
+	rm -rf obj_dir xsim.dir work *.jou *.log *.pb *.wdb simv* test_ccsds_ttc_hal
