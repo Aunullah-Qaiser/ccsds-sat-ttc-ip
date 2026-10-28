@@ -1,10 +1,8 @@
 {
-  "status": "PASS",
-  "rtl_vcd_present": true,
-  "rtl_sim_vcd": "stage8_xsim_rtl.vcd",
-  "simulator_version": "2022.2",
-  "vcd_size_bytes": 110414,
-  "timestamps_parsed": 580,
+  "status": "PENDING_RTL_SIM",
+  "rtl_vcd_present": false,
+  "rtl_sim_vcd_path": "sim_waves/stage8_xsim_rtl.vcd",
+  "note": "No simulator VCD found at sim_waves/stage8_xsim_rtl.vcd. vcd_waveform_matcher.py never fabricates RTL VCD files in Python. Run tb_stage8_all_protocols_channel_loopback in Vivado xsim, Verilator, or Icarus Verilog to generate sim_waves/stage8_xsim_rtl.vcd, then re-run this script.",
   "python_golden_expectations": {
     "ul_cltu_len_bytes": 26,
     "dl_frames_expected": 4,
@@ -24,14 +22,5 @@
       "fop1_retx_cnt": 1,
       "tmr_seu_corrected": 1
     }
-  },
-  "rtl_vcd_verification_checks": {
-    "dl_frames_emitted_eq_4": true,
-    "tm_obt_cuc_matched": true,
-    "tm_clcw_matched": true,
-    "channel_1bit_error_injected": true,
-    "fop1_nnr_advanced_to_2": true,
-    "fop1_go_back_n_rollback_4_to_2": true,
-    "farm1_tmr_seu_self_healed": true
   }
 }

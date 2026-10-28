@@ -1,7 +1,7 @@
 # ==============================================================================
 # File Name   : Makefile
 # Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-# Version     : v2.29.0 (Supports STAGE 2..11 across Vivado xsim, Verilator, Questa, Icarus)
+# Version     : v2.31.0 (Supports STAGE 2..12 across Vivado xsim, Verilator, Questa, Icarus)
 # Description : Turnkey Multi-Simulator Build, Lint & Verification Makefile
 #               Supporting:
 #                 1. Xilinx Vivado (SIM=xsim)   -- Windows xvlog.bat & Linux xvlog
@@ -12,7 +12,7 @@
 # ==============================================================================
 
 SIM   ?= xsim
-STAGE ?= 11
+STAGE ?= 12
 
 RTL_SYNTH_SRCS := \
 	rtl/ccsds_pkg.sv \
@@ -44,7 +44,7 @@ RTL_SYNTH_SRCS := \
 	rtl/ccsds_dl_rs255_223_dec.sv \
 	rtl/ccsds_sat_ttc_top.sv
 
-RTL_SRCS := $(RTL_SYNTH_SRCS) rtl/ccsds_channel_impairment_model.sv
+RTL_SRCS := $(RTL_SYNTH_SRCS) rtl/ccsds_channel_impairment_model.sv rtl/ccsds_space_flight_channel_model.sv
 
 TB_STAGE2  := tb/tb_stage2_primitives.sv
 TB_STAGE3  := tb/tb_stage3_vertical_slice.sv
@@ -56,6 +56,7 @@ TB_STAGE8  := tb/tb_stage8_all_protocols_channel_loopback.sv
 TB_STAGE9  := tb/tb_stage9_external_ref_check.sv
 TB_STAGE10 := tb/tb_stage10_full_matrix_link_stress.sv
 TB_STAGE11 := tb/tb_stage11_top_to_top_rf_link.sv
+TB_STAGE12 := tb/tb_stage12_space_channel_loopback.sv
 
 ifeq ($(STAGE),2)
   TB_TOP := tb_stage2_primitives
@@ -87,11 +88,14 @@ else ifeq ($(STAGE),10)
 else ifeq ($(STAGE),11)
   TB_TOP := tb_stage11_top_to_top_rf_link
   TB_SRC := $(TB_STAGE11)
+else ifeq ($(STAGE),12)
+  TB_TOP := tb_stage12_space_channel_loopback
+  TB_SRC := $(TB_STAGE12)
 endif
 
-.PHONY: all audit regression lint sim waveform-diff channel-sweep hal-test sta clean
+.PHONY: all audit regression lint sim waveform-diff channel-sweep space-perf hal-test sta clean
 
-all: audit regression hal-test
+all: audit regression hal-test space-perf
 
 audit:
 	python3 scripts/sv_rtl_audit.py
@@ -123,6 +127,9 @@ waveform-diff:
 
 channel-sweep:
 	python3 scripts/run_channel_ber_sweep.py
+
+space-perf:
+	python3 scripts/run_space_channel_perf_analysis.py
 
 sta:
 ifeq ($(OS),Windows_NT)

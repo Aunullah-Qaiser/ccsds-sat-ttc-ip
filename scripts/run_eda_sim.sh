@@ -2,14 +2,14 @@
 # ==============================================================================
 # File Name   : run_eda_sim.sh
 # Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-# Version     : v2.29.0 (Supports STAGE 2..11 + Real VCD & External Ref Checks)
+# Version     : v2.31.0 (Supports STAGE 2..12 + Space Flight Channel Loopback)
 # Description : Unified RTL Simulator Runner for Verilator, Icarus Verilog,
 #               Xilinx Vivado (xsim), and Siemens QuestaSim.
 # ==============================================================================
 set -euo pipefail
 
 SIM="${1:-auto}"
-STAGE="${2:-11}"
+STAGE="${2:-12}"
 
 RTL_SRCS=(
   rtl/ccsds_pkg.sv
@@ -40,6 +40,7 @@ RTL_SRCS=(
   rtl/ccsds_tm_aos_deframer.sv
   rtl/ccsds_dl_rs255_223_dec.sv
   rtl/ccsds_channel_impairment_model.sv
+  rtl/ccsds_space_flight_channel_model.sv
   rtl/ccsds_sat_ttc_top.sv
 )
 
@@ -54,7 +55,8 @@ case "${STAGE}" in
   9)  TB_TOP="tb_stage9_external_ref_check";             TB_SRC="tb/tb_stage9_external_ref_check.sv" ;;
   10) TB_TOP="tb_stage10_full_matrix_link_stress";       TB_SRC="tb/tb_stage10_full_matrix_link_stress.sv" ;;
   11) TB_TOP="tb_stage11_top_to_top_rf_link";            TB_SRC="tb/tb_stage11_top_to_top_rf_link.sv" ;;
-  *) echo "Unknown STAGE=${STAGE} (expected 2..11)"; exit 1 ;;
+  12) TB_TOP="tb_stage12_space_channel_loopback";        TB_SRC="tb/tb_stage12_space_channel_loopback.sv" ;;
+  *) echo "Unknown STAGE=${STAGE} (expected 2..12)"; exit 1 ;;
 esac
 
 mkdir -p sim_waves

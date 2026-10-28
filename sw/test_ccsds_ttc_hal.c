@@ -1,6 +1,7 @@
 /**
  * @file test_ccsds_ttc_hal.c
- * @brief Unit & register-map verification test for the C11 Flight/EGSE HAL SDK.
+ * @brief Unit & register-map verification test for the C11 Flight/EGSE HAL SDK
+ *        (strictly aligned with rtl/ccsds_axi_lite_csr.sv).
  */
 
 #include "ccsds_ttc_hal.h"
@@ -17,12 +18,12 @@ int main(void)
     ccsds_err_telemetry_t err_tlm;
 
     memset((void *)mock_axi_regs, 0, sizeof(mock_axi_regs));
-    mock_axi_regs[CCSDS_REG_VERSION_ID >> 2U]     = CCSDS_EXPECTED_VERSION_ID;
-    mock_axi_regs[CCSDS_REG_LATEST_CLCW >> 2U]    = (1UL << 18U) | (1UL << 11U) | (2UL << 9U) | 0x05UL;
-    mock_axi_regs[CCSDS_REG_OBT_CUC_LOW >> 2U]    = 0x00428000UL;
-    mock_axi_regs[CCSDS_REG_OBT_CUC_HIGH >> 2U]   = 0x00006530UL;
-    mock_axi_regs[CCSDS_REG_ERR_COUNTERS_0 >> 2U] = 0x03000100UL;
-    mock_axi_regs[CCSDS_REG_ERR_COUNTERS_1 >> 2U] = 0x02010004UL;
+    mock_axi_regs[CCSDS_REG_CORE_ID_VER     >> 2U] = CCSDS_EXPECTED_VERSION_ID;
+    mock_axi_regs[CCSDS_REG_OBT_COARSE_SEC  >> 2U] = 0x65300042UL;
+    mock_axi_regs[CCSDS_REG_OBT_FINE_SUBSEC >> 2U] = 0x00008000UL;
+    mock_axi_regs[CCSDS_REG_EDAC_CORR_CNTS  >> 2U] = (0x0002UL << 16U) | 0x0004UL;
+    mock_axi_regs[CCSDS_REG_FAULT_ERR_CNTS  >> 2U] = (0x0003UL << 16U) | 0x0001UL;
+    mock_axi_regs[CCSDS_REG_LATEST_CLCW_MON >> 2U] = (1UL << 18U) | (1UL << 11U) | (2UL << 9U) | 0x05UL;
 
     assert(ccsds_ttc_hal_init(&dev, mock_axi_regs) == 0);
 
@@ -48,6 +49,7 @@ int main(void)
     cfg_in.gardner_ted_en     = true;
     cfg_in.sdls_gcm_mode      = true;
     cfg_in.fll_assist_en      = true;
+    cfg_in.fault_irq_en       = true;
 
     assert(ccsds_ttc_hal_configure(&dev, &cfg_in) == 0);
     ccsds_ttc_hal_get_config(&dev, &cfg_out);
@@ -70,6 +72,7 @@ int main(void)
     assert(cfg_out.gardner_ted_en    == true);
     assert(cfg_out.sdls_gcm_mode     == true);
     assert(cfg_out.fll_assist_en     == true);
+    assert(cfg_out.fault_irq_en      == true);
 
     ccsds_ttc_hal_get_clcw(&dev, &clcw);
     assert(clcw.vcid           == 1U);
@@ -77,14 +80,13 @@ int main(void)
     assert(clcw.farm_b_counter == 2U);
     assert(clcw.report_value   == 5U);
 
-    assert(ccsds_ttc_hal_get_obt_cuc48(&dev) == 0x0000653000428000ULL);
+    assert(ccsds_ttc_hal_get_obt_cuc48(&dev) == 0x653000428000ULL);
 
     ccsds_ttc_hal_get_error_telemetry(&dev, &err_tlm);
-    assert(err_tlm.bch_single_err_cnt     == 3U);
-    assert(err_tlm.fifo_secded_single_cnt == 1U);
-    assert(err_tlm.tmr_seu_corrected_cnt  == 2U);
-    assert(err_tlm.frame_crc_err_cnt      == 1U);
-    assert(err_tlm.sdls_mac_err_cnt       == 4U);
+    assert(err_tlm.secded_bch_single_corr_cnt == 4U);
+    assert(err_tlm.tmr_seu_corrected_cnt      == 2U);
+    assert(err_tlm.uncorr_frame_pkt_err_cnt   == 1U);
+    assert(err_tlm.sdls_mac_err_cnt           == 3U);
 
     printf("[HAL-SDK-TEST PASS] All C11 Flight/EGSE HAL register pack/unpack assertions passed!\n");
     return 0;

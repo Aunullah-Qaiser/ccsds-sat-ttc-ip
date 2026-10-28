@@ -23,10 +23,12 @@
 //                   OQPSK, and PCM/PM
 //                 - Receiver NRZ-L, NRZ-M (differential), and Bi-Phi-L
 //                   (Manchester) line decoder (Fix CR-20)
-//                 - Multiplier-Free Fixed-Point Q32 Coherent Turnaround NCO
-//                   scaling registered Rx carrier frequency by S-band (240/221),
-//                   X-band (880/749), Ka-band Cat-B Deep Space (3344/749), or
-//                   Ka-band Cat-A Near-Earth (3360/749) per CCSDS 401.0-B-32
+//                 - Vendor-Agnostic Behavioral Q32 Fixed-Point Reciprocal
+//                   Coherent Turnaround NCO Multiplier (Fix P1-1) scaling
+//                   registered Rx carrier frequency by exact CCSDS 401.0-B-32
+//                   turnaround ratios: S-band (240/221), X-band (880/749),
+//                   Ka-band Cat-B Deep Space (3344/749), and Ka-band Cat-A
+//                   Near-Earth (3360/749) with < 1e-9 relative accuracy
 //                 - Downlink BPSK / QPSK / OQPSK / PCM-PM Baseband Modulator
 //                   with Regenerative PN Ranging Quadrature Overlay
 //=============================================================================
@@ -83,6 +85,16 @@ module ccsds_phy_modem
   localparam logic [31:0] FCW_NOM_XBAND       = 32'h12CC_63CD;
   localparam logic [31:0] FCW_NOM_KABAND_3344 = 32'h476E_814E;
   localparam logic [31:0] FCW_NOM_KABAND_3360 = 32'h47C6_00DA;
+
+  // Exact Q32 Fixed-Point Turnaround Reciprocal Multipliers (round(2^32 * Ratio), Fix P1-1):
+  //   S-Band  (240 / 221)  : 64'h0000_0001_1602_5117
+  //   X-Band  (880 / 749)  : 64'h0000_0001_2CC6_3CD5
+  //   Ka-Band (3344 / 749) : 64'h0000_0004_76E8_14E5
+  //   Ka-Band (3360 / 749) : 64'h0000_0004_7C60_0DA4
+  localparam logic [63:0] TURN_RATIO_Q32_SBAND       = 64'h0000_0001_1602_5117;
+  localparam logic [63:0] TURN_RATIO_Q32_XBAND       = 64'h0000_0001_2CC6_3CD5;
+  localparam logic [63:0] TURN_RATIO_Q32_KABAND_3344 = 64'h0000_0004_76E8_14E5;
+  localparam logic [63:0] TURN_RATIO_Q32_KABAND_3360 = 64'h0000_0004_7C60_0DA4;
 
   // 64-Entry Q3 CSD Sin/Cos NCO Lookup Tables (8 = +1.0)
   localparam logic signed [4:0] COS_LUT_Q3 [0:63] = '{
@@ -349,7 +361,8 @@ module ccsds_phy_modem
       rx_sym_valid_out  <= 1'b0;
       rx_sym_byte_out   <= 8'd0;
     end else begin
-      logic signed [31:0] df32, turn_delta32;
+      logic [63:0]        turn_ratio_q32;
+      logic [63:0]        turn_prod_q32;
       logic [1:0]         active_strobe_ph;
       logic               b1_strobe_now;
       logic [15:0]        base_phase_q16;
@@ -363,27 +376,14 @@ module ccsds_phy_modem
       t1_valid_q       <= 1'b0;
       b1_valid_q       <= 1'b0;
 
-      // Multiplier-Free CSD Coherent Turnaround NCO Scaling (S-Band, X-Band, Ka-Band 3344/749 & 3360/749)
-      df32 = {{16{rx_freq_q16[15]}}, rx_freq_q16};
+      // Vendor-Agnostic Behavioral Q32 Fixed-Point Reciprocal Turnaround NCO Multiplier (Fix P1-1)
       unique case (turnaround_kaband_cfg)
-        2'd1: begin // Ka-Band Deep-Space Category B (3344 / 749 = 4.4646)
-          turn_delta32 = (df32 <<< 2) + (df32 >>> 1) - (df32 >>> 5);
-          tx_nco_fcw_q <= FCW_NOM_KABAND_3344 + 32'(turn_delta32);
-        end
-        2'd2, 2'd3: begin // Ka-Band Near-Earth Category A (3360 / 749 = 4.4860)
-          turn_delta32 = (df32 <<< 2) + (df32 >>> 1) - (df32 >>> 6);
-          tx_nco_fcw_q <= FCW_NOM_KABAND_3360 + 32'(turn_delta32);
-        end
-        default: begin // S-Band (240 / 221 = 1.0860) or X-Band (880 / 749 = 1.1749)
-          if (turnaround_xband_cfg) begin
-            turn_delta32 = df32 + (df32 >>> 3) + (df32 >>> 4);
-            tx_nco_fcw_q <= FCW_NOM_XBAND + 32'(turn_delta32);
-          end else begin
-            turn_delta32 = df32 + (df32 >>> 4) + (df32 >>> 5);
-            tx_nco_fcw_q <= FCW_NOM_SBAND + 32'(turn_delta32);
-          end
-        end
+        2'd1:       turn_ratio_q32 = TURN_RATIO_Q32_KABAND_3344;
+        2'd2, 2'd3: turn_ratio_q32 = TURN_RATIO_Q32_KABAND_3360;
+        default:    turn_ratio_q32 = turnaround_xband_cfg ? TURN_RATIO_Q32_XBAND : TURN_RATIO_Q32_SBAND;
       endcase
+      turn_prod_q32 = {32'd0, rx_nco_fcw_q} * turn_ratio_q32;
+      tx_nco_fcw_q  <= turn_prod_q32[63:32];
 
       if (rx_iq_valid_in) begin
         // Shift 17-tap Rx Matched SRRC delay line

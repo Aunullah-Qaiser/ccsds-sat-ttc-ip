@@ -442,6 +442,8 @@ module tb_stage10_full_matrix_link_stress;
   ccsds_sdls_engine u_m4_sdls (
     .clk                        (clk),
     .rst_n                      (rst_n),
+    .clk_tx                     (clk),
+    .rst_tx_n                   (rst_n),
     .sdls_en_cfg                (1'b1),
     .sdls_gcm_mode_cfg          (m4_sdls_gcm_mode),
     .bc_require_sdls_cfg        (1'b0),
@@ -667,8 +669,10 @@ module tb_stage10_full_matrix_link_stress;
     .DEPTH_WORDS   (64),
     .ROLLBACK_MODE (1)
   ) u_m5_ecc_fifo (
-    .clk                      (clk),
-    .rst_n                    (rst_n),
+    .clk_wr                   (clk),
+    .rst_wr_n                 (rst_n),
+    .clk_rd                   (clk),
+    .rst_rd_n                 (rst_n),
     .cut_through_en           (1'b0),
     .watermark_words          (7'd8),
     .s_axis_tdata             (m5_fifo_wr_data),
@@ -691,7 +695,8 @@ module tb_stage10_full_matrix_link_stress;
     .ecc_single_err_corrected (m5_fifo_1err),
     .ecc_double_err_uncorr    (m5_fifo_2err),
     .rollback_overflow_err    (),
-    .committed_count          ()
+    .committed_count          (),
+    .speculative_count        ()
   );
 
   // ===========================================================================
@@ -708,7 +713,7 @@ module tb_stage10_full_matrix_link_stress;
   integer     m4_sdls_ct_cnt, m4_cltu_cnt, m4_rx_pkt_cnt;
   logic       m4_cltu_clr, m4_sdls_clr;
   logic       m4_sdls_auth_done_latched, m4_sdls_auth_ok_latched;
-  logic       m2_tm_crc_ok_latched, m5_fifo_1err_latched;
+  logic       m2_tm_crc_ok_latched, m5_fifo_1err_latched, m5_hcpd_seu_corr_latched;
   ccsds_clcw_t m4_vc1_clcw_latched;
 
   always_ff @(posedge clk or negedge rst_n) begin
@@ -727,13 +732,17 @@ module tb_stage10_full_matrix_link_stress;
       m4_vc1_clcw_latched       <= '0;
       m4_sdls_auth_done_latched <= 1'b0;
       m4_sdls_auth_ok_latched   <= 1'b0;
-      m5_fifo_1err_latched <= 1'b0;
+      m5_fifo_1err_latched     <= 1'b0;
+      m5_hcpd_seu_corr_latched <= 1'b0;
     end else begin
       if (m2_tm_crc_ok) begin
         m2_tm_crc_ok_latched <= 1'b1;
       end
       if (m5_fifo_1err) begin
         m5_fifo_1err_latched <= 1'b1;
+      end
+      if (m5_hcpd_seu_corr) begin
+        m5_hcpd_seu_corr_latched <= 1'b1;
       end
       if (!phy_rst_n) begin
         m1_srrc_rx_cnt <= 0;
@@ -1581,10 +1590,10 @@ module tb_stage10_full_matrix_link_stress;
     m4_tmr_seu_en  = 1'b0;
     m5_hcpd_seu_en = 1'b0;
     m5_fifo_seu_en = 1'b0;
-    @(posedge clk); #1;
+    repeat (3) @(posedge clk); #1;
 
     // Verify HCPD TMR self-healing pulse and FIFO SECDED single-bit correction on read-out
-    assert (m5_hcpd_seu_corr == 1'b1)
+    assert (m5_hcpd_seu_corr_latched == 1'b1)
       else $fatal(1, "HCPD TMR failed to detect and scrub injected SEU!");
     assert (m5_fifo_rd_val == 1'b1 && m5_fifo_1err_latched == 1'b1 && m5_fifo_2err == 1'b0 && m5_fifo_rd_data == 32'hCAFE_BABE)
       else $fatal(1, "Hsiao SECDED FIFO failed to heal 1-bit SEU on 0xCAFE_BABE!");

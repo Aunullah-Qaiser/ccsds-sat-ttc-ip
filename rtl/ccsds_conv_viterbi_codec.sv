@@ -10,9 +10,10 @@
 //                   G2 = 7'b1011011 (133o) with configurable C2 symbol inversion
 //                   (c2_invert_en=1 for TM/AOS per 131.0-B-5; 0 for Prox-1).
 //                 - 64-state parallel ACS unit with Register-Exchange 35-bit
-//                   survivor history registers and flat common-threshold metric
-//                   rescaling (Fix CR-14: eliminates 35-stage serial pointer-
-//                   chasing traceback mux chain and 64-way min_pm subtractor).
+//                   survivor history registers, flat common-threshold metric
+//                   rescaling, and 6-stage binary comparator tree (argmin over
+//                   nxt_pm[0..63], Fix P1-4) for true maximum-likelihood
+//                   survivor selection under low Eb/N0 and truncated frames.
 // =============================================================================
 `timescale 1ns / 1ps
 
@@ -82,11 +83,11 @@ module ccsds_conv_viterbi_codec
         logic c2_val;
         logic m1_val;
         logic m2_val;
-        c1_val        = calc_c1(tx_bit_in, conv_sr_q);
-        c2_val        = calc_c2(tx_bit_in, conv_sr_q, c2_invert_en);
-        conv_sr_q     <= {tx_bit_in, conv_sr_q[5:1]};
-        tx_sym_c1_out <= c1_val;
-        tx_sym_c2_out <= c2_val;
+        c1_val           = calc_c1(tx_bit_in, conv_sr_q);
+        c2_val           = calc_c2(tx_bit_in, conv_sr_q, c2_invert_en);
+        conv_sr_q        <= {tx_bit_in, conv_sr_q[5:1]};
+        tx_sym_c1_out    <= c1_val;
+        tx_sym_c2_out    <= c2_val;
         tx_sym_valid_out <= 1'b1;
 
         m1_val = nrzm_prev_q ^ c1_val;
@@ -107,7 +108,7 @@ module ccsds_conv_viterbi_codec
   end
 
   // ---------------------------------------------------------------------------
-  // 2. 64-State Soft-LLR ACS Viterbi Decoder (Register-Exchange Architecture)
+  // 2. 64-State Soft-LLR ACS Viterbi Decoder (Register-Exchange + Argmin Tree)
   // ---------------------------------------------------------------------------
   logic [9:0]                 pm_q        [0:63];
   logic [TRACEBACK_DEPTH-1:0] path_hist_q [0:63];
@@ -131,6 +132,17 @@ module ccsds_conv_viterbi_codec
   logic [9:0]                 rescale_sub;
   logic [9:0]                 nxt_pm        [0:63];
   logic [TRACEBACK_DEPTH-1:0] nxt_path_hist [0:63];
+  logic [9:0]                 l1_pm  [0:31];
+  logic [5:0]                 l1_idx [0:31];
+  logic [9:0]                 l2_pm  [0:15];
+  logic [5:0]                 l2_idx [0:15];
+  logic [9:0]                 l3_pm  [0:7];
+  logic [5:0]                 l3_idx [0:7];
+  logic [9:0]                 l4_pm  [0:3];
+  logic [5:0]                 l4_idx [0:3];
+  logic [9:0]                 l5_pm  [0:1];
+  logic [5:0]                 l5_idx [0:1];
+  logic [5:0]                 best_state;
 
   always_comb begin
     llr2_eff = c2_invert_en ? (-rx_sym_c2_llr_in) : rx_sym_c2_llr_in;
@@ -165,6 +177,29 @@ module ccsds_conv_viterbi_codec
         nxt_path_hist[nxt_s] = {path_hist_q[prev_s1][TRACEBACK_DEPTH-2:0], u_bit};
       end
     end
+
+    // 6-Stage Binary Comparator Tree (argmin over nxt_pm[0..63], Fix P1-4)
+    for (int i = 0; i < 32; i++) begin
+      l1_pm[i]  = (nxt_pm[2*i] <= nxt_pm[2*i+1]) ? nxt_pm[2*i] : nxt_pm[2*i+1];
+      l1_idx[i] = (nxt_pm[2*i] <= nxt_pm[2*i+1]) ? 6'(2*i)     : 6'(2*i+1);
+    end
+    for (int i = 0; i < 16; i++) begin
+      l2_pm[i]  = (l1_pm[2*i] <= l1_pm[2*i+1]) ? l1_pm[2*i]  : l1_pm[2*i+1];
+      l2_idx[i] = (l1_pm[2*i] <= l1_pm[2*i+1]) ? l1_idx[2*i] : l1_idx[2*i+1];
+    end
+    for (int i = 0; i < 8; i++) begin
+      l3_pm[i]  = (l2_pm[2*i] <= l2_pm[2*i+1]) ? l2_pm[2*i]  : l2_pm[2*i+1];
+      l3_idx[i] = (l2_pm[2*i] <= l2_pm[2*i+1]) ? l2_idx[2*i] : l2_idx[2*i+1];
+    end
+    for (int i = 0; i < 4; i++) begin
+      l4_pm[i]  = (l3_pm[2*i] <= l3_pm[2*i+1]) ? l3_pm[2*i]  : l3_pm[2*i+1];
+      l4_idx[i] = (l3_pm[2*i] <= l3_pm[2*i+1]) ? l3_idx[2*i] : l3_idx[2*i+1];
+    end
+    for (int i = 0; i < 2; i++) begin
+      l5_pm[i]  = (l4_pm[2*i] <= l4_pm[2*i+1]) ? l4_pm[2*i]  : l4_pm[2*i+1];
+      l5_idx[i] = (l4_pm[2*i] <= l4_pm[2*i+1]) ? l4_idx[2*i] : l4_idx[2*i+1];
+    end
+    best_state = (l5_pm[0] <= l5_pm[1]) ? l5_idx[0] : l5_idx[1];
   end
 
   always_ff @(posedge clk or negedge rst_n) begin
@@ -188,7 +223,7 @@ module ccsds_conv_viterbi_codec
         end
 
         if (fill_cnt_q == 6'(TRACEBACK_DEPTH - 1)) begin
-          rx_dec_bit_out   <= nxt_path_hist[0][TRACEBACK_DEPTH-1];
+          rx_dec_bit_out   <= nxt_path_hist[best_state][TRACEBACK_DEPTH-1];
           rx_dec_valid_out <= 1'b1;
         end else begin
           fill_cnt_q <= fill_cnt_q + 6'd1;

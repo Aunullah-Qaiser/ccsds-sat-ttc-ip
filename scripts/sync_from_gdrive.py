@@ -117,6 +117,9 @@ def main() -> None:
     ts_utc = payload.get("timestamp_utc", "")
     desc = payload.get("description", "")
     files_map = payload.get("files_zlib_b64", {})
+    plain_files_map = payload.get("files", {})
+    if not files_map and not plain_files_map:
+        raise RuntimeError(f"Bundle {bundle_path.name} contains no file entries!")
     delete_files = payload.get("delete_files", [])
     delete_globs = payload.get("delete_globs", [])
 
@@ -130,8 +133,11 @@ def main() -> None:
     unchanged_cnt = 0
     deleted_cnt = 0
 
-    for rel_path, b64_data in sorted(files_map.items()):
-        raw_bytes = zlib.decompress(base64.b64decode(b64_data))
+    all_items = [(k, v, True) for k, v in sorted(files_map.items())] + [
+        (k, v, False) for k, v in sorted(plain_files_map.items()) if k not in files_map
+    ]
+    for rel_path, content_val, is_zb64 in all_items:
+        raw_bytes = zlib.decompress(base64.b64decode(content_val)) if is_zb64 else content_val.encode("utf-8")
         target_path = repo_root / rel_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
 

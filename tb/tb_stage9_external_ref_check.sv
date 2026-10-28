@@ -334,6 +334,8 @@ module tb_stage9_external_ref_check;
   ccsds_sdls_engine u_sdls_dut (
     .clk                        (clk),
     .rst_n                      (rst_n),
+    .clk_tx                     (clk),
+    .rst_tx_n                   (rst_n),
     .sdls_en_cfg                (1'b1),
     .sdls_gcm_mode_cfg          (sdls_gcm_mode_in),
     .bc_require_sdls_cfg        (1'b0),
@@ -882,6 +884,25 @@ module tb_stage9_external_ref_check;
       else $fatal(1, $sformatf("Expected 2 corrected RS symbols, got %0d", rs_corr_sym_cnt));
     assert (rs_tm_crc_ok_latched == 1'b1)
       else $fatal(1, "TM Frame CRC-16 did not pass after RS(255,223) error correction!");
+
+    // Step 3B.2 (Fix P1-2): Stress full t=16 Berlekamp-Massey / Forney capability (16 corrupted symbols in one codeword!)
+    for (int i = 0; i < 60; i++) begin
+      logic [7:0] clean_b;
+      clean_b     = (i == 7) ? (ext_rs_corr_cw_mem[i] ^ 8'hA5) :
+                    ((i == 14) ? (ext_rs_corr_cw_mem[i] ^ 8'h3C) : ext_rs_corr_cw_mem[i]);
+      rs_s_tvalid = 1'b1;
+      rs_s_tdata  = (i < 16) ? (clean_b ^ (8'h11 + 8'(i * 7))) : clean_b;
+      rs_s_tlast  = (i == 59);
+      @(posedge clk);
+      while (!rs_s_tready) @(posedge clk);
+      #1;
+    end
+    rs_s_tvalid = 1'b0;
+    rs_s_tlast  = 1'b0;
+    repeat (60) @(posedge clk);
+    #1;
+    assert (rs_corr_sym_cnt == 16'd18)
+      else $fatal(1, $sformatf("Expected 2 + 16 = 18 total corrected RS symbols after t=16 stress, got %0d", rs_corr_sym_cnt));
     assert (rs_pkt_cnt == 16)
       else $fatal(1, $sformatf("Expected 16 reassembled Space Packet bytes after RS correction, got %0d", rs_pkt_cnt));
     for (int i = 0; i < 16; i++) begin
@@ -915,7 +936,7 @@ module tb_stage9_external_ref_check;
       end
       ldpc_cb_valid_in = 1'b0;
       ldpc_cb_start_in = 1'b0;
-      repeat (35) @(posedge clk);
+      repeat (55) @(posedge clk);
       #1;
     end
 

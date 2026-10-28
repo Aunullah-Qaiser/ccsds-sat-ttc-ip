@@ -1,0 +1,345 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\usepackage[scaled=0.90]{helvet}
+\usepackage{courier}
+\usepackage{microtype}
+\usepackage[margin=0.80in,top=0.95in,bottom=0.95in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\definecolor{navy}{HTML}{0B2545}
+\definecolor{slate}{HTML}{134074}
+\definecolor{teal}{HTML}{006D77}
+\definecolor{codebg}{HTML}{F4F6F9}
+\definecolor{framecol}{HTML}{CBD5E1}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=slate,
+    urlcolor=teal,
+    pdftitle={CCSDS-SAT-TTC-IP (v2.33.0): Product Guide and User Manual},
+    pdfauthor={CCSDS-SAT-TTC-IP Engineering Team}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textbf{\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.33.0}) Product Guide \& User Manual}}}
+\fancyhead[R]{\small\sffamily\textcolor{slate}{Doc ID: \texttt{PG-CCSDS-TTC-v2.33.0}}}
+\fancyfoot[L]{\small\sffamily\textcolor{slate}{Spacecraft Flight (\texttt{ROLE\_MODE=0}) \& Ground EGSE (\texttt{ROLE\_MODE=1/2})}}
+\fancyfoot[R]{\small\sffamily\textbf{\thepage}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+
+\lstdefinestyle{ccode}{
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{framecol},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{slate}\bfseries,
+    commentstyle=\color{teal}\itshape,
+    breaklines=true,
+    columns=fullflexible,
+    showstringspaces=false,
+    tabsize=2
+}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{0.6in}
+    {\scshape\Large\textcolor{teal}{Spacecraft \& Ground Station TT\&C IP Core Documentation}\par}
+    \vspace{0.25in}
+    {\Huge\bfseries\sffamily\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.33.0}):\\Product Guide \& User Manual}\par}
+    \vspace{0.20in}
+    {\large\sffamily\textcolor{slate}{Synthesizable IEEE 1800-2017 SystemVerilog Transceiver IP Core\\for Spacecraft Flight (\texttt{ROLE\_MODE=0}), Ground EGSE (\texttt{ROLE\_MODE=1}),\\and Universal Crosslink / On-Orbit BIST (\texttt{ROLE\_MODE=2})}\par}
+    \vspace{0.35in}
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Document Attribute} & \textbf{Specification Value} \\
+        \midrule
+        \textbf{Document ID} & \texttt{PG-CCSDS-TTC-v2.33.0} \\
+        \textbf{Top-Level RTL Module} & \texttt{ccsds\_sat\_ttc\_top} (\texttt{rtl/ccsds\_sat\_ttc\_top.sv}) \\
+        \textbf{Core Version ID Register} & \texttt{32'hCC5D\_0230} (\texttt{CORE\_ID\_VER} at offset \texttt{0x00}) \\
+        \textbf{Supported CCSDS Standards} & 17 Blue/Orange Books (TM, TC, AOS, Proximity-1, USLP, COP-1/P, SDLS, PN, RF) \\
+        \textbf{Verification Sign-Off} & Stages 0--12 Verified with \textbf{0 Errors} in Xilinx Vivado 2022.2 \texttt{xsim} \\
+        \textbf{Measured True $F_{\max}$ (Vivado STA)} & \texttt{clk\_sys}: \textbf{116.40 MHz} $\mid$ \texttt{clk\_adc\_iq}: \textbf{135.41 MHz} $\mid$ \texttt{clk\_tx\_sym}: \textbf{169.46 MHz} $\mid$ \texttt{clk\_tc\_safe}: \textbf{110.22 MHz} \\
+        \textbf{Flight Software SDK} & Bare-Metal ISO C11 HAL (\texttt{sw/ccsds\_ttc\_hal.h}, \texttt{sw/ccsds\_ttc\_hal.c}) \\
+        \textbf{License} & Apache License 2.0 \\
+        \bottomrule
+    \end{tabular}
+    \vfill
+    {\small\sffamily October 27, 2026 $\cdot$ Production Release \texttt{v2.33.0}\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Product Overview \& Architectural Personas}
+
+The \textbf{\texttt{CCSDS-SAT-TTC-IP} (\texttt{ccsds\_sat\_ttc\_top})} is a radiation-mitigated, vendor-agnostic \textbf{Telemetry, Tracking, and Command (TT\&C)} digital baseband, channel coding, data link framing, closed-loop ARQ, and inline cryptographic security IP core written in strict synthesizable IEEE 1800-2017 SystemVerilog. It implements \textbf{17 CCSDS Blue and Orange Book standards} within a single parameterized RTL hierarchy:
+
+\begin{itemize}
+    \item \textbf{Spacecraft Flight Transceiver Persona (\texttt{ROLE\_MODE = 0}, 23 Synthesizable Modules):} Implements the complete spacecraft uplink command receiver and downlink telemetry transmitter while stripping ground-only decoders and retransmission queues to minimize radiation-hardened FPGA area and Single-Event Upset (SEU) cross-section.
+    \item \textbf{Synthesizable Hardware Ground EGSE Persona (\texttt{ROLE\_MODE = 1}, 22 Synthesizable Modules):} Instantiates the 17 shared core modules plus the 5 ground-segment endpoints (\texttt{ccsds\_fop1\_engine}, \texttt{ccsds\_tc\_cltu\_framer}, \texttt{ccsds\_bch6356\_enc}, \texttt{ccsds\_dl\_rs255\_223\_dec} full $t=16$ Berlekamp-Massey/Chien/Forney error-correcting decoder, and \texttt{ccsds\_tm\_aos\_deframer}) for FlatSat benches, RFSoC ground station modems, and Hardware-in-the-Loop (HIL) test equipment.
+    \item \textbf{Universal Crosslink \& On-Orbit BIST Persona (\texttt{ROLE\_MODE = 2}, All 28 Synthesizable Modules):} Instantiates both spacecraft flight and ground EGSE endpoints simultaneously for symmetric spacecraft-to-spacecraft Proximity-1 (\texttt{CCSDS 211.0-B-6}) and USLP (\texttt{CCSDS 732.1-B-3}) crosslinks as well as autonomous on-orbit Built-In Self-Test (BIST).
+\end{itemize}
+
+\subsection{Summary of Supported CCSDS Standards}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{1.15in}L{1.85in}Y@{}}
+\toprule
+\textbf{CCSDS Standard} & \textbf{Protocol / Layer} & \textbf{Implemented Hardware Capabilities in \texttt{ccsds\_sat\_ttc\_top}} \\
+\midrule
+\texttt{133.0-B-2} & Space Packet Protocol & 48-bit Primary Header validation, Cycle-0 \texttt{FHP} segmentation, \texttt{APID=0x7FF} Idle Packet generation \& automatic Rx stripping. \\
+\texttt{132.0-B-3} & TM Space Data Link & 6-octet TM Header, \texttt{MC/VC} frame counters, 8-byte CUC \texttt{OBT} Secondary Header, atomic 32-bit \texttt{CLCW} OCF, CRC-16 FECF. \\
+\texttt{232.0-B-4} & TC Space Data Link & 5-octet TC Header, 8-bit Segment Header (\texttt{MAP\_ID}), multi-frame CLTU \texttt{0x55} fill stripping, Type-AD/BD/BC frame handling. \\
+\texttt{232.1-B-2} & COP-1 (\texttt{FARM-1} \& \texttt{FOP-1}) & 3x TMR \texttt{FARM-1} responder (8 VCs, Two-Phase SDLS commit, Type-BC \texttt{Unlock}/\texttt{Set V(R)}) \& Ground \texttt{FOP-1} Go-Back-$N$ initiator. \\
+\texttt{732.0-B-4} & AOS Space Data Link & 6-octet AOS Header with shortened $\text{RS}(10,6)$ over $GF(2^4)$ \texttt{FHEC} (\texttt{ccsds\_gf256\_math.sv}) SEC-DED header protection. \\
+\texttt{732.1-B-3} & Unified Space Link (USLP) & Truncated (4B) and Extended (7--14B) Primary Headers, 16-bit \texttt{SCID}, \texttt{TFDFH} construction rules, CRC-16 or CRC-32 FECF. \\
+\texttt{211.0/1/2-B} & Proximity-1 Crosslink & 5-octet Version-3 Header, 24-bit ASM (\texttt{0xFAF320}), 32-bit \texttt{PLCW} COP-P ARQ controller, and 32-bit CRC-32 (\texttt{0x00A00805}). \\
+\texttt{131.0-B-5} & TM Sync \& Channel Coding & Dual-Basis $\text{RS}(255,223)$ ($I \in \{1..8\}$, implicit $Q \in [0..200]$, $t=16$ BM/Forney decoder), Rate-$1/2, K=7$ Conv + 64-State Soft Viterbi, 16-State RSC Turbo ($r=1/2..1/6$), $h_{TM}$ (\texttt{0xA9}) scrambler. \\
+\texttt{231.0-B-4} & TC Sync \& Channel Coding & CLTU Start (\texttt{0xEB90}), Expurgated $\text{BCH}(63,56)$ SEC-DED ($g(x)=x^7+x^6+x^2+1$), Tail (\texttt{0xC5..79}), $h_{TC}$ (\texttt{0x5F}), 3x TMR \texttt{HCPD}. \\
+\texttt{231.1-O-1} & Uplink Short-Block LDPC & Table 2-1/2-4 Quasi-Cyclic $(128,64)$ LDPC encoder \& folded 16-row/clk Soft-Decision Offset Min-Sum (OMS) iterative decoder. \\
+\texttt{301.0-B-4} & CUC On-Board Time (\texttt{OBT}) & 48-bit Unsegmented Time Code (32-bit Coarse Seconds + 16-bit Fine Sub-Seconds, P-Field \texttt{0x2E}) synchronized to 1-PPS. \\
+\texttt{355.0/1-B} & Space Data Link Security & Synthesizable NIST FIPS-197 \texttt{AES-128-CTR} \& NIST SP 800-38D \texttt{AES-128-GCM} ($GF(2^{128})$ \texttt{GHASH} 128-bit Tag) + 64-SA SECDED RAM. \\
+\texttt{401.0-B-32} & RF \& Modulation Systems & \texttt{BPSK}, \texttt{QPSK}, \texttt{OQPSK}, \texttt{PCM/PM}; \texttt{NRZ-L/M}, \texttt{Bi-$\phi$-L}; 4-SPS 17-Tap SRRC ($\alpha=0.35$); 4-SPS Gardner STR; FLL-Assisted Costas; S ($240/221$), X ($880/749$), Ka-B ($3344/749$) \& Ka-A ($3360/749$) turnaround. \\
+\texttt{414.1-B-3} & Pseudo-Noise (PN) Ranging & 6-component weighted-voting \texttt{T2B} and \texttt{T4B} regenerative ranging correlator ($L=1,009,470$ chips) \& clean Q-channel overlay. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+\section{Compile-Time Parameters, Resource Utilization \& Timing Closure}
+
+\subsection{Top-Level Synthesis Generics (\texttt{rtl/ccsds\_sat\_ttc\_top.sv})}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{1.45in}C{0.65in}C{0.75in}Y@{}}
+\toprule
+\textbf{Parameter Name} & \textbf{Default} & \textbf{Values} & \textbf{Hardware Synthesis Behavior} \\
+\midrule
+\texttt{ROLE\_MODE} & \texttt{0} & \texttt{0, 1, 2} & \texttt{0}: Spacecraft Flight Core; \texttt{1}: Hardware Ground EGSE; \texttt{2}: Universal Crosslink / On-Orbit BIST Transceiver. \\
+\texttt{ENABLE\_SDLS} & \texttt{1'b1} & \texttt{1'b0, 1'b1} & When \texttt{1'b1}, instantiates \texttt{ccsds\_sdls\_engine} (\texttt{AES-128-CTR/GCM} + 64-SA SECDED RAM). Setting \texttt{1'b0} bypasses SDLS and saves \textbf{7,919 LUTs} and \textbf{5,571 FFs}. \\
+\texttt{ENABLE\_UL\_LDPC} & \texttt{1'b1} & \texttt{1'b0, 1'b1} & When \texttt{1'b1}, instantiates \texttt{ccsds\_ul\_short\_ldpc\_dec} (\texttt{231.1-O-1} Soft-OMS LDPC decoder). Setting \texttt{1'b0} for $\text{BCH}(63,56)$-only missions saves \textbf{12,610 LUTs}. \\
+\texttt{ENABLE\_DL\_TURBO} & \texttt{1'b1} & \texttt{1'b0, 1'b1} & When \texttt{1'b1}, instantiates \texttt{ccsds\_dl\_turbo\_ldpc\_enc}. Setting \texttt{1'b0} for $\text{RS}(255,223)$/Convolutional-only downlinks elides the Turbo/LDPC encoder. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Measured Xilinx Vivado 2022.2 Resource Utilization \& Device Sizing}
+
+Out-of-Context (OOC) synthesis in Xilinx Vivado 2022.2 confirms \textbf{zero Block RAMs (\texttt{0 RAMB36})} and \textbf{zero DSP slices (\texttt{0 DSP48E1/E2})} across all configurations:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{1.75in}C{0.95in}C{0.70in}C{0.75in}C{0.75in}Y@{}}
+\toprule
+\textbf{Configuration Profile} & \textbf{Slice LUTs} & \textbf{Slice FFs} & \textbf{Zynq-7010 (\texttt{xc7z010})} & \textbf{Zynq-7020 (\texttt{xc7z020})} & \textbf{Kintex UltraScale (\texttt{xcku040} / \texttt{xqrku060})} \\
+\midrule
+\textbf{Full Flight (\texttt{SDLS=1, LDPC=1})} & \textbf{28,861} & \textbf{13,864} & 163.98\% & \textbf{54.25\%} & \textbf{11.91\%} / \textbf{8.70\%} \\
+\textbf{BCH + GCM (\texttt{SDLS=1, LDPC=0})} & \textbf{$\sim$16,251} & \textbf{$\sim$12,732} & \textbf{92.34\%} & \textbf{30.55\%} & \textbf{6.70\%} / \textbf{4.90\%} \\
+\textbf{Compact (\texttt{SDLS=0, LDPC=0})} & \textbf{$\sim$8,332} & \textbf{$\sim$7,161} & \textbf{47.34\%} & \textbf{15.66\%} & \textbf{3.44\%} / \textbf{2.51\%} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Two-Pass Static Timing Analysis (STA) \& Measured True $F_{\max}$}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{0.85in}C{0.85in}C{0.80in}C{0.85in}C{0.95in}C{0.45in}Y@{}}
+\toprule
+\textbf{Clock Domain} & \textbf{Nominal Target} & \textbf{Pass 1 WNS} & \textbf{Min Period ($T_{\min}$)} & \textbf{Measured True $F_{\max}$} & \textbf{Levels} & \textbf{Limiting Physical Critical Path (\texttt{Vivado 2022.2})} \\
+\midrule
+\texttt{clk\_sys} & 100.0 MHz (10.000 ns) & \textbf{+1.409 ns} & 8.591 ns & \textbf{116.40 MHz} (+16.40\%) & \textbf{7} & \texttt{u\_rx\_commit\_cdc\_fifo/rd\_ptr\_q\_reg[0]/C -> u\_csr/cnt\_uncorr\_err\_q\_reg[0]/CE} \\
+\texttt{clk\_adc\_iq} & 120.0 MHz (8.333 ns) & \textbf{+0.948 ns} & 7.385 ns & \textbf{135.41 MHz} (+12.84\%) & \textbf{9} & \texttt{u\_phy\_modem/rx\_phase\_q16\_reg[10]/C -> u\_phy\_modem/i\_derot\_q\_reg[13]/D} \\
+\texttt{clk\_tx\_sym} & 50.0 MHz (20.000 ns) & \textbf{+14.099 ns} & 5.901 ns & \textbf{169.46 MHz} (+238.9\%) & \textbf{9} & \texttt{u\_tx\_hwm\_cdc\_fifo/wr\_bin\_sync2\_rd\_q\_reg[1]/C -> u\_tx\_hwm\_cdc\_fifo/rd\_gray\_q\_reg[6]/D} \\
+\texttt{clk\_tc\_safe} & 16.0 MHz (62.500 ns) & \textbf{+53.427 ns} & 9.073 ns & \textbf{110.22 MHz} (+588.9\%) & \textbf{11} & \texttt{u\_ul\_deframer/cur\_tc\_hdr\_q\_reg[vcid][4]/C -> u\_farm1/clcw\_scheduled\_out\_reg[wait\_flag]/D} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+\section{Top-Level Signal Interface \& AXI4-Stream Timing}
+
+\subsection{Complete Pinout Reference (\texttt{ccsds\_sat\_ttc\_top})}
+
+\begin{longtable}{@{}L{1.85in}C{0.45in}C{0.50in}C{0.75in}L{2.45in}@{}}
+\toprule
+\textbf{Port Name} & \textbf{Dir} & \textbf{Width} & \textbf{Clock} & \textbf{Functional Description} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Port Name} & \textbf{Dir} & \textbf{Width} & \textbf{Clock} & \textbf{Functional Description} \\
+\midrule
+\endhead
+\texttt{clk\_sys} & In & 1 & \texttt{clk\_sys} & System packet, framing, CSR \& outer FEC clock (100 MHz nominal). \\
+\texttt{clk\_tc\_safe} & In & 1 & \texttt{clk\_tc\_safe} & Radiation-safe telecommand \& emergency HCPD clock (16 MHz nominal). \\
+\texttt{clk\_tx\_sym} & In & 1 & \texttt{clk\_tx\_sym} & Downlink symbol \& inner coding clock (50 MHz nominal). \\
+\texttt{clk\_adc\_iq} & In & 1 & \texttt{clk\_adc\_iq} & Baseband RF ADC/DAC \& PN ranging clock (120 MHz nominal). \\
+\texttt{rst\_n} & In & 1 & Async & Active-low asynchronous reset (hold low $\ge 8$ \texttt{clk\_tc\_safe} cycles). \\
+\midrule
+\texttt{s\_axi\_awvalid / awready} & In/Out & 1 & \texttt{clk\_sys} & AXI4-Lite write address valid/ready handshake. \\
+\texttt{s\_axi\_awaddr} & In & 8 & \texttt{clk\_sys} & AXI4-Lite write byte address (\texttt{0x00..0x24}). \\
+\texttt{s\_axi\_wvalid / wready} & In/Out & 1 & \texttt{clk\_sys} & AXI4-Lite write data valid/ready handshake. \\
+\texttt{s\_axi\_wdata / wstrb} & In & 32, 4 & \texttt{clk\_sys} & 32-bit write data and 4-bit byte lane strobe (\texttt{4'hF}). \\
+\texttt{s\_axi\_bvalid / bready / bresp} & Out/In & 1, 1, 2 & \texttt{clk\_sys} & AXI4-Lite write response (\texttt{2'b00 = OKAY}). \\
+\texttt{s\_axi\_arvalid / arready / araddr} & In/Out & 1, 1, 8 & \texttt{clk\_sys} & AXI4-Lite read address channel (\texttt{0x00..0x24}). \\
+\texttt{s\_axi\_rvalid / rready / rdata / rresp} & Out/In & 1, 1, 32, 2 & \texttt{clk\_sys} & AXI4-Lite 32-bit read data channel (\texttt{2'b00 = OKAY}). \\
+\midrule
+\texttt{link\_proto\_override\_en} & In & 2 & \texttt{clk\_sys} & \texttt{2'b00}: Use CSR \texttt{PROTO\_MODE}; non-zero overrides protocol mode. \\
+\texttt{ul\_fec\_override\_en} & In & 2 & \texttt{clk\_tc\_safe} & \texttt{2'd0}: Direct Frame; \texttt{2'd1}: $\text{BCH}(63,56)$ CLTU; \texttt{2'd2}: $\text{LDPC}(128,64)$. \\
+\texttt{sdls\_en\_cfg / bc\_require\_sdls\_cfg} & In & 1, 1 & \texttt{clk\_sys} & Mission security straps OR-ed with CSR bits \texttt{[26]} and \texttt{[27]}. \\
+\texttt{pn\_ranging\_en\_cfg / pn\_t4b\_mode\_cfg} & In & 1, 1 & \texttt{clk\_adc\_iq} & Enable T4B (\texttt{1}) or T2B (\texttt{0}) regenerative PN ranging. \\
+\texttt{turnaround\_xband\_cfg} & In & 1 & \texttt{clk\_adc\_iq} & Selects S-Band ($240/221$, \texttt{0}) or X-Band ($880/749$, \texttt{1}) when Ka-Band is \texttt{0}. \\
+\texttt{mod\_mode\_cfg / line\_code\_cfg} & In & 2, 2 & \texttt{clk\_adc\_iq} & Modulation (\texttt{0..3}) \& Line Coding (\texttt{0..2}) mode straps. \\
+\midrule
+\texttt{rx\_i\_adc\_in / rx\_q\_adc\_in} & In & 12s, 12s & \texttt{clk\_adc\_iq} & Signed 12-bit baseband I/Q ADC samples. \\
+\texttt{rx\_iq\_valid\_in} & In & 1 & \texttt{clk\_adc\_iq} & Sample valid strobe (supports divided symbol rates \texttt{div=1,2,4,8}). \\
+\texttt{s\_axis\_ul\_sym\_tvalid/tready/tdata/tlast} & In/Out & 1, 1, 8, 1 & \texttt{clk\_tc\_safe} & Uplink soft-LLR symbol (\texttt{tdata[3:0]}) or direct frame byte input. \\
+\midrule
+\texttt{m\_axis\_rx\_pkt\_tvalid/tready/tdata/tlast} & Out/In & 1, 1, 8, 1 & \texttt{clk\_sys} & Reassembled telecommand Space Packet stream to OBC. \\
+\texttt{m\_axis\_rx\_pkt\_tuser} & Out & 64 & \texttt{clk\_sys} & Packed \texttt{ccsds\_tuser\_t} metadata (\texttt{vcid}, \texttt{map\_id}, \texttt{crc\_err}, \texttt{sdls\_mac\_err}). \\
+\texttt{s\_axis\_tx\_pkt\_tvalid/tready/tdata/tlast} & In/Out & 1, 1, 8, 1 & \texttt{clk\_sys} & Telemetry Space Packet ingress from OBC (\texttt{tlast} on final packet byte). \\
+\texttt{s\_axis\_tx\_pkt\_tuser} & In & 64 & \texttt{clk\_sys} & Ingress metadata (\texttt{tuser.vcid[2:0]} selects target Virtual Channel \texttt{0..7}). \\
+\midrule
+\texttt{m\_axis\_dl\_cad\_tvalid/tready/tdata/tlast} & Out/In & 1, 1, 8, 1 & \texttt{clk\_tx\_sym} & Scrambled \& outer-FEC encoded Downlink CADU byte stream. \\
+\texttt{tx\_i\_dac\_out / tx\_q\_dac\_out / tx\_iq\_valid\_out} & Out & 12s, 12s, 1 & \texttt{clk\_adc\_iq} & Signed 12-bit baseband I/Q DAC outputs and sample valid strobe. \\
+\midrule
+\texttt{hcpd\_obc\_reset\_pulse / safe\_mode\_force} & Out & 1, 1 & \texttt{clk\_tc\_safe} & Direct hardware OBC reset pulse \& safe-mode force latch (\texttt{VCID=63}). \\
+\texttt{hcpd\_rf\_chain\_select} & Out & 2 & \texttt{clk\_tc\_safe} & Redundant RF chain relay select outputs from TMR \texttt{HCPD}. \\
+\texttt{pn\_All\_Locked\_out} & Out & 1 & \texttt{clk\_adc\_iq} & High when all 6 PN ranging sequences ($C_1..C_6$) are locked. \\
+\texttt{fault\_irq\_out / edac\_scrub\_req\_out} & Out & 1, 1 & \texttt{clk\_sys} & Uncorrectable fault IRQ \& FPGA configuration SEU scrub request. \\
+\bottomrule
+\end{longtable}
+
+\newpage
+\section{AXI4-Lite Control \& Status Register Map (\texttt{ccsds\_axi\_lite\_csr.sv})}
+
+All writable mission configuration registers (\texttt{0x04}, \texttt{0x08}, \texttt{0x0C}) are implemented as \textbf{3x Triple Modular Redundant (TMR)} register banks with continuous single-cycle majority voting and autonomous SEU scrubbing.
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}C{0.50in}L{1.35in}C{0.55in}C{0.85in}Y@{}}
+\toprule
+\textbf{Offset} & \textbf{Register Name} & \textbf{Access} & \textbf{Reset Value} & \textbf{Bitfields \& Hardware Description} \\
+\midrule
+\texttt{0x00} & \texttt{CORE\_ID\_VER} & RO & \texttt{0xCC5D\_0230} & \texttt{[31:16]} Magic ID (\texttt{0xCC5D}), \texttt{[15:0]} Version (\texttt{0x0230}). \\
+\addlinespace[3pt]
+\texttt{0x04} & \texttt{CTRL\_SCID\_PROTO} & R/W (TMR) & \texttt{0x0131\_5155} & \texttt{[9:0]} \texttt{SCID\_10B} (\texttt{0x155}); \texttt{[14:12]} \texttt{PROTO\_MODE} (\texttt{0}=TM, \texttt{1}=AOS, \texttt{2}=Prox-1, \texttt{3}=USLP, \texttt{4}=TC); \texttt{[19:16]} \texttt{FEC\_MODE} (\texttt{0}=RS, \texttt{1..4}=Turbo); \texttt{[20]} \texttt{OCF\_EN}; \texttt{[21]} \texttt{FECF\_EN}; \texttt{[22]} \texttt{FECF\_CRC32}; \texttt{[23]} \texttt{AOS\_FHEC\_EN}; \texttt{[24]} \texttt{TC\_SEG\_HDR\_EN}; \texttt{[25]} \texttt{OBT\_SEC\_HDR\_EN}; \texttt{[26]} \texttt{SDLS\_EN}; \texttt{[27]} \texttt{BC\_REQ\_SDLS}; \texttt{[28]} \texttt{SRRC\_4SPS\_EN}; \texttt{[29]} \texttt{GARDNER\_TED\_EN}; \texttt{[31:30]} \texttt{TURNAROUND\_KABAND} (\texttt{0}=S/X, \texttt{1}=Ka Cat-B $3344/749$, \texttt{2}=Ka Cat-A $3360/749$). \\
+\addlinespace[3pt]
+\texttt{0x08} & \texttt{CTRL\_USLP\_RS\_CFG} & R/W (TMR) & \texttt{0x0001\_4255} & \texttt{[15:0]} \texttt{USLP\_SCID\_16B} (\texttt{0x4255}); \texttt{[19:16]} \texttt{RS\_INTERLEAVE\_I} ($I \in \{1..8\}$); \texttt{[27:20]} \texttt{RS\_VIRT\_FILL\_Q} ($Q \in [0..200]$); \texttt{[28]} \texttt{SDLS\_GCM\_MODE} (\texttt{1}=128-bit \texttt{AES-128-GCM} \texttt{GHASH}); \texttt{[29]} \texttt{FLL\_ASSIST\_EN} (\texttt{1}=Wide-CFO FLL-Assisted Costas). \\
+\addlinespace[3pt]
+\texttt{0x0C} & \texttt{CTRL\_COP1\_TFDF\_CFG} & R/W (TMR) & \texttt{0x010D\_F010} & \texttt{[7:0]} \texttt{WINDOW\_HALF\_W} ($W=16$); \texttt{[18:8]} \texttt{TFDF\_BYTE\_LEN} ($223$); \texttt{[24]} \texttt{FAULT\_IRQ\_EN}. \\
+\addlinespace[3pt]
+\texttt{0x10} & \texttt{OBT\_COARSE\_SEC} & R/W & \texttt{0x6530\_0000} & \texttt{[31:0]} CCSDS 301.0-B-4 CUC On-Board Time Coarse Seconds. \\
+\addlinespace[3pt]
+\texttt{0x14} & \texttt{OBT\_FINE\_SUBSEC} & R/W & \texttt{0x0000\_0000} & \texttt{[15:0]} CCSDS 301.0-B-4 CUC Fine Sub-Seconds ($2^{-16}\text{ s}$). \\
+\addlinespace[3pt]
+\texttt{0x18} & \texttt{EDAC\_CORR\_CNTS} & RO / W1C & \texttt{0x0000\_0000} & \texttt{[15:0]} \texttt{cnt\_secded\_corr\_q} (W1C bit 0); \texttt{[31:16]} \texttt{cnt\_tmr\_seu\_corr\_q} (W1C bit 16). \\
+\addlinespace[3pt]
+\texttt{0x1C} & \texttt{FAULT\_ERR\_CNTS} & RO / W1C & \texttt{0x0000\_0000} & \texttt{[15:0]} \texttt{cnt\_uncorr\_err\_q} (W1C bit 0); \texttt{[31:16]} \texttt{cnt\_sdls\_mac\_err\_q} (W1C bit 16). \\
+\addlinespace[3pt]
+\texttt{0x20} & \texttt{LATEST\_CLCW\_MON} & RO & \texttt{0x0000\_0000} & \texttt{[31:0]} Latest 32-bit COP-1 \texttt{CLCW} (\texttt{[7:0]} = $V(R)$ \texttt{report\_value}). \\
+\addlinespace[3pt]
+\texttt{0x24} & \texttt{LATEST\_PLCW\_MON} & RO & \texttt{0x0000\_0000} & \texttt{[31:0]} Latest 32-bit Proximity-1 COP-P \texttt{PLCW}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Bare-Metal C11 Flight/EGSE HAL SDK Integration}
+
+The C11 Hardware Abstraction Layer (\texttt{sw/ccsds\_ttc\_hal.h}, \texttt{sw/ccsds\_ttc\_hal.c}) provides type-safe APIs for initializing the transceiver, configuring all protocol/FEC/PHY/SDLS modes, synchronizing CUC On-Board Time, and unpacking live 32-bit \texttt{CLCW}/\texttt{PLCW} status words:
+
+\begin{lstlisting}[language=C,style=ccode]
+#include "ccsds_ttc_hal.h"
+
+int main(void) {
+    ccsds_ttc_dev_t dev;
+    ccsds_ttc_init(&dev, 0x43C00000u, my_axi_read32, my_axi_write32);
+
+    ccsds_ttc_config_t cfg = {
+        .scid_10b          = 0x155u,
+        .uslp_scid_16b     = 0x4255u,
+        .proto_mode        = CCSDS_PROTO_TM,
+        .fec_mode          = CCSDS_FEC_RS255_223,
+        .ocf_en            = true,
+        .fecf_en           = true,
+        .tc_seg_hdr_en     = true,
+        .obt_sec_hdr_en    = true,
+        .sdls_en           = true,
+        .sdls_gcm_mode     = true,
+        .srrc_4sps_en      = true,
+        .gardner_ted_en    = true,
+        .fll_assist_en     = true,
+        .turnaround_kaband = CCSDS_TURNAROUND_KA_CAT_B_3344_749,
+        .rs_interleave_i   = 1u,
+        .rs_virt_fill_q    = 195u,
+        .cop1_window_w     = 16u,
+        .tfdf_byte_len     = 16u,
+        .fault_irq_en      = true
+    };
+    ccsds_ttc_configure(&dev, &cfg);
+    return 0;
+}
+\end{lstlisting}
+
+\newpage
+\section{Orbital Space Flight Channel Loopback Validation (Stage 12 Sign-Off)}
+
+In \textbf{Stage 12 (\texttt{tb/tb\_stage12\_space\_channel\_loopback.sv})}, the IP core was validated in both \textbf{Spacecraft Flight (\texttt{ROLE\_MODE=0})} and \textbf{Ground EGSE (\texttt{ROLE\_MODE=1})} personas across our synthesizable \textbf{Orbital Space Flight Channel Model (\texttt{rtl/ccsds\_space\_flight\_channel\_model.sv})} in \textbf{Xilinx Vivado 2022.2 \texttt{xsim}} (\texttt{146,531,250 ps}, \texttt{2,800} Uplink IQ samples, \texttt{4,336} Downlink IQ samples, \textbf{0 errors}):
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}L{1.35in}L{2.55in}Y@{}}
+\toprule
+\textbf{Stage 12 Suite} & \textbf{Orbital Channel \& Configuration Sweep} & \textbf{Measured Vivado 2022.2 \texttt{xsim} Result} \\
+\midrule
+\textbf{\texttt{CFG-1}: 12 Waveforms $\times$ Variable Symbol Rates $\times$ 4-SPS Gardner} & Sweeps all 12 PHY waveforms (\texttt{BPSK}, \texttt{QPSK}, \texttt{OQPSK}, \texttt{PCM/PM} $\times$ \texttt{NRZ-L/M}, \texttt{Bi-$\phi$-L}), symbol rate dividers (\texttt{div=1,2,4,8}), and 4-SPS SRRC/Gardner timing offsets $\tau \in \{0,1,2,3\}$. & \textbf{PASS:} Verified 28 multi-rate / multi-waveform / 4-SPS Gardner space channel configurations with \textbf{0 bit errors}. \\
+\addlinespace[3pt]
+\textbf{\texttt{CFG-2}: Dynamic S-Curve Orbital Doppler \& 4 Turnaround Ratios} & Sweeps LEO horizon-to-horizon S-curve Doppler (\texttt{+512} AOS $\rightarrow$ \texttt{0} TCA $\rightarrow$ \texttt{-512} LOS, \texttt{slew=-2}/sample) + phase noise + FLL-Assisted Costas + S ($240/221$), X ($880/749$), Ka-B ($3344/749$) \& Ka-A ($3360/749$) turnaround. & \textbf{PASS:} All 4 coherent turnaround ratios locked and tracked dynamic S-curve Doppler with \textbf{0 bit errors}. \\
+\addlinespace[3pt]
+\textbf{\texttt{CFG-3}: Slant-Range Delay \& Regenerative T4B/T2B PN Ranging} & Tests two-way slant-range propagation delay (\texttt{tau\_prop = 4 \& 9} samples) + Rician multipath + AWGN across Spacecraft (\texttt{ROLE=0}) and Ground EGSE (\texttt{ROLE=1}). & \textbf{PASS:} Both Spacecraft and Ground EGSE achieved \texttt{T4B} \& \texttt{T2B} PN ranging lock (\texttt{pn\_All\_Locked\_out == 1}). \\
+\addlinespace[3pt]
+\textbf{\texttt{CFG-4}: All 5 CCSDS Protocols \& Multi-FEC CADU Streams} & Sweeps \textbf{TC}, \textbf{TM+OBT}, \textbf{AOS+FHEC}, \textbf{Proximity-1+CRC32}, and \textbf{USLP} across the space channel with $\text{BCH}(63,56)$ and Dual-Basis $\text{RS}(255,223)$ CADUs. & \textbf{PASS:} All 5 CCSDS protocols and Downlink CADU streams recovered with \textbf{0 errors}. \\
+\addlinespace[3pt]
+\textbf{\texttt{CFG-5}: Mid-Pass Rician Deep Fade \& COP-1 Go-Back-$N$ Replay} & Injects a mid-pass Rician deep fade burst erasing Frame \texttt{N(S)=1} $\rightarrow$ \texttt{FARM-1} asserts \texttt{CLCW.Retransmit=1 (V(R)=1)} $\rightarrow$ \texttt{FOP-1} replays \texttt{N(S)=1, 2}. & \textbf{PASS:} Automatic Go-Back-$N$ replay restored \texttt{V(R)=3} with \textbf{0 lost or duplicate packets}. \\
+\addlinespace[3pt]
+\textbf{\texttt{CFG-6}: Emergency HCPD (\texttt{VCID=63}) Over Space Channel} & Transmits authenticated Emergency Command (\texttt{MAGIC\_OBC\_HARD\_RESET}) over impaired space channel into \texttt{u\_spacecraft\_top}. & \textbf{PASS:} Decoded and asserted \texttt{hcpd\_obc\_reset\_pulse == 1} over space channel. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Future Enhancements Roadmap (Cataloged Only)}
+
+\begin{enumerate}
+    \item \textbf{Higher-Order Payload Downlink Modulations (\texttt{CCSDS 131.2-B-1 SCCC} / \texttt{131.3-B-2 DVB-S2X}):} Optional \texttt{GMSK}, \texttt{8PSK}, \texttt{16APSK}, \texttt{32APSK}, and \texttt{64APSK} constellations for multi-Gbps X/Ka-band payload telemetry downlinks.
+    \item \textbf{Long-Block Downlink AR4JA LDPC ($k=1024, 4096, 16384$) \& Uplink $(512,256)$ Table 3-1 ROM:} Expanding parity-check matrix ROMs for deep-space long-block LDPC and $(512,256)$ uplink short-block LDPC.
+    \item \textbf{256-Bit Key Schedule (\texttt{AES-256-GCM}) \& \texttt{HMAC-SHA-256}:} Extending \texttt{ccsds\_sdls\_engine.sv} from 10-round \texttt{AES-128-GCM} to 14-round \texttt{AES-256-GCM} and optional \texttt{HMAC-SHA-256}.
+    \item \textbf{Autonomous Scatter-Gather AXI4/AHB Master DMA \& Foundry Rad-Hard Tech-Mapping:} Optional scatter-gather descriptor ring DMA master wrapper and vendor primitive \texttt{techmap} cells for RTG4, PolarFire RT, XQRKU060, and NanoXplore.
+\end{enumerate}
+
+\end{document}
