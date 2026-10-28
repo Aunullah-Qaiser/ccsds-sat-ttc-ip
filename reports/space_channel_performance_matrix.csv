@@ -1,0 +1,13 @@
+config_id,modulation,line_code,bits_per_symbol,spectral_bw_expansion,srrc_4sps_gardner_ted_supported,phase_180_ambiguity_resolved,implementation_loss_db,req_ebn0_uncoded_ber_1e5_db,req_ebn0_concat_rs_viterbi_ber_1e6_db,req_ebn0_short_ldpc_fer_1e4_db,rtl_stage12_verified
+PHY-M0-L0,BPSK,NRZ-L,1.0,1.0,True,True,0.5,10.09,2.68,2.15,True
+PHY-M0-L1,BPSK,NRZ-M,1.0,1.0,True,True,0.85,10.44,2.9,2.36,True
+PHY-M0-L2,BPSK,Bi-Phi-L,1.0,2.0,True,True,0.95,10.54,2.97,2.42,True
+PHY-M1-L0,QPSK,NRZ-L,2.0,1.0,True,True,0.68,10.27,2.79,2.26,True
+PHY-M1-L1,QPSK,NRZ-M,2.0,1.0,True,True,1.03,10.62,3.02,2.47,True
+PHY-M1-L2,QPSK,Bi-Phi-L,2.0,2.0,True,True,1.13,10.72,3.08,2.53,True
+PHY-M2-L0,OQPSK,NRZ-L,2.0,1.0,True,True,0.62,10.21,2.75,2.22,True
+PHY-M2-L1,OQPSK,NRZ-M,2.0,1.0,True,True,0.97,10.56,2.98,2.43,True
+PHY-M2-L2,OQPSK,Bi-Phi-L,2.0,2.0,True,True,1.07,10.66,3.05,2.49,True
+PHY-M3-L0,PCM/PM,NRZ-L,1.0,1.0,True,True,0.85,10.44,2.9,2.36,True
+PHY-M3-L1,PCM/PM,NRZ-M,1.0,1.0,True,True,1.2,10.79,3.13,2.57,True
+PHY-M3-L2,PCM/PM,Bi-Phi-L,1.0,2.0,True,True,1.3,10.89,3.2,2.63,True

@@ -4,7 +4,7 @@
   "results": {
     "stage1": {
       "sv_static_audit_pass_1_and_2": true,
-      "files_audited": 39,
+      "files_audited": 41,
       "struct_bit_widths": {
         "ccsds_space_pkt_hdr_t": 48,
         "ccsds_tc_prim_hdr_t": 40,
@@ -28,7 +28,7 @@
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
       "sdls_aes_128_gcm_verified": true,
-      "elapsed_sec": 2.284
+      "elapsed_sec": 4.292
     },
     "stage2": {
       "rtl_files_audited": [
@@ -55,6 +55,7 @@
         "ccsds_prox1_plcw_ctrl.sv",
         "ccsds_sat_ttc_top.sv",
         "ccsds_sdls_engine.sv",
+        "ccsds_space_flight_channel_model.sv",
         "ccsds_tc_cltu_framer.sv",
         "ccsds_tc_uslp_deframer.sv",
         "ccsds_tm_aos_deframer.sv",
@@ -63,6 +64,7 @@
         "ccsds_vc_arbiter_mux.sv",
         "tb_stage10_full_matrix_link_stress.sv",
         "tb_stage11_top_to_top_rf_link.sv",
+        "tb_stage12_space_channel_loopback.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
@@ -75,6 +77,7 @@
       "tb_files_audited": [
         "tb_stage10_full_matrix_link_stress.sv",
         "tb_stage11_top_to_top_rf_link.sv",
+        "tb_stage12_space_channel_loopback.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
@@ -92,10 +95,10 @@
       "secded_2bit_detection_trials": 500,
       "aos_fhec_gf16_headers_verified": 1000,
       "rollback_fifo_multiframe_isolation_verified": true,
-      "elapsed_sec": 5.929
+      "elapsed_sec": 7.457
     },
     "stage3": {
-      "rtl_files_audited_count": 39,
+      "rtl_files_audited_count": 41,
       "rtl_files_audited": [
         "ccsds_pkg.sv",
         "ccsds_asm_correlator.sv",
@@ -120,6 +123,7 @@
         "ccsds_prox1_plcw_ctrl.sv",
         "ccsds_sat_ttc_top.sv",
         "ccsds_sdls_engine.sv",
+        "ccsds_space_flight_channel_model.sv",
         "ccsds_tc_cltu_framer.sv",
         "ccsds_tc_uslp_deframer.sv",
         "ccsds_tm_aos_deframer.sv",
@@ -128,6 +132,7 @@
         "ccsds_vc_arbiter_mux.sv",
         "tb_stage10_full_matrix_link_stress.sv",
         "tb_stage11_top_to_top_rf_link.sv",
+        "tb_stage12_space_channel_loopback.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
@@ -140,6 +145,7 @@
       "tb_files_audited": [
         "tb_stage10_full_matrix_link_stress.sv",
         "tb_stage11_top_to_top_rf_link.sv",
+        "tb_stage12_space_channel_loopback.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
@@ -153,46 +159,46 @@
       "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S3] Verified 500 0/180-deg CLTU soft-LLR locks, 500 TMR FARM-1 SEU scrubs (500 healed), and generated Stage 3 VCD",
       "closed_loop_fop1_farm1_clcw_rs_cadu_pass": true,
       "telecommands_delivered_in_order": 16,
-      "elapsed_sec": 4.241
+      "elapsed_sec": 6.071
     },
     "stage4": {
-      "rtl_files_audited": 39,
-      "tb_files_audited": 10,
+      "rtl_files_audited": 41,
+      "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage4_ref_crosscheck_stdout": "[CPP20-STAGE4-COSIM] PASS: 45000 AOS FHEC trials, 32 CSR TMR SEU scrubs (SVA-CSR-4), Prox-1 PLCW (V(R)=42), Space Pkt Reassembler (APID=0x701 & 0x7FF Idle stripped)",
       "aos_fhec_frames_verified": 8,
       "prox1_crc32_frames_verified": 50,
       "uslp_truncated_frames_verified": 50,
       "uslp_extended_variable_frames_verified": 50,
-      "elapsed_sec": 4.628
+      "elapsed_sec": 7.525
     },
     "stage5": {
-      "rtl_files_audited": 39,
-      "tb_files_audited": 10,
+      "rtl_files_audited": 41,
+      "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage5_ref_crosscheck_stdout": "[CPP20-STAGE5-COSIM] PASS: 64000 Conv/Viterbi noisy bits corrected (0 errors), 500 Short-LDPC blocks converged, HCPD TMR SEU healed=7 (SVA-HCPD-5)",
       "conv_k7_and_short_ldpc_golden_match": true,
       "viterbi_noisy_bits_corrected": 64000,
       "short_ldpc_noisy_blocks_converged": 500,
       "hcpd_tmr_seu_verified": true,
-      "elapsed_sec": 4.52
+      "elapsed_sec": 6.853
     },
     "stage6": {
-      "rtl_files_audited": 39,
-      "tb_files_audited": 10,
+      "rtl_files_audited": 41,
+      "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage6_ref_crosscheck_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
-      "elapsed_sec": 4.083
+      "elapsed_sec": 6.619
     },
     "stage7": {
-      "rtl_files_audited": 39,
-      "tb_files_audited": 10,
+      "rtl_files_audited": 41,
+      "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage7_ref_crosscheck_stdout": "[CPP20-STAGE7-COSIM] Verified Hardware EGSE (ROLE_MODE=1) <-> Spacecraft (ROLE_MODE=0) Loopback: 30/30 FOP-1<->FARM-1 Go-Back-N ARQ Frames, 1,000 BCH(63,56) CLTU Blocks, TM/AOS CUC OBT & CLCW Extraction, RS(255,223) Syndrome Decode & VCD",
-      "elapsed_sec": 3.971
+      "elapsed_sec": 6.532
     },
     "stage8": {
-      "rtl_and_tb_files_audited": 39,
+      "rtl_and_tb_files_audited": 41,
       "sv_static_audit_pass_1_and_2": true,
       "pillar1_real_vcd_verification": {
         "status": "PENDING_RTL_SIM",
@@ -243,25 +249,25 @@
         "ramb36": 0,
         "dsp_blocks": 0,
         "true_fmax_mhz": {
-          "clk_sys_100mhz_nom": 115.93,
-          "clk_adc_iq_120mhz_nom": 141.48,
-          "clk_tx_sym_50mhz_nom": 184.98,
-          "clk_tc_safe_16mhz_nom": 104.18
+          "clk_sys_100mhz_nom": 116.4,
+          "clk_adc_iq_120mhz_nom": 135.41,
+          "clk_tx_sym_50mhz_nom": 169.46,
+          "clk_tc_safe_16mhz_nom": 110.22
         },
         "nominal_wns_ns": {
-          "clk_sys": 1.374,
-          "clk_adc_iq": 1.265,
-          "clk_tx_sym": 14.594,
-          "clk_tc_safe": 52.901
+          "clk_sys": 1.409,
+          "clk_adc_iq": 0.948,
+          "clk_tx_sym": 14.099,
+          "clk_tc_safe": 53.427
         },
         "overclock_push_wns_ns": {
-          "clk_sys": -5.293,
-          "clk_adc_iq": -4.068,
-          "clk_tx_sym": -2.073,
-          "clk_tc_safe": -5.599
+          "clk_sys": -5.258,
+          "clk_adc_iq": -4.385,
+          "clk_tx_sym": -2.568,
+          "clk_tc_safe": -5.073
         }
       },
-      "elapsed_sec": 7.468
+      "elapsed_sec": 10.134
     }
   }
 }

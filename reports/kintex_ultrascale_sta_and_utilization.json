@@ -1,5 +1,5 @@
 {
-  "report_version": "v2.29.0",
+  "report_version": "v2.30.6",
   "target_device": "xc7z010iclg225-1L (AMD/Xilinx Zynq-7000 28nm, -1L Low-Power Speed Grade)",
   "vivado_tool_version": "Xilinx Vivado v2022.2 (64-bit)",
   "synthesis_mode": "Out-of-Context (OOC) with -keep_equivalent_registers -flatten_hierarchy rebuilt (3x TMR preserved)",
@@ -8,13 +8,13 @@
     "clk_sys": {
       "nominal_target_mhz": 100.0,
       "nominal_period_ns": 10.0,
-      "nominal_wns_ns": 1.374,
+      "nominal_wns_ns": 1.409,
       "nominal_tns_ns": 0.0,
       "nominal_timing_met": true,
       "overclock_push_period_ns": 3.333,
-      "overclock_push_wns_ns": -5.293,
-      "min_achievable_period_ns": 8.626,
-      "true_fmax_mhz": 115.93,
+      "overclock_push_wns_ns": -5.258,
+      "min_achievable_period_ns": 8.591,
+      "true_fmax_mhz": 116.4,
       "margin_vs_nominal_pct": 15.93,
       "logic_levels": 8,
       "critical_path_startpoint": "u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C",
@@ -23,13 +23,13 @@
     "clk_adc_iq": {
       "nominal_target_mhz": 120.0,
       "nominal_period_ns": 8.333,
-      "nominal_wns_ns": 1.265,
+      "nominal_wns_ns": 0.948,
       "nominal_tns_ns": 0.0,
       "nominal_timing_met": true,
       "overclock_push_period_ns": 3.0,
-      "overclock_push_wns_ns": -4.068,
-      "min_achievable_period_ns": 7.068,
-      "true_fmax_mhz": 141.48,
+      "overclock_push_wns_ns": -4.385,
+      "min_achievable_period_ns": 7.385,
+      "true_fmax_mhz": 135.41,
       "margin_vs_nominal_pct": 17.9,
       "logic_levels": 8,
       "critical_path_startpoint": "u_phy_modem/rx_phase_q16_reg[10]/C",
@@ -38,13 +38,13 @@
     "clk_tx_sym": {
       "nominal_target_mhz": 50.0,
       "nominal_period_ns": 20.0,
-      "nominal_wns_ns": 14.594,
+      "nominal_wns_ns": 14.099,
       "nominal_tns_ns": 0.0,
       "nominal_timing_met": true,
       "overclock_push_period_ns": 3.333,
-      "overclock_push_wns_ns": -2.073,
-      "min_achievable_period_ns": 5.406,
-      "true_fmax_mhz": 184.98,
+      "overclock_push_wns_ns": -2.568,
+      "min_achievable_period_ns": 5.901,
+      "true_fmax_mhz": 169.46,
       "margin_vs_nominal_pct": 269.96,
       "logic_levels": 5,
       "critical_path_startpoint": "u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C",
@@ -53,13 +53,13 @@
     "clk_tc_safe": {
       "nominal_target_mhz": 16.0,
       "nominal_period_ns": 62.5,
-      "nominal_wns_ns": 52.901,
+      "nominal_wns_ns": 53.427,
       "nominal_tns_ns": 0.0,
       "nominal_timing_met": true,
       "overclock_push_period_ns": 4.0,
-      "overclock_push_wns_ns": -5.599,
-      "min_achievable_period_ns": 9.599,
-      "true_fmax_mhz": 104.18,
+      "overclock_push_wns_ns": -5.073,
+      "min_achievable_period_ns": 9.073,
+      "true_fmax_mhz": 110.22,
       "margin_vs_nominal_pct": 551.13,
       "logic_levels": 11,
       "critical_path_startpoint": "u_farm1/v_r_tmr_reg[1][7][1]/C",
@@ -116,6 +116,106 @@
           "ramb36": 0,
           "dsp_blocks": 0
         }
+      }
+    }
+  },
+  "measured_vivado_2022_2_post_audit_v2_30_6": {
+    "target_device": "xc7z010iclg225-1L",
+    "clk_sys": {
+      "nominal_mhz": 100.0,
+      "push_period_ns": 3.333,
+      "push_wns_ns": -5.258,
+      "min_period_ns": 8.591,
+      "true_fmax_mhz": 116.4,
+      "margin_pct": 16.4,
+      "logic_levels": 7,
+      "critical_path": "u_rx_commit_cdc_fifo/rd_ptr_q_reg[0]/C -> u_csr/cnt_uncorr_err_q_reg[0]/CE"
+    },
+    "clk_adc_iq": {
+      "nominal_mhz": 120.0,
+      "push_period_ns": 3.0,
+      "push_wns_ns": -4.385,
+      "min_period_ns": 7.385,
+      "true_fmax_mhz": 135.41,
+      "margin_pct": 12.84,
+      "logic_levels": 9,
+      "critical_path": "u_phy_modem/rx_phase_q16_reg[10]/C -> u_phy_modem/i_derot_q_reg[13]/D"
+    },
+    "clk_tx_sym": {
+      "nominal_mhz": 50.0,
+      "push_period_ns": 3.333,
+      "push_wns_ns": -2.568,
+      "min_period_ns": 5.901,
+      "true_fmax_mhz": 169.46,
+      "margin_pct": 238.92,
+      "logic_levels": 9,
+      "critical_path": "u_tx_hwm_cdc_fifo/wr_bin_sync2_rd_q_reg[1]/C -> u_tx_hwm_cdc_fifo/rd_gray_q_reg[6]/D"
+    },
+    "clk_tc_safe": {
+      "nominal_mhz": 16.0,
+      "push_period_ns": 4.0,
+      "push_wns_ns": -5.073,
+      "min_period_ns": 9.073,
+      "true_fmax_mhz": 110.22,
+      "margin_pct": 588.88,
+      "logic_levels": 11,
+      "critical_path": "u_ul_deframer/cur_tc_hdr_q_reg[vcid][4]/C -> u_farm1/clcw_scheduled_out_reg[wait_flag]/D"
+    }
+  },
+  "version": "v2.33.1",
+  "vivado_2022_2_role0_v2_33_0_post_stage12_measured_sta": {
+    "timestamp": "Wed Oct 28 00:18:26 2026",
+    "tool": "Xilinx Vivado v2022.2 (64-bit) SW Build 3671981",
+    "role_mode": 0,
+    "configuration": "ROLE_MODE=0 (Spacecraft Transponder), ENABLE_SDLS=1, ENABLE_UL_LDPC=1, Dual-CDC PHY FIFOs (u_tx_phy_cdc_fifo + u_rx_sym_cdc_fifo), Programmable Symbol-Rate Divider (sym_rate_div_cfg), Loop-BW Gearshift (loop_bw_shift_cfg)",
+    "clocks": {
+      "clk_sys": {
+        "nominal_mhz": 100.0,
+        "nominal_period_ns": 10.0,
+        "overclock_push_target_mhz": 300.0,
+        "overclock_push_period_ns": 3.333,
+        "push_slack_ns": -1.268,
+        "min_period_ns": 4.601,
+        "true_fmax_mhz": 217.34,
+        "headroom_pct": 117.34,
+        "logic_levels": 13,
+        "critical_path": "u_vc_arb/cur_pkt_byte_cnt_q_reg[5]/C -> u_vc_arb/wr_spec_ptr_q_reg[3]/D"
+      },
+      "clk_adc_iq": {
+        "nominal_mhz": 120.0,
+        "nominal_period_ns": 8.333,
+        "overclock_push_target_mhz": 333.33,
+        "overclock_push_period_ns": 3.0,
+        "push_slack_ns": -0.68,
+        "min_period_ns": 3.68,
+        "true_fmax_mhz": 271.74,
+        "headroom_pct": 126.45,
+        "logic_levels": 7,
+        "critical_path": "u_phy_modem/rx_phase_q16_reg[10]/C -> u_phy_modem/q_derot_q_reg[13]/D"
+      },
+      "clk_tx_sym": {
+        "nominal_mhz": 50.0,
+        "nominal_period_ns": 20.0,
+        "overclock_push_target_mhz": 300.0,
+        "overclock_push_period_ns": 3.333,
+        "push_slack_ns": -0.968,
+        "min_period_ns": 4.301,
+        "true_fmax_mhz": 232.5,
+        "headroom_pct": 365.0,
+        "logic_levels": 6,
+        "critical_path": "u_tx_hwm_cdc_fifo/rd_ptr_q_reg[0]/C -> u_tx_phy_cdc_fifo/mem_ecc_reg_0_63_6_6/DP/I"
+      },
+      "clk_tc_safe": {
+        "nominal_mhz": 16.0,
+        "nominal_period_ns": 62.5,
+        "overclock_push_target_mhz": 250.0,
+        "overclock_push_period_ns": 4.0,
+        "push_slack_ns": -0.917,
+        "min_period_ns": 4.917,
+        "true_fmax_mhz": 203.38,
+        "headroom_pct": 1171.13,
+        "logic_levels": 11,
+        "critical_path": "u_ul_deframer/cur_tc_hdr_q_reg[vcid][4]/C -> u_farm1/clcw_scheduled_out_reg[wait_flag]/D"
       }
     }
   }

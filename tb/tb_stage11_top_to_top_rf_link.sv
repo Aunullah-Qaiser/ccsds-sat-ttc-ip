@@ -34,15 +34,17 @@ module tb_stage11_top_to_top_rf_link;
   // ---------------------------------------------------------------------------
   // 1. Master System Clock (100 MHz) & Reset
   // ---------------------------------------------------------------------------
-  logic clk   = 1'b0;
-  logic rst_n = 1'b0;
-  always #5.000 clk = ~clk;
+  // 4 Independent Asynchronous Spacecraft/Ground Clock Domains (Fix P0-5)
+  logic clk_sys     = 1'b0;
+  logic clk_adc_iq  = 1'b0;
+  logic clk_tx_sym  = 1'b0;
+  logic clk_tc_safe = 1'b0;
+  logic rst_n       = 1'b0;
 
-  logic clk_sys, clk_adc_iq, clk_tx_sym, clk_tc_safe;
-  assign clk_sys     = clk;
-  assign clk_adc_iq  = clk;
-  assign clk_tx_sym  = clk;
-  assign clk_tc_safe = clk;
+  always #5.000  clk_sys     = ~clk_sys;     // 100.0 MHz
+  always #4.167  clk_adc_iq  = ~clk_adc_iq;  // 120.0 MHz
+  always #10.000 clk_tx_sym  = ~clk_tx_sym;  //  50.0 MHz
+  always #31.250 clk_tc_safe = ~clk_tc_safe; //  16.0 MHz
 
   // ---------------------------------------------------------------------------
   // 2. Ground EGSE (`ROLE_MODE = 1`) Signals
@@ -496,7 +498,7 @@ module tb_stage11_top_to_top_rf_link;
     sc_ul_sym_tvalid = 1'b0;
     sc_ul_sym_tlast  = 1'b0;
 
-    repeat (40) @(posedge clk_sys);
+    repeat (120) @(posedge clk_sys);
     #1;
 
     assert (sc_rx_pkt_cnt == 14)

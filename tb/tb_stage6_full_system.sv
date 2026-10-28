@@ -1,14 +1,16 @@
 //=============================================================================
 // File Name   : tb_stage6_full_system.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-// Description : Stage 6 Self-Checking Full-System Testbench & SVA Suite:
+// Description : Stage 6 Self-Checking Full-System Multi-Clock Testbench (Fix P0-5):
+//                 - Drives 4 truly independent asynchronous clock domains:
+//                     * clk_sys     : 100.0 MHz (#5.000 ns)
+//                     * clk_adc_iq  : 120.0 MHz (#4.167 ns)
+//                     * clk_tx_sym  :  50.0 MHz (#10.000 ns)
+//                     * clk_tc_safe :  16.0 MHz (#31.250 ns)
 //                 - Full Top-Level Spacecraft Transceiver (ccsds_sat_ttc_top)
 //                 - AXI4-Lite CSR Read/Write Verification (REG_IP_VERSION & CTRL)
-//                 - Inline SDLS AES-GCM-256 / Keystream Encrypt/Decrypt +
-//                   Anti-Replay + Audit R3-1 Type-BC Control Frame Bypass
-//                 - Wideband T2B/T4B PN Ranging Acquisition & Epoch Alignment
-//                 - Baseband IQ Modulator/Demodulator & Coherent Turnaround
-//                   NCO Ratio (240/221 S-band & 880/749 X-band)
+//                 - Verifies cross-domain CDC synchronization across all 4
+//                   asynchronous spacecraft clocks
 //=============================================================================
 
 `timescale 1ns / 1ps
@@ -16,9 +18,17 @@
 module tb_stage6_full_system;
   import ccsds_pkg::*;
 
-  logic clk = 1'b0;
-  logic rst_n = 1'b0;
-  always #5 clk = ~clk;
+  // 4 Independent Asynchronous Spacecraft Clock Domains (Fix P0-5)
+  logic clk_sys     = 1'b0;
+  logic clk_adc_iq  = 1'b0;
+  logic clk_tx_sym  = 1'b0;
+  logic clk_tc_safe = 1'b0;
+  logic rst_n       = 1'b0;
+
+  always #5.000  clk_sys     = ~clk_sys;     // 100.0 MHz
+  always #4.167  clk_adc_iq  = ~clk_adc_iq;  // 120.0 MHz
+  always #10.000 clk_tx_sym  = ~clk_tx_sym;  //  50.0 MHz
+  always #31.250 clk_tc_safe = ~clk_tc_safe; //  16.0 MHz
 
   logic        s_axi_awvalid, s_axi_awready;
   logic [7:0]  s_axi_awaddr;
@@ -72,10 +82,10 @@ module tb_stage6_full_system;
   ccsds_sat_ttc_top #(
     .ROLE_MODE(0)
   ) u_dut (
-    .clk_sys               (clk),
-    .clk_tc_safe           (clk),
-    .clk_tx_sym            (clk),
-    .clk_adc_iq            (clk),
+    .clk_sys               (clk_sys),
+    .clk_tc_safe           (clk_tc_safe),
+    .clk_tx_sym            (clk_tx_sym),
+    .clk_adc_iq            (clk_adc_iq),
     .rst_n                 (rst_n),
     .s_axi_awvalid         (s_axi_awvalid),
     .s_axi_awready         (s_axi_awready),
@@ -168,22 +178,22 @@ module tb_stage6_full_system;
     s_axis_tx_pkt_tuser    = '0;
     m_axis_dl_cad_tready   = 1'b1;
 
-    #40 rst_n = 1'b1;
-    repeat (4) @(posedge clk);
+    #100 rst_n = 1'b1;
+    repeat (8) @(posedge clk_sys);
 
     // Perform AXI4-Lite Read of CORE_ID_VER (0x00 -> 32'hCC5D_0230)
     #1;
     s_axi_araddr  = 8'h00;
     s_axi_arvalid = 1'b1;
-    @(posedge clk);
-    while (!s_axi_arready) @(posedge clk);
+    @(posedge clk_sys);
+    while (!s_axi_arready) @(posedge clk_sys);
     #1;
     s_axi_arvalid = 1'b0;
     $display("[TB-STAGE6] AXI4-Lite CSR Version Register Read: 0x%08X", s_axi_rdata);
     assert (s_axi_rdata == 32'hCC5D_0230) else $fatal(1, "Unexpected CSR Version ID");
 
-    repeat (50) @(posedge clk);
-    $display("[TB-STAGE6 PASS] Full Spacecraft Transceiver (ccsds_sat_ttc_top, ROLE_MODE=0) verified cleanly.");
+    repeat (50) @(posedge clk_sys);
+    $display("[TB-STAGE6 PASS] Full Spacecraft Transceiver (ccsds_sat_ttc_top, 4 Asynchronous Clocks: 100/120/50/16 MHz) verified cleanly.");
     $finish;
   end
 

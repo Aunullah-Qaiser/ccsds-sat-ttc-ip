@@ -52,6 +52,7 @@ EXPECTED_STRUCT_BITS: Dict[str, int] = {
 SV_RTL_MANIFEST: List[str] = [
     "ccsds_pkg.sv",
     "ccsds_channel_impairment_model.sv",
+    "ccsds_space_flight_channel_model.sv",
     "ccsds_crc_universal.sv",
     "ccsds_lfsr_scrambler.sv",
     "ccsds_cdc_fifo_ecc.sv",
@@ -92,6 +93,7 @@ SV_TB_MANIFEST: List[str] = [
     "tb_stage9_external_ref_check.sv",
     "tb_stage10_full_matrix_link_stress.sv",
     "tb_stage11_top_to_top_rf_link.sv",
+    "tb_stage12_space_channel_loopback.sv",
 ]
 
 
@@ -269,7 +271,7 @@ def audit_symbols_and_struct_fields(rtl_dir: Path, tb_dir: Path) -> List[str]:
 
     def strip_all(text: str) -> str:
         text = strip_sv_comments(text)
-        text = re.sub(r'"[^"]*"', '""', text)
+        text = re.sub(r'"(?:\\.|[^"\\])*"', '""', text)
         text = re.sub(r"`\w+.*", "", text)
         text = re.sub(r"\(\*.*?\*\)", "", text, flags=re.DOTALL)
         return text
@@ -312,7 +314,7 @@ def audit_symbols_and_struct_fields(rtl_dir: Path, tb_dir: Path) -> List[str]:
         "assert", "assume", "cover", "disable", "wait", "null", "this", "super", "string",
         "event", "void", "const", "var", "ref", "static", "virtual", "interface", "endinterface",
         "modport", "clocking", "endclocking", "priority", "unique", "unique0", "inside",
-        "ccsds_pkg"
+        "ccsds_pkg", "fork", "join", "join_any", "join_none"
     }
 
     all_files = resolve_sv_files(rtl_dir)
@@ -350,7 +352,7 @@ def audit_symbols_and_struct_fields(rtl_dir: Path, tb_dir: Path) -> List[str]:
             declared.add(m.group(1))
         for m in re.finditer(r":\s*(\w+)", c):
             declared.add(m.group(1))
-        for m in re.finditer(r"\b(?:parameter|localparam)\b[^;,\)]*?\b(\w+)\s*(?:\[[^\]]*\])?\s*=", c, re.DOTALL):
+        for m in re.finditer(r"\b(?:parameter|localparam)\b[^;,\)]*?\b(\w+)\s*(?:\s*\[[^\]]*\])*\s*=", c, re.DOTALL):
             declared.add(m.group(1))
         for m in re.finditer(r"typedef\s+enum\s+[^\{]+\{(.*?)\}\s*(\w+)\s*;", c, re.DOTALL):
             ebody, ename = m.group(1), m.group(2)
@@ -435,6 +437,17 @@ def run_audit(rtl_dir: Path) -> Tuple[bool, List[Dict[str, object]]]:
                 )
         rep["errors"] = errs
         rep["passed"] = len(errs) == 0 and len(rep["warnings"]) == 0  # type: ignore
+
+    # Rule 6: Cross-module symbol table & packed struct member resolution
+    tb_dir = rtl_dir.parent / "tb"
+    sym_errs = audit_symbols_and_struct_fields(rtl_dir, tb_dir)
+    if sym_errs:
+        by_file = {str(r["file"]): r for r in reports}
+        for se in sym_errs:
+            fname = se.split(":", 1)[0].strip()
+            if fname in by_file:
+                by_file[fname]["errors"].append(se)  # type: ignore
+                by_file[fname]["passed"] = False
 
     # Ensure ccsds_pkg.sv is first in report list so struct_widths is at index 0
     reports.sort(key=lambda r: (0 if r["file"] == "ccsds_pkg.sv" else 1, str(r["file"])))

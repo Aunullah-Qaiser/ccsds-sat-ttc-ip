@@ -5,6 +5,9 @@
 //               CCSDS 355.1-B-1 (SDLS Extended Procedures), NIST FIPS-197 AES,
 //               & NIST SP 800-38D (AES-128-GCM Galois/Counter Mode)
 // Description : Inline Synthesizable Space Data Link Security (SDLS) Engine:
+//                 - Independent Uplink Rx (clk / rst_n) and Downlink Tx
+//                   (clk_tx / rst_tx_n) clock domains with zero shared mutable
+//                   state (Fix P0-4)
 //                 - 64-Entry Security Association (SA) Table protected by
 //                   (39,32) Hsiao SECDED ECC with single-bit scrub & double-
 //                   bit fault abort
@@ -36,6 +39,8 @@ module ccsds_sdls_engine
 ) (
   input  logic         clk,
   input  logic         rst_n,
+  input  logic         clk_tx,
+  input  logic         rst_tx_n,
 
   // Global Configuration
   input  logic         sdls_en_cfg,
@@ -44,13 +49,13 @@ module ccsds_sdls_engine
   input  logic [15:0]  tx_default_spi_cfg,
   input  logic [255:0] master_key_cfg,
 
-  // SA Table Provisioning Port
+  // SA Table Provisioning Port (clk domain)
   input  logic         sa_wr_en,
   input  logic [5:0]   sa_wr_addr,
   input  logic [15:0]  sa_wr_spi,
   input  logic [31:0]  sa_wr_seq_low,
 
-  // Uplink Rx Stream (From TC/USLP Deframer -> To Packet Reassembler)
+  // Uplink Rx Stream (clk domain: From TC/USLP Deframer -> To Packet Reassembler)
   input  logic         s_axis_rx_tvalid,
   output logic         s_axis_rx_tready,
   input  logic [7:0]   s_axis_rx_tdata,
@@ -62,14 +67,14 @@ module ccsds_sdls_engine
   output logic [7:0]   m_axis_rx_tdata,
   output logic         m_axis_rx_tlast,
 
-  // Two-Phase Commit / Rollback Handshake to FARM-1 & HCPD
+  // Two-Phase Commit / Rollback Handshake to FARM-1 & HCPD (clk domain)
   output logic         sdls_auth_done_pulse,
   output logic         sdls_auth_ok,
   output logic [15:0]  rx_active_spi_out,
   output logic         sa_secded_single_err_pulse,
   output logic         sa_secded_double_err_pulse,
 
-  // Downlink Tx Stream (From VC Arbiter -> To TM/AOS/USLP Framer)
+  // Downlink Tx Stream (clk_tx domain: From VC Arbiter -> To TM/AOS/USLP Framer)
   input  logic         s_axis_tx_tvalid,
   output logic         s_axis_tx_tready,
   input  logic [7:0]   s_axis_tx_tdata,
@@ -242,7 +247,7 @@ module ccsds_sdls_engine
   logic [15:0] sa_spi_ram [0:NUM_SAS-1];
 
   // ---------------------------------------------------------------------------
-  // 3. Uplink Rx SDLS Decryptor & 1B/16B Lookahead MAC/GCM Tag Stripper
+  // 3. Uplink Rx SDLS Decryptor & 1B/16B Lookahead MAC/GCM Tag Stripper (clk)
   // ---------------------------------------------------------------------------
   typedef enum logic [3:0] {
     RX_SDLS_IDLE          = 4'd0,
@@ -419,7 +424,6 @@ module ccsds_sdls_engine
                   rx_win_cnt_q     <= 5'd0;
                   rx_cipher_bits_q <= 64'd0;
                   if (sdls_gcm_mode_cfg) begin
-                    // Phase 0: H = AES_K(0^128)
                     rx_aes_phase_q <= 2'd0;
                     rx_aes_state_q <= 128'd0 ^ master_key_cfg[127:0];
                   end else begin
@@ -444,14 +448,12 @@ module ccsds_sdls_engine
           rx_aes_rk_q    <= nxt_rk;
           if (rx_aes_round_q == 4'd10) begin
             if (sdls_gcm_mode_cfg && (rx_aes_phase_q == 2'd0)) begin
-              // Latch H = AES_K(0^128), launch Phase 1: E_K(J0) where J0 = format_aes_ctr_block(spi, seq, 16'd1)
               rx_ghash_h_q   <= nxt_st;
               rx_aes_phase_q <= 2'd1;
               rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, 16'd1) ^ master_key_cfg[127:0];
               rx_aes_rk_q    <= master_key_cfg[127:0];
               rx_aes_round_q <= 4'd1;
             end else if (sdls_gcm_mode_cfg && (rx_aes_phase_q == 2'd1)) begin
-              // Latch E_K(J0), launch Phase 2: J1 = format_aes_ctr_block(spi, seq, 16'd2)
               rx_ek_j0_q     <= nxt_st;
               rx_aes_phase_q <= 2'd2;
               rx_aes_state_q <= format_aes_ctr_block(rx_spi_q, rx_seq_q, 16'd2) ^ master_key_cfg[127:0];
@@ -536,7 +538,6 @@ module ccsds_sdls_engine
                 rx_raw_win_q <= {rx_raw_win_q[119:0], s_axis_rx_tdata};
                 rx_win_cnt_q <= rx_win_cnt_q + 5'd1;
                 if (s_axis_rx_tlast) begin
-                  // Runt GCM frame (< 17 bytes after header)
                   sdls_auth_done_pulse <= 1'b1;
                   sdls_auth_ok         <= 1'b0;
                   rx_state_q           <= RX_SDLS_IDLE;
@@ -573,7 +574,6 @@ module ccsds_sdls_engine
                     rx_state_q      <= RX_SDLS_GCM_BLK_GHASH;
                   end
                 end else begin
-                  // Final wire byte arrived: `c_byte` is final ciphertext byte, `{rx_raw_win_q[119:0], s_axis_rx_tdata}` is 128-bit GCM Tag
                   logic [127:0] last_ct_blk;
                   last_ct_blk = 128'd0;
                   for (int k = 0; k < 16; k++) begin
@@ -674,7 +674,7 @@ module ccsds_sdls_engine
   end
 
   // ---------------------------------------------------------------------------
-  // 4. Downlink Tx SDLS AES-128-CTR / AES-128-GCM Encryptor & Tag Appender
+  // 4. Downlink Tx SDLS AES-128-CTR / AES-128-GCM Encryptor & Tag Appender (clk_tx)
   // ---------------------------------------------------------------------------
   typedef enum logic [3:0] {
     TX_SDLS_IDLE          = 4'd0,
@@ -724,8 +724,8 @@ module ccsds_sdls_engine
     end
   end
 
-  always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tx or negedge rst_tx_n) begin
+    if (!rst_tx_n) begin
       tx_state_q       <= TX_SDLS_IDLE;
       tx_hdr_idx_q     <= 3'd0;
       tx_tag_idx_q     <= 4'd0;

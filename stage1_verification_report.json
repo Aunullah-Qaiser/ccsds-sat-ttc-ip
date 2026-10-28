@@ -28,7 +28,7 @@
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
       "sdls_aes_128_gcm_verified": true,
-      "elapsed_sec": 2.946
+      "elapsed_sec": 2.156
     }
   }
 }

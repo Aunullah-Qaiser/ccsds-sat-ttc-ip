@@ -1,20 +1,26 @@
 //=============================================================================
 // File Name   : ccsds_sat_ttc_top.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-// Version     : v2.8 (Full 28-Module Cross-Elaborated & BLKSEQ-Clean Release)
+// Version     : v2.32.0 (Full 28-Module Dual-Clock CDC, TMR & Modular Build Release)
 // Description : Top-Level Parameterized Spacecraft Flight Transceiver
 //               (ROLE_MODE=0), Hardware Ground EGSE Transceiver (ROLE_MODE=1),
 //               and Symmetric Crosslink / On-Orbit BIST Transceiver (ROLE_MODE=2).
+//               Supports compile-time modular feature parameterization
+//               (ENABLE_SDLS, ENABLE_UL_LDPC) for compact FPGA targets (xc7z010)
+//               as well as full-featured deployment on xc7z020 / Kintex UltraScale.
 //               Integrates all 27 synthesizable sub-modules with verified
-//               cross-module port bindings, 2-FF CDC synchronizers, Hsiao
-//               SECDED store-and-forward / high-watermark FIFOs, and TMR voting.
+//               cross-module port bindings, 2-FF ASYNC_REG CDC synchronizers,
+//               dual-clock Gray-code Hsiao SECDED store-and-forward / high-
+//               watermark / PHY-bridge FIFOs, and triplicated TMR next-state voting.
 //=============================================================================
 `timescale 1ns / 1ps
 
 module ccsds_sat_ttc_top
   import ccsds_pkg::*;
 #(
-  parameter int unsigned ROLE_MODE = 0
+  parameter int unsigned ROLE_MODE      = 0,
+  parameter bit          ENABLE_SDLS    = 1'b1,
+  parameter bit          ENABLE_UL_LDPC = 1'b1
 ) (
   input  logic               clk_sys,
   input  logic               clk_tc_safe,
@@ -24,22 +30,22 @@ module ccsds_sat_ttc_top
 
   // AXI4-Lite Control & Status Register Interface
   input  logic               s_axi_awvalid,
-  output logic                     s_axi_awready,
+  output logic               s_axi_awready,
   input  logic [7:0]         s_axi_awaddr,
   input  logic               s_axi_wvalid,
-  output logic                     s_axi_wready,
+  output logic               s_axi_wready,
   input  logic [31:0]        s_axi_wdata,
   input  logic [3:0]         s_axi_wstrb,
-  output logic                     s_axi_bvalid,
+  output logic               s_axi_bvalid,
   input  logic               s_axi_bready,
-  output logic [1:0]               s_axi_bresp,
+  output logic [1:0]         s_axi_bresp,
   input  logic               s_axi_arvalid,
-  output logic                     s_axi_arready,
+  output logic               s_axi_arready,
   input  logic [7:0]         s_axi_araddr,
-  output logic                     s_axi_rvalid,
+  output logic               s_axi_rvalid,
   input  logic               s_axi_rready,
-  output logic [31:0]              s_axi_rdata,
-  output logic [1:0]               s_axi_rresp,
+  output logic [31:0]        s_axi_rdata,
+  output logic [1:0]         s_axi_rresp,
 
   // Mission Strap & Mode Overrides
   input  logic [1:0]         link_proto_override_en,
@@ -57,44 +63,44 @@ module ccsds_sat_ttc_top
   input  logic signed [11:0] rx_q_adc_in,
   input  logic               rx_iq_valid_in,
   input  logic               s_axis_ul_sym_tvalid,
-  output logic                     s_axis_ul_sym_tready,
+  output logic               s_axis_ul_sym_tready,
   input  logic [7:0]         s_axis_ul_sym_tdata,
   input  logic               s_axis_ul_sym_tlast,
 
   // Uplink Reassembled Space Packet / MAP SDU Output to OBC
-  output logic                     m_axis_rx_pkt_tvalid,
+  output logic               m_axis_rx_pkt_tvalid,
   input  logic               m_axis_rx_pkt_tready,
-  output logic [7:0]               m_axis_rx_pkt_tdata,
-  output logic                     m_axis_rx_pkt_tlast,
-  output ccsds_tuser_t             m_axis_rx_pkt_tuser,
+  output logic [7:0]         m_axis_rx_pkt_tdata,
+  output logic               m_axis_rx_pkt_tlast,
+  output ccsds_tuser_t       m_axis_rx_pkt_tuser,
 
   // Downlink Space Packet Ingress from OBC
   input  logic               s_axis_tx_pkt_tvalid,
-  output logic                     s_axis_tx_pkt_tready,
+  output logic               s_axis_tx_pkt_tready,
   input  logic [7:0]         s_axis_tx_pkt_tdata,
   input  logic               s_axis_tx_pkt_tlast,
   input  ccsds_tuser_t       s_axis_tx_pkt_tuser,
 
   // Downlink CADU / Baseband IQ DAC Outputs
-  output logic                     m_axis_dl_cad_tvalid,
+  output logic               m_axis_dl_cad_tvalid,
   input  logic               m_axis_dl_cad_tready,
-  output logic [7:0]               m_axis_dl_cad_tdata,
-  output logic                     m_axis_dl_cad_tlast,
-  output logic signed [11:0]       tx_i_dac_out,
-  output logic signed [11:0]       tx_q_dac_out,
-  output logic                     tx_iq_valid_out,
+  output logic [7:0]         m_axis_dl_cad_tdata,
+  output logic               m_axis_dl_cad_tlast,
+  output logic signed [11:0] tx_i_dac_out,
+  output logic signed [11:0] tx_q_dac_out,
+  output logic               tx_iq_valid_out,
 
   // Emergency HCPD & Fault Outputs
-  output logic                     hcpd_obc_reset_pulse,
-  output logic                     hcpd_safe_mode_force,
-  output logic [1:0]               hcpd_rf_chain_select,
-  output logic                     pn_All_Locked_out,
-  output logic                     fault_irq_out,
-  output logic                     edac_scrub_req_out
+  output logic               hcpd_obc_reset_pulse,
+  output logic               hcpd_safe_mode_force,
+  output logic [1:0]         hcpd_rf_chain_select,
+  output logic               pn_All_Locked_out,
+  output logic               fault_irq_out,
+  output logic               edac_scrub_req_out
 );
 
   //---------------------------------------------------------------------------
-  // 1. CSR & Runtime Configuration Buses
+  // 1. CSR & Runtime Configuration Buses (clk_sys)
   //---------------------------------------------------------------------------
   logic [9:0]  csr_scid_10b;
   logic [15:0] csr_scid_16b;
@@ -139,6 +145,8 @@ module ccsds_sat_ttc_top
   logic        rx_fifo_secded_double;
   logic        tx_fifo_secded_single;
   logic        tx_fifo_secded_double;
+  logic        tx_phy_fifo_secded_single;
+  logic        tx_phy_fifo_secded_double;
   logic        ul_fecf_crc_err_pulse;
   logic        farm_tmr_seu_pulse;
   logic        hcpd_tmr_seu_pulse;
@@ -151,7 +159,118 @@ module ccsds_sat_ttc_top
   ccsds_clcw_t clcw_scheduled_sys_q;
   logic        clcw_valid_pulse_tc;
   ccsds_plcw_t plcw_scheduled_tc;
+  ccsds_plcw_t plcw_scheduled_sys_q;
   logic        plcw_valid_pulse_tc;
+
+  // 2-FF CDC Synchronizers for CSR control signals into clk_tc_safe
+  (* ASYNC_REG = "TRUE" *) logic        sdls_en_tc_meta_q,    sdls_en_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic        sdls_gcm_tc_meta_q,   sdls_gcm_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic        bc_req_tc_meta_q,     bc_req_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic        fecf_crc32_tc_meta_q, fecf_crc32_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic        tc_seg_tc_meta_q,     tc_seg_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [9:0]  scid_10b_tc_meta_q,   scid_10b_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [15:0] scid_16b_tc_meta_q,   scid_16b_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [7:0]  win_half_w_tc_meta_q, win_half_w_tc_sync_q;
+
+  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
+    if (!rst_n) begin
+      sdls_en_tc_meta_q    <= 1'b0;
+      sdls_en_tc_sync_q    <= 1'b0;
+      sdls_gcm_tc_meta_q   <= 1'b0;
+      sdls_gcm_tc_sync_q   <= 1'b0;
+      bc_req_tc_meta_q     <= 1'b0;
+      bc_req_tc_sync_q     <= 1'b0;
+      fecf_crc32_tc_meta_q <= 1'b0;
+      fecf_crc32_tc_sync_q <= 1'b0;
+      tc_seg_tc_meta_q     <= 1'b1;
+      tc_seg_tc_sync_q     <= 1'b1;
+      scid_10b_tc_meta_q   <= 10'h1AB;
+      scid_10b_tc_sync_q   <= 10'h1AB;
+      scid_16b_tc_meta_q   <= 16'h1AB0;
+      scid_16b_tc_sync_q   <= 16'h1AB0;
+      win_half_w_tc_meta_q <= 8'd16;
+      win_half_w_tc_sync_q <= 8'd16;
+    end else begin
+      sdls_en_tc_meta_q    <= active_sdls_en;
+      sdls_en_tc_sync_q    <= sdls_en_tc_meta_q;
+      sdls_gcm_tc_meta_q   <= csr_sdls_gcm_mode;
+      sdls_gcm_tc_sync_q   <= sdls_gcm_tc_meta_q;
+      bc_req_tc_meta_q     <= active_bc_req_sdls;
+      bc_req_tc_sync_q     <= bc_req_tc_meta_q;
+      fecf_crc32_tc_meta_q <= csr_fecf_crc32;
+      fecf_crc32_tc_sync_q <= fecf_crc32_tc_meta_q;
+      tc_seg_tc_meta_q     <= csr_tc_seg_hdr_en;
+      tc_seg_tc_sync_q     <= tc_seg_tc_meta_q;
+      scid_10b_tc_meta_q   <= csr_scid_10b;
+      scid_10b_tc_sync_q   <= scid_10b_tc_meta_q;
+      scid_16b_tc_meta_q   <= csr_scid_16b;
+      scid_16b_tc_sync_q   <= scid_16b_tc_meta_q;
+      win_half_w_tc_meta_q <= csr_win_half_w;
+      win_half_w_tc_sync_q <= win_half_w_tc_meta_q;
+    end
+  end
+
+  // Toggle-to-Pulse 2-FF ASYNC_REG Event Synchronizers into clk_sys for CSR counters
+  logic [6:0] evt_tc_pulse_vec;
+  logic [6:0] evt_tc_tog_q;
+  logic [1:0] evt_tx_pulse_vec;
+  logic [1:0] evt_tx_tog_q;
+  logic [1:0] evt_adc_pulse_vec;
+  logic [1:0] evt_adc_tog_q;
+
+  assign evt_tc_pulse_vec = {
+    sdls_auth_done_pulse & ~sdls_auth_ok,
+    ul_fecf_crc_err_pulse,
+    farm_tmr_seu_pulse | hcpd_tmr_seu_pulse,
+    sa_secded_double_pulse,
+    sa_secded_single_pulse,
+    bch_double_err_pulse,
+    bch_single_err_pulse
+  };
+  assign evt_tx_pulse_vec  = {tx_fifo_secded_double, tx_fifo_secded_single};
+  assign evt_adc_pulse_vec = {tx_phy_fifo_secded_double, tx_phy_fifo_secded_single};
+
+  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
+    if (!rst_n) begin
+      evt_tc_tog_q <= 7'd0;
+    end else begin
+      evt_tc_tog_q <= evt_tc_tog_q ^ evt_tc_pulse_vec;
+    end
+  end
+
+  always_ff @(posedge clk_tx_sym or negedge rst_n) begin
+    if (!rst_n) begin
+      evt_tx_tog_q <= 2'd0;
+    end else begin
+      evt_tx_tog_q <= evt_tx_tog_q ^ evt_tx_pulse_vec;
+    end
+  end
+
+  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
+    if (!rst_n) begin
+      evt_adc_tog_q <= 2'd0;
+    end else begin
+      evt_adc_tog_q <= evt_adc_tog_q ^ evt_adc_pulse_vec;
+    end
+  end
+
+  (* ASYNC_REG = "TRUE" *) logic [10:0] evt_sys_meta_q, evt_sys_sync_q;
+  logic [10:0] evt_sys_prev_q;
+  logic [10:0] evt_sys_pulse;
+
+  always_ff @(posedge clk_sys or negedge rst_n) begin
+    if (!rst_n) begin
+      evt_sys_meta_q <= 11'd0;
+      evt_sys_sync_q <= 11'd0;
+      evt_sys_prev_q <= 11'd0;
+    end else begin
+      evt_sys_meta_q <= {evt_adc_tog_q, evt_tx_tog_q, evt_tc_tog_q};
+      evt_sys_sync_q <= evt_sys_meta_q;
+      evt_sys_prev_q <= evt_sys_sync_q;
+    end
+  end
+
+  assign evt_sys_pulse = evt_sys_sync_q ^ evt_sys_prev_q;
 
   ccsds_axi_lite_csr u_csr (
     .clk                         (clk_sys),
@@ -176,16 +295,16 @@ module ccsds_sat_ttc_top
     .pps_1hz_pulse               (1'b0),
     .csr_seu_inject_en           (1'b0),
     .csr_seu_xor_mask            (32'd0),
-    .bch_single_err_pulse        (bch_single_err_pulse),
-    .bch_double_abort_pulse      (bch_double_err_pulse),
-    .fifo_secded_single_pulse    (sa_secded_single_pulse | rx_fifo_secded_single | tx_fifo_secded_single),
-    .fifo_secded_double_pulse    (sa_secded_double_pulse | rx_fifo_secded_double | tx_fifo_secded_double),
-    .farm1_tmr_seu_pulse         (farm_tmr_seu_pulse | hcpd_tmr_seu_pulse),
-    .frame_crc_err_pulse         (ul_fecf_crc_err_pulse),
+    .bch_single_err_pulse        (evt_sys_pulse[0]),
+    .bch_double_abort_pulse      (evt_sys_pulse[1]),
+    .fifo_secded_single_pulse    (evt_sys_pulse[2] | rx_fifo_secded_single | evt_sys_pulse[7] | evt_sys_pulse[9]),
+    .fifo_secded_double_pulse    (evt_sys_pulse[3] | rx_fifo_secded_double | evt_sys_pulse[8] | evt_sys_pulse[10]),
+    .farm1_tmr_seu_pulse         (evt_sys_pulse[4]),
+    .frame_crc_err_pulse         (evt_sys_pulse[5]),
     .pkt_len_err_pulse           (vc_pkt_len_err | reasm_pkt_len_err),
-    .sdls_mac_err_pulse          (sdls_auth_done_pulse & ~sdls_auth_ok),
+    .sdls_mac_err_pulse          (evt_sys_pulse[6]),
     .latest_clcw_in              (clcw_scheduled_sys_q),
-    .latest_plcw_in              (plcw_scheduled_tc),
+    .latest_plcw_in              (plcw_scheduled_sys_q),
     .spacecraft_id_cfg           (csr_scid_10b),
     .uslp_scid_cfg               (csr_scid_16b),
     .proto_mode_cfg              (csr_proto_mode),
@@ -377,24 +496,36 @@ module ccsds_sat_ttc_top
   logic       ldpc_dec_tlast;
   logic       ldpc_dec_tabort;
 
-  ccsds_ul_short_ldpc_dec u_short_ldpc_dec (
-    .clk                      (clk_tc_safe),
-    .rst_n                    (rst_n),
-    .ldpc_mode_512_en         (ul_fec_override_en == 2'd2),
-    .tc_derand_en             (1'b1),
-    .cb_llr_in                (asm_cb_llr),
-    .cb_hard_bit_in           (asm_cb_hard_bit),
-    .cb_start_pulse           (asm_cb_start_pulse),
-    .cb_valid_in              (asm_cb_valid),
-    .ldpc_tail_detected_pulse (ldpc_tail_pulse),
-    .ldpc_converged_pulse     (ldpc_converged_pulse),
-    .ldpc_uncorr_abort_pulse  (ldpc_abort_pulse),
-    .m_axis_tdata             (ldpc_dec_tdata),
-    .m_axis_tvalid            (ldpc_dec_tvalid),
-    .m_axis_tready            (ldpc_dec_tready),
-    .m_axis_tlast             (ldpc_dec_tlast),
-    .m_axis_tabort            (ldpc_dec_tabort)
-  );
+  generate
+    if (ENABLE_UL_LDPC) begin : g_ul_short_ldpc
+      ccsds_ul_short_ldpc_dec u_short_ldpc_dec (
+        .clk                      (clk_tc_safe),
+        .rst_n                    (rst_n),
+        .ldpc_mode_512_en         (ul_fec_override_en == 2'd2),
+        .tc_derand_en             (1'b1),
+        .cb_llr_in                (asm_cb_llr),
+        .cb_hard_bit_in           (asm_cb_hard_bit),
+        .cb_start_pulse           (asm_cb_start_pulse),
+        .cb_valid_in              (asm_cb_valid),
+        .ldpc_tail_detected_pulse (ldpc_tail_pulse),
+        .ldpc_converged_pulse     (ldpc_converged_pulse),
+        .ldpc_uncorr_abort_pulse  (ldpc_abort_pulse),
+        .m_axis_tdata             (ldpc_dec_tdata),
+        .m_axis_tvalid            (ldpc_dec_tvalid),
+        .m_axis_tready            (ldpc_dec_tready),
+        .m_axis_tlast             (ldpc_dec_tlast),
+        .m_axis_tabort            (ldpc_dec_tabort)
+      );
+    end else begin : g_no_ul_short_ldpc
+      assign ldpc_tail_pulse      = 1'b0;
+      assign ldpc_converged_pulse = 1'b0;
+      assign ldpc_abort_pulse     = 1'b0;
+      assign ldpc_dec_tdata       = 8'd0;
+      assign ldpc_dec_tvalid      = 1'b0;
+      assign ldpc_dec_tlast       = 1'b0;
+      assign ldpc_dec_tabort      = 1'b0;
+    end
+  endgenerate
 
   logic [7:0]   tc_descram_tdata;
   logic [0:0]   tc_descram_tkeep;
@@ -408,7 +539,7 @@ module ccsds_sat_ttc_top
   ) u_tc_descram (
     .clk              (clk_tc_safe),
     .rst_n            (rst_n),
-    .bypass_en        (1'b1), // Direct frame byte pass-through when pre-descrambled
+    .bypass_en        (1'b1),
     .mode_tc_not_tm   (1'b1),
     .lfsr_reseed_sync (asm_cb_start_pulse),
     .s_axis_tdata     ((ul_fec_override_en == 2'd0) ? s_axis_ul_sym_tdata  :
@@ -432,7 +563,7 @@ module ccsds_sat_ttc_top
   assign ldpc_dec_tready = tc_descram_tready;
 
   //---------------------------------------------------------------------------
-  // 4. Uplink Deframer, Proximity-1 PLCW, COP-1 FARM-1, SDLS & HCPD
+  // 4. Uplink Deframer, Proximity-1 PLCW, COP-1 FARM-1, SDLS & HCPD (clk_tc_safe)
   //---------------------------------------------------------------------------
   ccsds_tc_prim_hdr_t    parsed_tc_hdr;
   ccsds_tc_seg_hdr_t     parsed_tc_seg_hdr;
@@ -456,12 +587,12 @@ module ccsds_sat_ttc_top
   ccsds_tc_uslp_deframer u_ul_deframer (
     .clk                      (clk_tc_safe),
     .rst_n                    (rst_n),
-    .spacecraft_id_cfg        (csr_scid_10b),
-    .uslp_scid_cfg            (csr_scid_16b),
+    .spacecraft_id_cfg        (scid_10b_tc_sync_q),
+    .uslp_scid_cfg            (scid_16b_tc_sync_q),
     .uslp_trunc_frame_len_cfg (16'd16),
     .uslp_tfdf_3byte_en_cfg   (1'b0),
-    .fecf_crc32_cfg           (csr_fecf_crc32),
-    .tc_seg_hdr_present_cfg   (csr_tc_seg_hdr_en),
+    .fecf_crc32_cfg           (fecf_crc32_tc_sync_q),
+    .tc_seg_hdr_present_cfg   (tc_seg_tc_sync_q),
     .s_axis_tdata             (tc_descram_tdata),
     .s_axis_tvalid            (tc_descram_tvalid),
     .s_axis_tready            (tc_descram_tready),
@@ -515,7 +646,7 @@ module ccsds_sat_ttc_top
     .no_rf_avail       (~carrier_lock_sync_q),
     .no_bit_lock       (~symbol_lock_sync_q),
     .wait_flag_in      (1'b0),
-    .window_half_w     (csr_win_half_w),
+    .window_half_w     (win_half_w_tc_sync_q),
     .prox1_hdr_in      (parsed_prox1_hdr),
     .spdu_cmd_byte0    (cmd_byte0_q),
     .spdu_cmd_byte1    (cmd_byte1_q),
@@ -546,41 +677,61 @@ module ccsds_sat_ttc_top
   logic        sdls_tx_tready;
   logic        sdls_tx_tlast;
 
-  ccsds_sdls_engine u_sdls (
-    .clk                        (clk_tc_safe),
-    .rst_n                      (rst_n),
-    .sdls_en_cfg                (active_sdls_en),
-    .sdls_gcm_mode_cfg          (csr_sdls_gcm_mode),
-    .bc_require_sdls_cfg        (active_bc_req_sdls),
-    .tx_default_spi_cfg         (16'h0001),
-    .master_key_cfg             (256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F),
-    .sa_wr_en                   (1'b0),
-    .sa_wr_addr                 (6'd0),
-    .sa_wr_spi                  (16'd0),
-    .sa_wr_seq_low              (32'd0),
-    .s_axis_rx_tvalid           (ul_deframed_tvalid),
-    .s_axis_rx_tready           (ul_deframed_tready),
-    .s_axis_rx_tdata            (ul_deframed_tdata),
-    .s_axis_rx_tlast            (ul_deframed_tlast),
-    .rx_frame_is_type_bc        (parsed_tc_hdr.bypass_flag & parsed_tc_hdr.ctrl_cmd_flag),
-    .m_axis_rx_tvalid           (sdls_rx_tvalid),
-    .m_axis_rx_tready           (sdls_rx_tready),
-    .m_axis_rx_tdata            (sdls_rx_tdata),
-    .m_axis_rx_tlast            (sdls_rx_tlast),
-    .sdls_auth_done_pulse       (sdls_auth_done_pulse),
-    .sdls_auth_ok               (sdls_auth_ok),
-    .rx_active_spi_out          (rx_active_spi_unused),
-    .sa_secded_single_err_pulse (sa_secded_single_pulse),
-    .sa_secded_double_err_pulse (sa_secded_double_pulse),
-    .s_axis_tx_tvalid           (vc_tfdf_tvalid),
-    .s_axis_tx_tready           (vc_tfdf_tready),
-    .s_axis_tx_tdata            (vc_tfdf_tdata),
-    .s_axis_tx_tlast            (vc_tfdf_tlast),
-    .m_axis_tx_tvalid           (sdls_tx_tvalid),
-    .m_axis_tx_tready           (sdls_tx_tready),
-    .m_axis_tx_tdata            (sdls_tx_tdata),
-    .m_axis_tx_tlast            (sdls_tx_tlast)
-  );
+  generate
+    if (ENABLE_SDLS) begin : g_sdls_engine
+      ccsds_sdls_engine u_sdls (
+        .clk                        (clk_tc_safe),
+        .rst_n                      (rst_n),
+        .clk_tx                     (clk_sys),
+        .rst_tx_n                   (rst_n),
+        .sdls_en_cfg                (sdls_en_tc_sync_q),
+        .sdls_gcm_mode_cfg          (sdls_gcm_tc_sync_q),
+        .bc_require_sdls_cfg        (bc_req_tc_sync_q),
+        .tx_default_spi_cfg         (16'h0001),
+        .master_key_cfg             (256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F),
+        .sa_wr_en                   (1'b0),
+        .sa_wr_addr                 (6'd0),
+        .sa_wr_spi                  (16'd0),
+        .sa_wr_seq_low              (32'd0),
+        .s_axis_rx_tvalid           (ul_deframed_tvalid),
+        .s_axis_rx_tready           (ul_deframed_tready),
+        .s_axis_rx_tdata            (ul_deframed_tdata),
+        .s_axis_rx_tlast            (ul_deframed_tlast),
+        .rx_frame_is_type_bc        (parsed_tc_hdr.bypass_flag & parsed_tc_hdr.ctrl_cmd_flag),
+        .m_axis_rx_tvalid           (sdls_rx_tvalid),
+        .m_axis_rx_tready           (sdls_rx_tready),
+        .m_axis_rx_tdata            (sdls_rx_tdata),
+        .m_axis_rx_tlast            (sdls_rx_tlast),
+        .sdls_auth_done_pulse       (sdls_auth_done_pulse),
+        .sdls_auth_ok               (sdls_auth_ok),
+        .rx_active_spi_out          (rx_active_spi_unused),
+        .sa_secded_single_err_pulse (sa_secded_single_pulse),
+        .sa_secded_double_err_pulse (sa_secded_double_pulse),
+        .s_axis_tx_tvalid           (vc_tfdf_tvalid),
+        .s_axis_tx_tready           (vc_tfdf_tready),
+        .s_axis_tx_tdata            (vc_tfdf_tdata),
+        .s_axis_tx_tlast            (vc_tfdf_tlast),
+        .m_axis_tx_tvalid           (sdls_tx_tvalid),
+        .m_axis_tx_tready           (sdls_tx_tready),
+        .m_axis_tx_tdata            (sdls_tx_tdata),
+        .m_axis_tx_tlast            (sdls_tx_tlast)
+      );
+    end else begin : g_no_sdls_engine
+      assign sdls_rx_tvalid         = ul_deframed_tvalid;
+      assign ul_deframed_tready     = sdls_rx_tready;
+      assign sdls_rx_tdata          = ul_deframed_tdata;
+      assign sdls_rx_tlast          = ul_deframed_tlast;
+      assign sdls_auth_done_pulse   = ul_frame_done_pulse;
+      assign sdls_auth_ok           = 1'b1;
+      assign rx_active_spi_unused   = 16'd0;
+      assign sa_secded_single_pulse = 1'b0;
+      assign sa_secded_double_pulse = 1'b0;
+      assign sdls_tx_tvalid         = vc_tfdf_tvalid;
+      assign vc_tfdf_tready         = sdls_tx_tready;
+      assign sdls_tx_tdata          = vc_tfdf_tdata;
+      assign sdls_tx_tlast          = vc_tfdf_tlast;
+    end
+  endgenerate
 
   logic farm_accept_pulse;
   logic farm_reject_pulse;
@@ -588,9 +739,9 @@ module ccsds_sat_ttc_top
   ccsds_farm1_tmr u_farm1 (
     .clk                     (clk_tc_safe),
     .rst_n                   (rst_n),
-    .sdls_en                 (active_sdls_en),
-    .bc_require_sdls         (active_bc_req_sdls),
-    .window_half_w           (csr_win_half_w),
+    .sdls_en                 (sdls_en_tc_sync_q),
+    .bc_require_sdls         (bc_req_tc_sync_q),
+    .window_half_w           (win_half_w_tc_sync_q),
     .no_rf_avail             (~carrier_lock_sync_q),
     .no_bit_lock             (~symbol_lock_sync_q),
     .rx_buffer_wait          (~m_axis_rx_pkt_tready),
@@ -613,13 +764,60 @@ module ccsds_sat_ttc_top
     .tmr_seu_corrected_pulse (farm_tmr_seu_pulse)
   );
 
-  // Synchronize scheduled CLCW for the active Uplink TC VC into clk_sys
+  // Toggle CDC Synchronizer for CLCW & PLCW from clk_tc_safe into clk_sys
+  ccsds_clcw_t clcw_hold_tc_q;
+  logic        clcw_tog_tc_q;
+  (* ASYNC_REG = "TRUE" *) logic clcw_tog_meta_q, clcw_tog_sync_q;
+  logic        clcw_tog_prev_q;
+
+  ccsds_plcw_t plcw_hold_tc_q;
+  logic        plcw_tog_tc_q;
+  (* ASYNC_REG = "TRUE" *) logic plcw_tog_meta_q, plcw_tog_sync_q;
+  logic        plcw_tog_prev_q;
+
+  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
+    if (!rst_n) begin
+      clcw_hold_tc_q <= '0;
+      clcw_tog_tc_q  <= 1'b0;
+      plcw_hold_tc_q <= '0;
+      plcw_tog_tc_q  <= 1'b0;
+    end else begin
+      if (clcw_valid_pulse_tc) begin
+        if (((clcw_scheduled_tc.vcid == parsed_tc_hdr.vcid) || (clcw_hold_tc_q == '0)) &&
+            (clcw_scheduled_tc != clcw_hold_tc_q)) begin
+          clcw_hold_tc_q <= clcw_scheduled_tc;
+          clcw_tog_tc_q  <= ~clcw_tog_tc_q;
+        end
+      end
+      if (plcw_valid_pulse_tc && (plcw_scheduled_tc != plcw_hold_tc_q)) begin
+        plcw_hold_tc_q <= plcw_scheduled_tc;
+        plcw_tog_tc_q  <= ~plcw_tog_tc_q;
+      end
+    end
+  end
+
   always_ff @(posedge clk_sys or negedge rst_n) begin
     if (!rst_n) begin
+      clcw_tog_meta_q      <= 1'b0;
+      clcw_tog_sync_q      <= 1'b0;
+      clcw_tog_prev_q      <= 1'b0;
       clcw_scheduled_sys_q <= '0;
-    end else if (clcw_valid_pulse_tc) begin
-      if ((clcw_scheduled_tc.vcid == parsed_tc_hdr.vcid) || (clcw_scheduled_sys_q == '0)) begin
-        clcw_scheduled_sys_q <= clcw_scheduled_tc;
+      plcw_tog_meta_q      <= 1'b0;
+      plcw_tog_sync_q      <= 1'b0;
+      plcw_tog_prev_q      <= 1'b0;
+      plcw_scheduled_sys_q <= '0;
+    end else begin
+      clcw_tog_meta_q <= clcw_tog_tc_q;
+      clcw_tog_sync_q <= clcw_tog_meta_q;
+      clcw_tog_prev_q <= clcw_tog_sync_q;
+      if (clcw_tog_sync_q ^ clcw_tog_prev_q) begin
+        clcw_scheduled_sys_q <= clcw_hold_tc_q;
+      end
+      plcw_tog_meta_q <= plcw_tog_tc_q;
+      plcw_tog_sync_q <= plcw_tog_meta_q;
+      plcw_tog_prev_q <= plcw_tog_sync_q;
+      if (plcw_tog_sync_q ^ plcw_tog_prev_q) begin
+        plcw_scheduled_sys_q <= plcw_hold_tc_q;
       end
     end
   end
@@ -634,7 +832,7 @@ module ccsds_sat_ttc_top
     .hcpd_en_cfg                  (1'b1),
     .hcpd_vcid_cfg                (EMERGENCY_VCID),
     .hcpd_magic_word_cfg          (MAGIC_OBC_HARD_RESET[63:32]),
-    .sdls_en_cfg                  (active_sdls_en),
+    .sdls_en_cfg                  (sdls_en_tc_sync_q),
     .hcpd_seu_inject_en           (1'b0),
     .hcpd_seu_xor_mask            (8'd0),
     .tc_hdr_in                    (parsed_tc_hdr),
@@ -653,7 +851,7 @@ module ccsds_sat_ttc_top
   assign hcpd_safe_mode_force = hcpd_pulse_bus[1];
   assign hcpd_rf_chain_select = hcpd_pulse_bus[3:2];
 
-  // Store-and-Forward Commit/Rollback FIFO (RX7)
+  // Store-and-Forward Dual-Clock Commit/Rollback FIFO (RX7: clk_tc_safe -> clk_sys)
   logic [7:0]   rx_fifo_tdata;
   logic [0:0]   rx_fifo_tkeep_unused;
   logic         rx_fifo_tvalid;
@@ -670,8 +868,10 @@ module ccsds_sat_ttc_top
     .ROLLBACK_MODE (1'b1),
     .WATERMARK_MODE(1'b0)
   ) u_rx_commit_cdc_fifo (
-    .clk                      (clk_sys),
-    .rst_n                    (rst_n),
+    .clk_wr                   (clk_tc_safe),
+    .rst_wr_n                 (rst_n),
+    .clk_rd                   (clk_sys),
+    .rst_rd_n                 (rst_n),
     .cut_through_en           (1'b0),
     .watermark_words          (10'd0),
     .frame_commit_pulse       (farm_accept_pulse),
@@ -698,6 +898,26 @@ module ccsds_sat_ttc_top
     .rollback_overflow_err    (rx_fifo_ovf_unused)
   );
 
+  // 1-Stage AXI4-Stream Pipeline Slice between u_rx_commit_cdc_fifo SECDED and u_reassembler
+  logic [7:0]           rx_pipe_tdata_q;
+  logic                 rx_pipe_tvalid_q;
+  logic                 rx_pipe_tlast_q;
+  logic                 rx_reasm_tready;
+
+  assign rx_fifo_tready = !rx_pipe_tvalid_q || rx_reasm_tready;
+
+  always_ff @(posedge clk_sys or negedge rst_n) begin
+    if (!rst_n) begin
+      rx_pipe_tvalid_q <= 1'b0;
+      rx_pipe_tdata_q  <= 8'h00;
+      rx_pipe_tlast_q  <= 1'b0;
+    end else if (rx_fifo_tready) begin
+      rx_pipe_tvalid_q <= rx_fifo_tvalid;
+      rx_pipe_tdata_q  <= rx_fifo_tdata;
+      rx_pipe_tlast_q  <= rx_fifo_tlast;
+    end
+  end
+
   ccsds_space_pkt_hdr_t parsed_pkt_hdr_unused;
   logic                 pkt_completed_unused;
   logic                 idle_pkt_stripped_unused;
@@ -707,11 +927,11 @@ module ccsds_sat_ttc_top
     .rst_n                   (rst_n),
     .fhp_resync_en           (1'b0),
     .frame_fhp_in            (11'd0),
-    .frame_start_pulse       (farm_accept_pulse),
-    .s_axis_tdata            (rx_fifo_tdata),
-    .s_axis_tvalid           (rx_fifo_tvalid),
-    .s_axis_tready           (rx_fifo_tready),
-    .s_axis_tlast            (rx_fifo_tlast),
+    .frame_start_pulse       (1'b0),
+    .s_axis_tdata            (rx_pipe_tdata_q),
+    .s_axis_tvalid           (rx_pipe_tvalid_q),
+    .s_axis_tready           (rx_reasm_tready),
+    .s_axis_tlast            (rx_pipe_tlast_q),
     .m_axis_pkt_tdata        (m_axis_rx_pkt_tdata),
     .m_axis_pkt_tvalid       (m_axis_rx_pkt_tvalid),
     .m_axis_pkt_tready       (m_axis_rx_pkt_tready),
@@ -872,6 +1092,7 @@ module ccsds_sat_ttc_top
     .m_axis_tuser     (tm_scram_tuser_unused)
   );
 
+  // Downlink High-Watermark Dual-Clock FIFO (TX9: clk_sys -> clk_tx_sym)
   logic [0:0]   tx_hwm_tkeep_unused;
   ccsds_tuser_t tx_hwm_tuser_unused;
   logic [9:0]   tx_hwm_comm_cnt_unused;
@@ -884,8 +1105,10 @@ module ccsds_sat_ttc_top
     .ROLLBACK_MODE (1'b0),
     .WATERMARK_MODE(1'b1)
   ) u_tx_hwm_cdc_fifo (
-    .clk                      (clk_tx_sym),
-    .rst_n                    (rst_n),
+    .clk_wr                   (clk_sys),
+    .rst_wr_n                 (rst_n),
+    .clk_rd                   (clk_tx_sym),
+    .rst_rd_n                 (rst_n),
     .cut_through_en           (1'b1),
     .watermark_words          (10'd4),
     .frame_commit_pulse       (1'b0),
@@ -912,6 +1135,18 @@ module ccsds_sat_ttc_top
     .rollback_overflow_err    (tx_hwm_ovf_unused)
   );
 
+  // 2-FF CDC Synchronizer for c2_invert_en from clk_sys into clk_tx_sym
+  (* ASYNC_REG = "TRUE" *) logic c2_inv_tx_meta_q, c2_inv_tx_sync_q;
+  always_ff @(posedge clk_tx_sym or negedge rst_n) begin
+    if (!rst_n) begin
+      c2_inv_tx_meta_q <= 1'b1;
+      c2_inv_tx_sync_q <= 1'b1;
+    end else begin
+      c2_inv_tx_meta_q <= (active_proto_mode != 3'd2);
+      c2_inv_tx_sync_q <= c2_inv_tx_meta_q;
+    end
+  end
+
   logic conv_c1_unused, conv_c2_unused, conv_valid_unused;
   logic conv_lc_c1_unused, conv_lc_c2_unused;
   logic vit_dec_bit_unused, vit_dec_valid_unused;
@@ -919,7 +1154,7 @@ module ccsds_sat_ttc_top
   ccsds_conv_viterbi_codec u_conv_viterbi (
     .clk                  (clk_tx_sym),
     .rst_n                (rst_n),
-    .c2_invert_en         (active_proto_mode != 3'd2),
+    .c2_invert_en         (c2_inv_tx_sync_q),
     .line_code_mode       (ccsds_line_code_e'(line_code_cfg)),
     .tx_bit_in            (m_axis_dl_cad_tdata[7]),
     .tx_bit_valid_in      (m_axis_dl_cad_tvalid),
@@ -935,8 +1170,73 @@ module ccsds_sat_ttc_top
     .rx_dec_valid_out     (vit_dec_valid_unused)
   );
 
-  assign tx_phy_tvalid = m_axis_dl_cad_tvalid;
-  assign tx_phy_tdata  = m_axis_dl_cad_tdata;
+  // Dedicated Dual-Clock Gray-Code SECDED CDC FIFO (TX10: clk_tx_sym -> clk_adc_iq)
+  // Bridges Downlink CADU stream into Baseband PHY Modem IQ clock domain with zero CDC violations
+  logic [7:0]   tx_phy_fifo_tdata;
+  logic [0:0]   tx_phy_fifo_tkeep_unused;
+  logic         tx_phy_fifo_tvalid;
+  logic         tx_phy_fifo_tready;
+  logic         tx_phy_fifo_tlast_unused;
+  ccsds_tuser_t tx_phy_fifo_tuser_unused;
+  logic         tx_phy_fifo_wr_ready_unused;
+  logic [7:0]   tx_phy_fifo_comm_cnt_unused;
+  logic [7:0]   tx_phy_fifo_spec_cnt_unused;
+  logic         tx_phy_fifo_ovf_unused;
+
+  ccsds_cdc_fifo_ecc #(
+    .DATA_WIDTH    (8),
+    .DEPTH_WORDS   (128),
+    .ROLLBACK_MODE (1'b0),
+    .WATERMARK_MODE(1'b0)
+  ) u_tx_phy_cdc_fifo (
+    .clk_wr                   (clk_tx_sym),
+    .rst_wr_n                 (rst_n),
+    .clk_rd                   (clk_adc_iq),
+    .rst_rd_n                 (rst_n),
+    .cut_through_en           (1'b1),
+    .watermark_words          (8'd0),
+    .frame_commit_pulse       (1'b0),
+    .frame_rollback_pulse     (1'b0),
+    .seu_inject_en            (1'b0),
+    .seu_inject_addr          (7'd0),
+    .seu_inject_bit           (6'd0),
+    .s_axis_tdata             (m_axis_dl_cad_tdata),
+    .s_axis_tkeep             (1'b1),
+    .s_axis_tvalid            (m_axis_dl_cad_tvalid && m_axis_dl_cad_tready),
+    .s_axis_tready            (tx_phy_fifo_wr_ready_unused),
+    .s_axis_tlast             (m_axis_dl_cad_tlast),
+    .s_axis_tuser             ('0),
+    .m_axis_tdata             (tx_phy_fifo_tdata),
+    .m_axis_tkeep             (tx_phy_fifo_tkeep_unused),
+    .m_axis_tvalid            (tx_phy_fifo_tvalid),
+    .m_axis_tready            (tx_phy_fifo_tready),
+    .m_axis_tlast             (tx_phy_fifo_tlast_unused),
+    .m_axis_tuser             (tx_phy_fifo_tuser_unused),
+    .committed_count          (tx_phy_fifo_comm_cnt_unused),
+    .speculative_count        (tx_phy_fifo_spec_cnt_unused),
+    .ecc_single_err_corrected (tx_phy_fifo_secded_single),
+    .ecc_double_err_uncorr    (tx_phy_fifo_secded_double),
+    .rollback_overflow_err    (tx_phy_fifo_ovf_unused)
+  );
+
+  // 1-Stage AXI4-Stream Pipeline Slice in clk_adc_iq feeding u_phy_modem
+  logic [7:0] tx_phy_pipe_tdata_q;
+  logic       tx_phy_pipe_tvalid_q;
+
+  assign tx_phy_fifo_tready = !tx_phy_pipe_tvalid_q || tx_phy_tready;
+
+  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
+    if (!rst_n) begin
+      tx_phy_pipe_tvalid_q <= 1'b0;
+      tx_phy_pipe_tdata_q  <= 8'h00;
+    end else if (tx_phy_fifo_tready) begin
+      tx_phy_pipe_tvalid_q <= tx_phy_fifo_tvalid;
+      tx_phy_pipe_tdata_q  <= tx_phy_fifo_tdata;
+    end
+  end
+
+  assign tx_phy_tvalid = tx_phy_pipe_tvalid_q;
+  assign tx_phy_tdata  = tx_phy_pipe_tdata_q;
 
   //---------------------------------------------------------------------------
   // 6. Optional Ground EGSE / Universal BIST Endpoints (ROLE_MODE = 1 or 2)
@@ -960,6 +1260,7 @@ module ccsds_sat_ttc_top
       logic [7:0]        egse_rs_dec_tdata;
       logic              egse_rs_done, egse_rs_clean;
       logic [15:0]       egse_rs_corr_cnt;
+      logic              egse_rs_in_ready_unused;
 
       logic              egse_tfdf_tvalid, egse_tfdf_tlast;
       logic [7:0]        egse_tfdf_tdata;
@@ -1029,10 +1330,10 @@ module ccsds_sat_ttc_top
         .rst_n                    (rst_n),
         .interleave_depth_i_cfg   (csr_rs_interleave),
         .virtual_fill_q_cfg       (csr_rs_q_fill),
-        .s_axis_tvalid            (m_axis_dl_cad_tvalid),
-        .s_axis_tready            (),
-        .s_axis_tdata             (m_axis_dl_cad_tdata),
-        .s_axis_tlast             (m_axis_dl_cad_tlast),
+        .s_axis_tvalid            (tm_scram_tvalid && tm_scram_tready),
+        .s_axis_tready            (egse_rs_in_ready_unused),
+        .s_axis_tdata             (tm_scram_tdata),
+        .s_axis_tlast             (tm_scram_tlast),
         .m_axis_tvalid            (egse_rs_dec_tvalid),
         .m_axis_tready            (egse_rs_dec_tready),
         .m_axis_tdata             (egse_rs_dec_tdata),

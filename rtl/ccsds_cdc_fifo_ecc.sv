@@ -2,362 +2,360 @@
 // File Name   : ccsds_cdc_fifo_ecc.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
 // Standard    : IEEE 1800-2017 SystemVerilog (Synthesizable)
-// Description : Radiation-hardened SECDED (39,32) ECC FIFO with Per-Frame
-//               Store-and-Forward Commit/Rollback Mode (ROLLBACK_MODE=1),
-//               Pre-Fill High-Watermark Mode (WATERMARK_MODE=1), single-write-
-//               port Distributed LUTRAM inference ((* ram_style = "distributed" *))
-//               with shadow SEU scrub register (Fix CR-11: eliminates 17-level
-//               mem_data_reg -> decode_secded32 -> encode_secded32 -> mem_ecc_reg
-//               feedback loop for >280 MHz Kintex UltraScale Fmax), and Atomic
-//               32-bit Req/Ack CLCW CDC Mailbox (ccsds_clcw_cdc_mbox).
+// Description : Parameterized Dual-Clock Asynchronous AXI4-Stream Store-and-
+//               Forward Packet FIFO with Speculative Write Pointer, Per-Frame
+//               CRC/BCH/SDLS Commit & Rollback, High-Watermark Downlink
+//               Underflow Guard, and (39,32) Hsiao SECDED ECC Protection:
+//                 - True dual-clock CDC (clk_wr / clk_rd) using binary-to-Gray
+//                   pointer conversion and 2-stage (* ASYNC_REG = "TRUE" *)
+//                   synchronizer chains across write and read domains (Fix P0-3),
+//                   with Gray-to-binary decoding pipelined into the 2nd sync
+//                   stage (`wr_bin_sync2_rd_q`, `rd_bin_sync2_wr_q`) for high
+//                   Fmax closure on clk_sys and clk_tx_sym.
+//                 - Dedicated synchronous RAM write block (`always_ff @(posedge clk_wr)`
+//                   without async reset sensitivity) guaranteeing true Xilinx
+//                   RAM64M Distributed LUTRAM inference instead of FF arrays.
+//                 - Generate-guarded width adaptation for DATA_WIDTH < 32,
+//                   DATA_WIDTH == 32, and DATA_WIDTH > 32 with zero out-of-bounds
+//                   part-select warnings during elaboration (Fix P2-1) and
+//                   width-bounded SECDED syndrome trees (`ECC_DATA_BITS`).
 // =============================================================================
 `timescale 1ns / 1ps
 
 module ccsds_cdc_fifo_ecc
   import ccsds_pkg::*;
 #(
-  parameter int unsigned DATA_WIDTH     = DEFAULT_DATA_WIDTH,
+  parameter int unsigned DATA_WIDTH     = 32,
   parameter int unsigned DEPTH_WORDS    = 512,
   parameter bit          ROLLBACK_MODE  = 1'b1,
-  parameter bit          WATERMARK_MODE = 1'b0
+  parameter bit          WATERMARK_MODE = 1'b0,
+  parameter int unsigned ADDR_W         = $clog2(DEPTH_WORDS)
 ) (
-  input  logic                          clk,
-  input  logic                          rst_n,
+  input  logic                     clk_wr,
+  input  logic                     rst_wr_n,
+  input  logic                     clk_rd,
+  input  logic                     rst_rd_n,
 
-  input  logic                          cut_through_en,
-  input  logic [$clog2(DEPTH_WORDS):0]  watermark_words,
-  input  logic                          frame_commit_pulse,
-  input  logic                          frame_rollback_pulse,
+  // Runtime Configuration
+  input  logic                     cut_through_en,
+  input  logic [ADDR_W:0]          watermark_words,
 
-  input  logic                          seu_inject_en,
-  input  logic [$clog2(DEPTH_WORDS)-1:0] seu_inject_addr,
-  input  logic [5:0]                    seu_inject_bit,
+  // AXI4-Stream Slave (Write / Ingress Domain: clk_wr)
+  input  logic [DATA_WIDTH-1:0]    s_axis_tdata,
+  input  logic [DATA_WIDTH/8-1:0]  s_axis_tkeep,
+  input  logic                     s_axis_tvalid,
+  output logic                     s_axis_tready,
+  input  logic                     s_axis_tlast,
+  input  ccsds_tuser_t             s_axis_tuser,
 
-  input  logic [DATA_WIDTH-1:0]         s_axis_tdata,
-  input  logic [(DATA_WIDTH/8)-1:0]     s_axis_tkeep,
-  input  logic                          s_axis_tvalid,
-  output logic                          s_axis_tready,
-  input  logic                          s_axis_tlast,
-  input  ccsds_tuser_t                  s_axis_tuser,
+  // Per-Frame Two-Phase Commit / Rollback Strobes (Write Domain: clk_wr)
+  input  logic                     frame_commit_pulse,
+  input  logic                     frame_rollback_pulse,
 
-  output logic [DATA_WIDTH-1:0]         m_axis_tdata,
-  output logic [(DATA_WIDTH/8)-1:0]     m_axis_tkeep,
-  output logic                          m_axis_tvalid,
-  input  logic                          m_axis_tready,
-  output logic                          m_axis_tlast,
-  output ccsds_tuser_t                  m_axis_tuser,
+  // AXI4-Stream Master (Read / Egress Domain: clk_rd)
+  output logic [DATA_WIDTH-1:0]    m_axis_tdata,
+  output logic [DATA_WIDTH/8-1:0]  m_axis_tkeep,
+  output logic                     m_axis_tvalid,
+  input  logic                     m_axis_tready,
+  output logic                     m_axis_tlast,
+  output ccsds_tuser_t             m_axis_tuser,
 
-  output logic [$clog2(DEPTH_WORDS):0]  committed_count,
-  output logic [$clog2(DEPTH_WORDS):0]  speculative_count,
-  output logic                          ecc_single_err_corrected,
-  output logic                          ecc_double_err_uncorr,
-  output logic                          rollback_overflow_err
+  // Radiation SEU Fault-Injection & EDAC Telemetry Port (Read Domain: clk_rd)
+  input  logic                     seu_inject_en,
+  input  logic [ADDR_W-1:0]        seu_inject_addr,
+  input  logic [5:0]               seu_inject_bit,
+  output logic                     ecc_single_err_corrected,
+  output logic                     ecc_double_err_uncorr,
+  output logic                     rollback_overflow_err,
+  output logic [ADDR_W:0]          committed_count,
+  output logic [ADDR_W:0]          speculative_count
 );
 
-  localparam int unsigned ADDR_W = $clog2(DEPTH_WORDS);
-  localparam int unsigned KEEP_W = DATA_WIDTH / 8;
+  // ---------------------------------------------------------------------------
+  // 1. (39,32) Hsiao SECDED Encoder / Decoder & Gray-Code Conversion Functions
+  // ---------------------------------------------------------------------------
+  localparam int unsigned ECC_DATA_BITS = (DATA_WIDTH < 32) ? DATA_WIDTH : 32;
+  localparam logic [31:0] ECC_DATA_MASK = (DATA_WIDTH < 32) ? ((32'd1 << DATA_WIDTH) - 32'd1) : 32'hFFFF_FFFF;
 
-  function automatic logic [6:0] encode_secded32(input logic [31:0] d);
-    logic [5:0] p;
-    logic       overall;
-    p[0] = ^(d & 32'h56AA_AD5B);
-    p[1] = ^(d & 32'h9B33_366D);
-    p[2] = ^(d & 32'hE3C3_C78E);
-    p[3] = ^(d & 32'h03FC_07F0);
-    p[4] = ^(d & 32'h03FF_F800);
-    p[5] = ^(d & 32'hFC00_0000);
-    overall = (^d) ^ (^p);
-    return {overall, p};
+  localparam logic [31:0] HSIAO_H_MASK [0:5] = '{
+    32'h56AA_AD5B,
+    32'h9B33_366D,
+    32'hE3C3_C78E,
+    32'h03FC_07F0,
+    32'h03FF_F800,
+    32'hFC00_0000
+  };
+
+  function automatic logic [6:0] hsiao_encode_32(input logic [31:0] d);
+    logic [31:0] dm;
+    logic [6:0]  p;
+    dm = d & ECC_DATA_MASK;
+    for (int i = 0; i < 6; i++) begin
+      p[i] = ^(dm & (HSIAO_H_MASK[i] & ECC_DATA_MASK));
+    end
+    p[6] = ^{dm, p[5:0]};
+    return p;
   endfunction
 
-  function automatic void decode_secded32(
-    input  logic [31:0] d_in,
-    input  logic [6:0]  ecc_in,
-    output logic [31:0] d_corr,
-    output logic        single_err,
-    output logic        double_err
-  );
-    logic [5:0] p_calc;
-    logic [5:0] syn;
-    logic       overall_err;
+  function automatic logic [ADDR_W:0] bin2gray(input logic [ADDR_W:0] b);
+    return (b >> 1) ^ b;
+  endfunction
 
-    p_calc[0] = ^(d_in & 32'h56AA_AD5B);
-    p_calc[1] = ^(d_in & 32'h9B33_366D);
-    p_calc[2] = ^(d_in & 32'hE3C3_C78E);
-    p_calc[3] = ^(d_in & 32'h03FC_07F0);
-    p_calc[4] = ^(d_in & 32'h03FF_F800);
-    p_calc[5] = ^(d_in & 32'hFC00_0000);
+  function automatic logic [ADDR_W:0] gray2bin(input logic [ADDR_W:0] g);
+    logic [ADDR_W:0] b;
+    for (int i = 0; i <= ADDR_W; i++) begin
+      b[i] = ^(g >> i);
+    end
+    return b;
+  endfunction
 
-    syn         = p_calc ^ ecc_in[5:0];
-    overall_err = (^d_in) ^ (^ecc_in);
-    d_corr      = d_in;
-    single_err  = 1'b0;
-    double_err  = 1'b0;
+  // ---------------------------------------------------------------------------
+  // 2. Dual-Port Distributed RAM Storage & Dual-Clock Gray-Code Synchronizers
+  // ---------------------------------------------------------------------------
+  (* ram_style = "distributed" *) logic [DATA_WIDTH-1:0]   mem_data [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic [DATA_WIDTH/8-1:0] mem_keep [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic                    mem_last [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) ccsds_tuser_t            mem_user [0:DEPTH_WORDS-1];
+  (* ram_style = "distributed" *) logic [6:0]              mem_ecc  [0:DEPTH_WORDS-1];
 
-    if ((syn != 6'd0) && overall_err) begin
-      single_err = 1'b1;
-      for (int b = 0; b < 32; b++) begin
-        logic [5:0] col_mask;
-        col_mask[0] = (32'h56AA_AD5B >> b) & 1'b1;
-        col_mask[1] = (32'h9B33_366D >> b) & 1'b1;
-        col_mask[2] = (32'hE3C3_C78E >> b) & 1'b1;
-        col_mask[3] = (32'h03FC_07F0 >> b) & 1'b1;
-        col_mask[4] = (32'h03FF_F800 >> b) & 1'b1;
-        col_mask[5] = (32'hFC00_0000 >> b) & 1'b1;
-        if (syn == col_mask) begin
-          d_corr[b] = ~d_in[b];
-        end
+  // Write-domain pointers & Gray-code launch register (clk_wr)
+  logic [ADDR_W:0] wr_spec_ptr_q;
+  logic [ADDR_W:0] wr_commit_ptr_q;
+  logic [ADDR_W:0] frame_end_ptr_q;
+  logic [ADDR_W:0] wr_eff_gray_q;
+  (* ASYNC_REG = "TRUE" *) logic [ADDR_W:0] rd_gray_sync1_wr_q, rd_gray_sync2_wr_q;
+  logic [ADDR_W:0] rd_bin_sync2_wr_q;
+
+  // Read-domain pointers & Gray-code launch register (clk_rd)
+  logic [ADDR_W:0] rd_ptr_q;
+  logic [ADDR_W:0] rd_gray_q;
+  logic            watermark_open_q;
+  (* ASYNC_REG = "TRUE" *) logic [ADDR_W:0] wr_gray_sync1_rd_q, wr_gray_sync2_rd_q;
+  logic [ADDR_W:0] wr_bin_sync2_rd_q;
+
+  // Compact 1-entry non-destructive SEU shadow register in Read domain (clk_rd)
+  logic              seu_valid_q;
+  logic [ADDR_W-1:0] seu_addr_q;
+  logic [5:0]        seu_bit_q;
+
+  // ---------------------------------------------------------------------------
+  // 3. Generate-Guarded 32-Bit SECDED Word Adaptation (Fix P2-1)
+  // ---------------------------------------------------------------------------
+  logic [31:0]             wr_data_32;
+  logic [DATA_WIDTH-1:0]   rd_raw_data;
+  logic [DATA_WIDTH/8-1:0] rd_raw_keep;
+  logic                    rd_raw_last;
+  ccsds_tuser_t            rd_raw_user;
+  logic [6:0]              rd_raw_ecc;
+  logic [31:0]             rd_data_32;
+  logic [38:0]             rd_codeword_39;
+  logic [31:0]             rd_corr_32;
+
+  assign rd_raw_data = mem_data[rd_ptr_q[ADDR_W-1:0]];
+  assign rd_raw_keep = mem_keep[rd_ptr_q[ADDR_W-1:0]];
+  assign rd_raw_last = mem_last[rd_ptr_q[ADDR_W-1:0]];
+  assign rd_raw_user = mem_user[rd_ptr_q[ADDR_W-1:0]];
+  assign rd_raw_ecc  = mem_ecc[rd_ptr_q[ADDR_W-1:0]];
+
+  generate
+    if (DATA_WIDTH >= 32) begin : g_ecc_ge32
+      assign wr_data_32 = s_axis_tdata[31:0];
+      assign rd_data_32 = rd_raw_data[31:0];
+      if (DATA_WIDTH > 32) begin : g_ecc_gt32
+        assign m_axis_tdata = {rd_raw_data[DATA_WIDTH-1:32], rd_corr_32};
+      end else begin : g_ecc_eq32
+        assign m_axis_tdata = rd_corr_32;
       end
-    end else if ((syn != 6'd0) && !overall_err) begin
-      double_err = 1'b1;
-    end else if ((syn == 6'd0) && overall_err) begin
-      single_err = 1'b1;
+    end else begin : g_ecc_lt32
+      assign wr_data_32   = {{(32 - DATA_WIDTH){1'b0}}, s_axis_tdata};
+      assign rd_data_32   = {{(32 - DATA_WIDTH){1'b0}}, rd_raw_data};
+      assign m_axis_tdata = rd_corr_32[DATA_WIDTH-1:0];
     end
-  endfunction
+  endgenerate
 
-  // Pure Single-Write-Port Distributed LUTRAM Storage (Fix CR-11)
-  (* ram_style = "distributed" *) logic [DATA_WIDTH-1:0] mem_data  [0:DEPTH_WORDS-1];
-  (* ram_style = "distributed" *) logic [KEEP_W-1:0]     mem_keep  [0:DEPTH_WORDS-1];
-  (* ram_style = "distributed" *) logic                  mem_last  [0:DEPTH_WORDS-1];
-  (* ram_style = "distributed" *) ccsds_tuser_t          mem_user  [0:DEPTH_WORDS-1];
-  (* ram_style = "distributed" *) logic [6:0]            mem_ecc   [0:DEPTH_WORDS-1];
+  // ---------------------------------------------------------------------------
+  // 4. Write Domain Logic & Dedicated LUTRAM Inference Block (clk_wr)
+  // ---------------------------------------------------------------------------
+  logic [ADDR_W:0] rd_ptr_bin_wr;
+  logic [ADDR_W:0] spec_used_wr;
+  logic            fifo_full_spec;
+  logic            wr_fire;
+  logic [ADDR_W:0] wr_spec_ptr_nxt;
+  logic [ADDR_W:0] wr_commit_ptr_nxt;
+  logic [ADDR_W:0] eff_wr_ptr_nxt;
 
-  // Shadow 1-entry SEU Fault-Injection & Scrub Register (avoids RAM multi-porting)
-  logic                  seu_valid_q;
-  logic [ADDR_W-1:0]     seu_addr_q;
-  logic [31:0]           seu_mask_data_q;
-  logic [6:0]            seu_mask_ecc_q;
+  assign rd_ptr_bin_wr         = rd_bin_sync2_wr_q;
+  assign spec_used_wr          = wr_spec_ptr_q - rd_ptr_bin_wr;
+  assign speculative_count     = spec_used_wr;
+  assign fifo_full_spec        = (spec_used_wr >= DEPTH_WORDS[ADDR_W:0]);
+  assign s_axis_tready         = !fifo_full_spec;
+  assign wr_fire               = s_axis_tvalid && s_axis_tready;
+  assign rollback_overflow_err = s_axis_tvalid && fifo_full_spec;
 
-  logic [ADDR_W:0]       rd_ptr_q;
-  logic [ADDR_W:0]       wr_commit_ptr_q;
-  logic [ADDR_W:0]       wr_spec_ptr_q;
-  logic [ADDR_W:0]       frame_end_ptr_q;
-  logic                  frame_end_pending_q;
-  logic                  watermark_open_q;
-
-  logic [ADDR_W:0]       eff_wr_ptr;
-  logic                  fifo_full;
-  logic                  fifo_empty;
-  logic                  wr_fire;
-  logic                  rd_fire;
-
-  assign eff_wr_ptr        = (ROLLBACK_MODE && !cut_through_en) ? wr_commit_ptr_q : wr_spec_ptr_q;
-  assign committed_count   = eff_wr_ptr - rd_ptr_q;
-  assign speculative_count = wr_spec_ptr_q - rd_ptr_q;
-
-  assign fifo_full         = (speculative_count == DEPTH_WORDS[ADDR_W:0]);
-  assign fifo_empty        = (committed_count == '0);
-  assign s_axis_tready     = !fifo_full;
-
-  assign m_axis_tvalid     = !fifo_empty && (!WATERMARK_MODE || watermark_open_q);
-  assign wr_fire           = s_axis_tvalid && s_axis_tready && !frame_rollback_pulse;
-  assign rd_fire           = m_axis_tvalid && m_axis_tready;
-
-  logic [31:0] wr_low32;
-  logic [6:0]  wr_ecc;
-  logic [31:0] raw_low32, corr_low32;
-  logic [6:0]  raw_ecc;
-  logic [31:0] seu_bit_mask_d;
-  logic [6:0]  seu_bit_mask_e;
-
-  always_comb begin
-    wr_low32 = '0;
-    if (DATA_WIDTH >= 32) begin
-      wr_low32 = s_axis_tdata[31:0];
-    end else begin
-      wr_low32[DATA_WIDTH-1:0] = s_axis_tdata;
-    end
-    wr_ecc = encode_secded32(wr_low32);
-
-    seu_bit_mask_d = (seu_inject_bit < 6'd32) ? (32'h1 << seu_inject_bit[4:0]) : 32'h0;
-    seu_bit_mask_e = (seu_inject_bit >= 6'd32 && seu_inject_bit < 6'd39) ?
-                     (7'h1 << (seu_inject_bit - 6'd32)) : 7'h0;
-
-    raw_low32 = '0;
-    if (DATA_WIDTH >= 32) begin
-      raw_low32 = mem_data[rd_ptr_q[ADDR_W-1:0]][31:0];
-    end else begin
-      raw_low32[DATA_WIDTH-1:0] = mem_data[rd_ptr_q[ADDR_W-1:0]];
-    end
-    raw_ecc = mem_ecc[rd_ptr_q[ADDR_W-1:0]];
-
-    if (seu_valid_q && (rd_ptr_q[ADDR_W-1:0] == seu_addr_q)) begin
-      raw_low32 = raw_low32 ^ seu_mask_data_q;
-      raw_ecc   = raw_ecc   ^ seu_mask_ecc_q;
-    end
-
-    decode_secded32(raw_low32, raw_ecc, corr_low32, ecc_single_err_corrected, ecc_double_err_uncorr);
-
-    m_axis_tdata = mem_data[rd_ptr_q[ADDR_W-1:0]];
-    if (DATA_WIDTH >= 32) begin
-      m_axis_tdata[31:0] = corr_low32;
-    end else begin
-      m_axis_tdata[DATA_WIDTH-1:0] = corr_low32[DATA_WIDTH-1:0];
-    end
-    m_axis_tkeep = mem_keep[rd_ptr_q[ADDR_W-1:0]];
-    m_axis_tlast = mem_last[rd_ptr_q[ADDR_W-1:0]];
-    m_axis_tuser = mem_user[rd_ptr_q[ADDR_W-1:0]];
-  end
-
-  // Dedicated Single-Write-Port RAM Inference Block (No Reset Loop or Multi-Write)
-  always_ff @(posedge clk) begin
+  // Dedicated Single-Write-Port Distributed LUTRAM Inference Block (No Async Reset Sensitivity)
+  always_ff @(posedge clk_wr) begin
     if (wr_fire) begin
       mem_data[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tdata;
       mem_keep[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tkeep;
       mem_last[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tlast;
       mem_user[wr_spec_ptr_q[ADDR_W-1:0]] <= s_axis_tuser;
-      mem_ecc[wr_spec_ptr_q[ADDR_W-1:0]]  <= wr_ecc;
+      mem_ecc [wr_spec_ptr_q[ADDR_W-1:0]] <= hsiao_encode_32(wr_data_32);
     end
   end
 
-  always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      rd_ptr_q              <= '0;
-      wr_commit_ptr_q       <= '0;
-      wr_spec_ptr_q         <= '0;
-      frame_end_ptr_q       <= '0;
-      frame_end_pending_q   <= 1'b0;
-      watermark_open_q      <= 1'b0;
-      rollback_overflow_err <= 1'b0;
-      seu_valid_q           <= 1'b0;
-      seu_addr_q            <= '0;
-      seu_mask_data_q       <= '0;
-      seu_mask_ecc_q        <= '0;
+  always_comb begin
+    wr_spec_ptr_nxt   = wr_spec_ptr_q;
+    wr_commit_ptr_nxt = wr_commit_ptr_q;
+
+    if (wr_fire) begin
+      wr_spec_ptr_nxt = wr_spec_ptr_q + {{ADDR_W{1'b0}}, 1'b1};
+    end
+
+    if (ROLLBACK_MODE && !cut_through_en) begin
+      if (frame_rollback_pulse) begin
+        wr_spec_ptr_nxt = wr_commit_ptr_q;
+      end else if (frame_commit_pulse) begin
+        wr_commit_ptr_nxt = wr_fire ? (wr_spec_ptr_q + {{ADDR_W{1'b0}}, 1'b1}) : frame_end_ptr_q;
+      end
     end else begin
-      rollback_overflow_err <= 1'b0;
+      wr_commit_ptr_nxt = wr_spec_ptr_nxt;
+    end
 
-      if (frame_rollback_pulse && ROLLBACK_MODE && !cut_through_en) begin
-        wr_spec_ptr_q       <= wr_commit_ptr_q;
-        frame_end_pending_q <= 1'b0;
-      end else begin
-        if (wr_fire) begin
-          wr_spec_ptr_q <= wr_spec_ptr_q + 1'b1;
-          if (s_axis_tlast && !frame_commit_pulse) begin
-            frame_end_ptr_q     <= wr_spec_ptr_q + 1'b1;
-            frame_end_pending_q <= 1'b1;
-          end
+    eff_wr_ptr_nxt = (!ROLLBACK_MODE || cut_through_en) ? wr_spec_ptr_nxt : wr_commit_ptr_nxt;
+  end
+
+  always_ff @(posedge clk_wr or negedge rst_wr_n) begin
+    if (!rst_wr_n) begin
+      wr_spec_ptr_q      <= '0;
+      wr_commit_ptr_q    <= '0;
+      frame_end_ptr_q    <= '0;
+      wr_eff_gray_q      <= '0;
+      rd_gray_sync1_wr_q <= '0;
+      rd_gray_sync2_wr_q <= '0;
+      rd_bin_sync2_wr_q  <= '0;
+    end else begin
+      rd_gray_sync1_wr_q <= rd_gray_q;
+      rd_gray_sync2_wr_q <= rd_gray_sync1_wr_q;
+      rd_bin_sync2_wr_q  <= gray2bin(rd_gray_sync1_wr_q);
+
+      if (wr_fire && s_axis_tlast) begin
+        frame_end_ptr_q <= wr_spec_ptr_q + {{ADDR_W{1'b0}}, 1'b1};
+      end
+
+      wr_spec_ptr_q   <= wr_spec_ptr_nxt;
+      wr_commit_ptr_q <= wr_commit_ptr_nxt;
+      wr_eff_gray_q   <= bin2gray(eff_wr_ptr_nxt);
+    end
+  end
+
+  // ---------------------------------------------------------------------------
+  // 5. Read Domain Logic & Hsiao SECDED Syndrome Decoder (clk_rd)
+  // ---------------------------------------------------------------------------
+  logic [ADDR_W:0] wr_eff_bin_rd;
+  logic [ADDR_W:0] comm_used_rd;
+  logic            rd_fire;
+  logic [ADDR_W:0] rd_ptr_nxt;
+  logic            seu_hit;
+  logic [6:0]      recalc_ecc;
+  logic [5:0]      syndrome;
+  logic            overall_par;
+
+  assign wr_eff_bin_rd   = wr_bin_sync2_rd_q;
+  assign comm_used_rd    = wr_eff_bin_rd - rd_ptr_q;
+  assign committed_count = comm_used_rd;
+
+  always_comb begin
+    if (WATERMARK_MODE) begin
+      m_axis_tvalid = (comm_used_rd != '0) &&
+                      (watermark_open_q || (comm_used_rd >= watermark_words));
+    end else begin
+      m_axis_tvalid = (comm_used_rd != '0);
+    end
+  end
+
+  assign rd_fire    = m_axis_tvalid && m_axis_tready;
+  assign rd_ptr_nxt = rd_fire ? (rd_ptr_q + {{ADDR_W{1'b0}}, 1'b1}) : rd_ptr_q;
+  assign seu_hit    = seu_valid_q && (rd_ptr_q[ADDR_W-1:0] == seu_addr_q);
+
+  always_comb begin
+    rd_codeword_39 = {rd_raw_ecc, rd_data_32};
+    if (seu_hit) begin
+      for (int b = 0; b < ECC_DATA_BITS; b++) begin
+        if (seu_bit_q == 6'(b)) begin
+          rd_codeword_39[b] = ~rd_codeword_39[b];
         end
-
-        if (!ROLLBACK_MODE || cut_through_en) begin
-          wr_commit_ptr_q     <= wr_fire ? (wr_spec_ptr_q + 1'b1) : wr_spec_ptr_q;
-          frame_end_pending_q <= 1'b0;
-        end else if (frame_commit_pulse) begin
-          if (frame_end_pending_q) begin
-            wr_commit_ptr_q     <= frame_end_ptr_q;
-            frame_end_pending_q <= (wr_fire && s_axis_tlast);
-            if (wr_fire && s_axis_tlast) begin
-              frame_end_ptr_q <= wr_spec_ptr_q + 1'b1;
-            end
-          end else begin
-            wr_commit_ptr_q <= (wr_fire && s_axis_tlast) ? (wr_spec_ptr_q + 1'b1) : wr_spec_ptr_q;
-          end
+      end
+      for (int b = 32; b < 39; b++) begin
+        if (seu_bit_q == 6'(b)) begin
+          rd_codeword_39[b] = ~rd_codeword_39[b];
         end
       end
+    end
 
-      if (ROLLBACK_MODE && !cut_through_en && fifo_full && s_axis_tvalid && (wr_commit_ptr_q == rd_ptr_q)) begin
-        rollback_overflow_err <= 1'b1;
-      end
+    recalc_ecc  = hsiao_encode_32(rd_codeword_39[31:0]);
+    syndrome    = rd_codeword_39[37:32] ^ recalc_ecc[5:0];
+    overall_par = ^({rd_codeword_39[38:32], (rd_codeword_39[31:0] & ECC_DATA_MASK)});
 
-      if (rd_fire) begin
-        rd_ptr_q <= rd_ptr_q + 1'b1;
-      end
-
-      if (WATERMARK_MODE) begin
-        if (fifo_empty && !wr_fire) begin
-          watermark_open_q <= 1'b0;
-        end else if (committed_count >= watermark_words) begin
-          watermark_open_q <= 1'b1;
+    // Data correction computed directly from LUTRAM output (independent of m_axis_tvalid)
+    rd_corr_32 = rd_codeword_39[31:0];
+    if (overall_par) begin
+      for (int b = 0; b < ECC_DATA_BITS; b++) begin
+        logic [5:0] col_syn;
+        for (int r = 0; r < 6; r++) begin
+          col_syn[r] = HSIAO_H_MASK[r][b];
         end
-      end else begin
-        watermark_open_q <= 1'b1;
+        if (syndrome == col_syn) begin
+          rd_corr_32[b] = ~rd_codeword_39[b];
+        end
       end
+    end
+
+    ecc_single_err_corrected = m_axis_tvalid && overall_par;
+    ecc_double_err_uncorr    = m_axis_tvalid && (syndrome != 6'd0) && !overall_par;
+
+    m_axis_tkeep = rd_raw_keep;
+    m_axis_tlast = rd_raw_last;
+    m_axis_tuser = rd_raw_user;
+    if (ecc_double_err_uncorr) begin
+      m_axis_tuser.crc_err = 1'b1;
+    end
+  end
+
+  always_ff @(posedge clk_rd or negedge rst_rd_n) begin
+    if (!rst_rd_n) begin
+      rd_ptr_q           <= '0;
+      rd_gray_q          <= '0;
+      watermark_open_q   <= 1'b0;
+      wr_gray_sync1_rd_q <= '0;
+      wr_gray_sync2_rd_q <= '0;
+      wr_bin_sync2_rd_q  <= '0;
+      seu_valid_q        <= 1'b0;
+      seu_addr_q         <= '0;
+      seu_bit_q          <= '0;
+    end else begin
+      wr_gray_sync1_rd_q <= wr_eff_gray_q;
+      wr_gray_sync2_rd_q <= wr_gray_sync1_rd_q;
+      wr_bin_sync2_rd_q  <= gray2bin(wr_gray_sync1_rd_q);
 
       if (seu_inject_en) begin
-        if (seu_valid_q && (seu_addr_q == seu_inject_addr)) begin
-          seu_mask_data_q <= seu_mask_data_q ^ seu_bit_mask_d;
-          seu_mask_ecc_q  <= seu_mask_ecc_q  ^ seu_bit_mask_e;
-        end else begin
-          seu_valid_q     <= 1'b1;
-          seu_addr_q      <= seu_inject_addr;
-          seu_mask_data_q <= seu_bit_mask_d;
-          seu_mask_ecc_q  <= seu_bit_mask_e;
+        seu_valid_q <= 1'b1;
+        seu_addr_q  <= seu_inject_addr;
+        seu_bit_q   <= seu_inject_bit;
+      end else if (rd_fire && seu_hit) begin
+        seu_valid_q <= 1'b0;
+      end
+
+      rd_ptr_q  <= rd_ptr_nxt;
+      rd_gray_q <= bin2gray(rd_ptr_nxt);
+
+      if (WATERMARK_MODE) begin
+        if (comm_used_rd == '0 || (rd_fire && m_axis_tlast && comm_used_rd == {{ADDR_W{1'b0}}, 1'b1})) begin
+          watermark_open_q <= 1'b0;
+        end else if (comm_used_rd >= watermark_words) begin
+          watermark_open_q <= 1'b1;
         end
-      end else if (!wr_fire && !fifo_empty && seu_valid_q &&
-                   (rd_ptr_q[ADDR_W-1:0] == seu_addr_q) && ecc_single_err_corrected) begin
-        seu_valid_q     <= 1'b0;
-        seu_mask_data_q <= '0;
-        seu_mask_ecc_q  <= '0;
       end
     end
   end
 
 endmodule : ccsds_cdc_fifo_ecc
-
-
-module ccsds_clcw_cdc_mbox
-  import ccsds_pkg::*;
-(
-  input  logic          src_clk,
-  input  logic          src_rst_n,
-  input  ccsds_clcw_t   src_clcw_in,
-  input  logic          src_req_valid,
-  output logic          src_req_ready,
-
-  input  logic          dst_clk,
-  input  logic          dst_rst_n,
-  output ccsds_clcw_t   dst_clcw_latched,
-  output logic          dst_new_pulse
-);
-
-  logic        src_req_toggle_q;
-  ccsds_clcw_t src_mbox_data_q;
-  logic        src_ack_sync1_q, src_ack_sync2_q;
-
-  logic        dst_req_sync1_q, dst_req_sync2_q, dst_req_prev_q;
-  ccsds_clcw_t dst_clcw_q;
-  logic        dst_pulse_q;
-
-  assign src_req_ready = (src_req_toggle_q == src_ack_sync2_q);
-
-  always_ff @(posedge src_clk or negedge src_rst_n) begin
-    if (!src_rst_n) begin
-      src_req_toggle_q <= 1'b0;
-      src_mbox_data_q  <= '0;
-      src_ack_sync1_q  <= 1'b0;
-      src_ack_sync2_q  <= 1'b0;
-    end else begin
-      src_ack_sync1_q <= dst_req_prev_q;
-      src_ack_sync2_q <= src_ack_sync1_q;
-
-      if (src_req_valid && src_req_ready) begin
-        src_mbox_data_q  <= src_clcw_in;
-        src_req_toggle_q <= ~src_req_toggle_q;
-      end
-    end
-  end
-
-  always_ff @(posedge dst_clk or negedge dst_rst_n) begin
-    if (!dst_rst_n) begin
-      dst_req_sync1_q <= 1'b0;
-      dst_req_sync2_q <= 1'b0;
-      dst_req_prev_q  <= 1'b0;
-      dst_clcw_q      <= '0;
-      dst_pulse_q     <= 1'b0;
-    end else begin
-      dst_req_sync1_q <= src_req_toggle_q;
-      dst_req_sync2_q <= dst_req_sync1_q;
-      dst_req_prev_q  <= dst_req_sync2_q;
-
-      if (dst_req_sync2_q != dst_req_prev_q) begin
-        dst_clcw_q  <= src_mbox_data_q;
-        dst_pulse_q <= 1'b1;
-      end else begin
-        dst_pulse_q <= 1'b0;
-      end
-    end
-  end
-
-  assign dst_clcw_latched = dst_clcw_q;
-  assign dst_new_pulse    = dst_pulse_q;
-
-endmodule : ccsds_clcw_cdc_mbox
