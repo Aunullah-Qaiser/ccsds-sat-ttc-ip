@@ -2,8 +2,8 @@
 // File Name   : tb_stage8_all_protocols_channel_loopback.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
 // Description : Stage 8 Comprehensive End-to-End RTL Testbench:
-//                 - Dumps native VCD ("stage8_xsim_rtl.vcd") for Python Golden
-//                   Waveform cross-correlation & cycle-similarity matching
+//                 - Dumps native simulator VCD ("sim_waves/stage8_xsim_rtl.vcd")
+//                   for Python Golden Waveform cross-check via vcd_waveform_matcher.py
 //                 - Phase 1: Sequential Protocol 1 — Classic TC (232.0-B-4) &
 //                            TM (132.0-B-3) with 48-bit CUC OBT & CLCW
 //                 - Phase 2: Sequential Protocol 2 — AOS (732.0-B-4) with
@@ -307,7 +307,7 @@ module tb_stage8_all_protocols_channel_loopback;
   endtask
 
   initial begin
-    $dumpfile("stage8_xsim_rtl.vcd");
+    $dumpfile("sim_waves/stage8_xsim_rtl.vcd");
     $dumpvars(0, tb_stage8_all_protocols_channel_loopback);
 
     rst_n              = 1'b0;

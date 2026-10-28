@@ -4,7 +4,7 @@
   "results": {
     "stage1": {
       "sv_static_audit_pass_1_and_2": true,
-      "files_audited": 34,
+      "files_audited": 39,
       "struct_bit_widths": {
         "ccsds_space_pkt_hdr_t": 48,
         "ccsds_tc_prim_hdr_t": 40,
@@ -19,7 +19,7 @@
         "ccsds_plcw_t": 32,
         "ccsds_tuser_t": 64
       },
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
       "crc16_123456789_hex": "0x29B1",
       "tm_pn_40B_golden_match": true,
       "tc_pn_40B_golden_match": true,
@@ -27,8 +27,8 @@
       "bch_2bit_rejection_trials": 200,
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
-      "sdls_aes_gcm_256_verified": true,
-      "elapsed_sec": 1.872
+      "sdls_aes_128_gcm_verified": true,
+      "elapsed_sec": 2.379
     },
     "stage2": {
       "rtl_files_audited": [
@@ -38,6 +38,7 @@
         "ccsds_bch6356_dec.sv",
         "ccsds_bch6356_enc.sv",
         "ccsds_cdc_fifo_ecc.sv",
+        "ccsds_channel_impairment_model.sv",
         "ccsds_conv_viterbi_codec.sv",
         "ccsds_crc_universal.sv",
         "ccsds_dl_rs255_223_dec.sv",
@@ -60,32 +61,38 @@
         "ccsds_tm_aos_uslp_framer.sv",
         "ccsds_ul_short_ldpc_dec.sv",
         "ccsds_vc_arbiter_mux.sv",
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
-        "tb_stage7_hw_egse_loopback.sv"
+        "tb_stage7_hw_egse_loopback.sv",
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "tb_files_audited": [
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
-        "tb_stage7_hw_egse_loopback.sv"
+        "tb_stage7_hw_egse_loopback.sv",
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "sv_static_audit_0_errors_0_warnings": true,
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S2] Passed 10,000 CRC-16/32 tkeep fuzz packets, 1,000 TM/TC LFSR frames, 19,500 1-bit & 500 2-bit SECDED trials, 1,000 AOS FHEC headers, and Per-Frame Rollback FIFO isolation",
-      "vcd_waveform_generated": "stage2_primitives_sim.vcd",
-      "vcd_size_bytes": 6054,
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S2] Passed 10,000 CRC-16/32 tkeep fuzz packets, 1,000 TM/TC LFSR frames, 19,500 1-bit & 500 2-bit SECDED trials, 1,000 AOS FHEC headers, and Per-Frame Rollback FIFO isolation",
       "crc16_crc32_tkeep_fuzz_packets": 10000,
       "lfsr_tm_tc_sparse_tkeep_frames": 1000,
       "secded_1bit_correction_trials": 19500,
       "secded_2bit_detection_trials": 500,
       "aos_fhec_gf16_headers_verified": 1000,
       "rollback_fifo_multiframe_isolation_verified": true,
-      "elapsed_sec": 4.657
+      "elapsed_sec": 5.0
     }
   }
 }

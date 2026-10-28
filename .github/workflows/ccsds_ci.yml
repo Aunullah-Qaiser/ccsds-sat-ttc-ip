@@ -1,15 +1,15 @@
-name: CCSDS-SAT-TTC-IP Full Verification & Synthesis CI (v2.26.9)
+name: CCSDS-SAT-TTC-IP Full RTL Simulation, Lint & Verification CI (v2.29.0)
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev/**" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "dev/**" ]
   workflow_dispatch:
 
 jobs:
   verify-ccsds-ip:
-    name: Static SV Audit (38 Files), Verilator Lint, C++20 Co-Sim & Stage 9/10 Sign-Off
+    name: Static SV Audit (39 Files), Verilator Lint, RTL Sim (Stages 2-11) & External Ref Check
     runs-on: ubuntu-latest
 
     steps:
@@ -28,32 +28,74 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install cryptography matplotlib numpy spacepackets
 
-      - name: Gate 1 — Static IEEE 1800-2017 AST, Hierarchy & Timescale Audit (38 .sv files)
+      - name: Gate 1 — Static IEEE 1800-2017 AST, Hierarchy & Timescale Audit (39 .sv files: 29 RTL + 10 TB)
         run: |
           python3 scripts/sv_rtl_audit.py
 
-      - name: Gate 2 — Verilator Full-Hierarchy Synthesizable RTL Lint
+      - name: Gate 2 — Verilator Full-Hierarchy Synthesizable RTL Lint (All 28 Synthesizable Modules, ROLE_MODE=2)
         run: |
-          verilator --lint-only -Wall --Wno-fatal \
-            -Wno-BLKSEQ -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-UNOPTFLAT \
-            -Wno-DECLFILENAME -Wno-UNUSED -Wno-UNDRIVEN -Wno-VARHIDDEN -Wno-PINCONNECTEMPTY \
-            -Wno-TIMESCALEMOD \
+          verilator --lint-only -Wall \
+            -Wno-TIMESCALEMOD -Wno-UNUSED -Wno-BLKSEQ -Wno-UNOPTFLAT \
+            -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC -Wno-CASEINCOMPLETE -Wno-PINCONNECTEMPTY \
+            -GROLE_MODE=2 \
             --top-module ccsds_sat_ttc_top \
             -Irtl \
             rtl/ccsds_pkg.sv \
-            $(ls rtl/*.sv | grep -v ccsds_pkg.sv | grep -v ccsds_channel_impairment_model.sv)
+            rtl/ccsds_crc_universal.sv \
+            rtl/ccsds_lfsr_scrambler.sv \
+            rtl/ccsds_cdc_fifo_ecc.sv \
+            rtl/ccsds_gf256_math.sv \
+            rtl/ccsds_asm_correlator.sv \
+            rtl/ccsds_bch6356_dec.sv \
+            rtl/ccsds_farm1_tmr.sv \
+            rtl/ccsds_vc_arbiter_mux.sv \
+            rtl/ccsds_dl_rs255_223_enc.sv \
+            rtl/ccsds_tc_uslp_deframer.sv \
+            rtl/ccsds_tm_aos_uslp_framer.sv \
+            rtl/ccsds_pkt_reassembler.sv \
+            rtl/ccsds_prox1_plcw_ctrl.sv \
+            rtl/ccsds_axi_lite_csr.sv \
+            rtl/ccsds_conv_viterbi_codec.sv \
+            rtl/ccsds_ul_short_ldpc_dec.sv \
+            rtl/ccsds_dl_turbo_ldpc_enc.sv \
+            rtl/ccsds_hcpd_ctrl.sv \
+            rtl/ccsds_sdls_engine.sv \
+            rtl/ccsds_pn_ranging.sv \
+            rtl/ccsds_phy_modem.sv \
+            rtl/ccsds_bch6356_enc.sv \
+            rtl/ccsds_tc_cltu_framer.sv \
+            rtl/ccsds_fop1_engine.sv \
+            rtl/ccsds_tm_aos_deframer.sv \
+            rtl/ccsds_dl_rs255_223_dec.sv \
+            rtl/ccsds_sat_ttc_top.sv
 
-      - name: Gate 3 — Stages 1–8 C++20 Hardware Co-Simulation, VCD Waveform Matcher & Channel Sweep
-        run: |
-          python3 scripts/run_regression_suite.py --stage 8
-          python3 scripts/vcd_waveform_matcher.py
-          python3 scripts/run_channel_ber_sweep.py
-
-      - name: Gate 4 — Stage 9 External Reference Vector Generation (spacepackets-py & NIST FIPS-197 AES-128)
+      - name: Gate 3 — Generate Stage 9 External Reference Vectors (spacepackets-py & NIST AES-128-CTR/GCM)
         run: |
           python3 scripts/run_external_ref_check.py --generate
 
-      - name: Upload VCD Waveforms, Channel Sweep Plots & JSON Reports
+      - name: Gate 4 — Execute Real SystemVerilog RTL Simulations (Stages 2 through 11) via Verilator
+        run: |
+          for stg in 2 3 4 5 6 7 8 9 10 11; do
+            echo "=================================================================="
+            echo " Running Real SystemVerilog RTL Simulation: STAGE=${stg}"
+            echo "=================================================================="
+            bash scripts/run_eda_sim.sh verilator "${stg}"
+          done
+
+      - name: Gate 5 — Verify Real Simulator VCD (Stage 8) & External Reference RTL Outputs (Stage 9)
+        run: |
+          python3 scripts/vcd_waveform_matcher.py --rtl-vcd sim_waves/stage8_xsim_rtl.vcd
+          python3 scripts/run_external_ref_check.py --verify
+
+      - name: Gate 6 — Bare-Metal C11 Flight/EGSE HAL Unit Test & Python/C++20 Reference Cross-Check
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -Isw sw/ccsds_ttc_hal.c sw/test_ccsds_ttc_hal.c -o test_ccsds_ttc_hal
+          ./test_ccsds_ttc_hal
+          rm -f test_ccsds_ttc_hal
+          python3 scripts/run_regression_suite.py --stage 8
+          python3 scripts/run_channel_ber_sweep.py
+
+      - name: Upload Real Simulator VCD, Channel Sweep Plots & JSON Reports
         uses: actions/upload-artifact@v4
         with:
           name: ccsds-verification-artifacts

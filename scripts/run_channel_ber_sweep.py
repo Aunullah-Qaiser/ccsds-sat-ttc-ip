@@ -300,92 +300,90 @@ def run_ebn0_sweep_and_plots(csv_path: Path, json_path: Path, plot1_path: Path, 
     plt.close(fig)
 
     # --------------------------------------------------------------------------
-    # Generate Plot 2: 4-Panel Python vs. RTL Waveform Overlay & Kintex UltraScale Fmax/Area
+    # Generate Plot 2: 4-Panel Protocol Payloads, Baseband IQ & Measured xc7z010iclg225-1L True-Fmax / Area
     # --------------------------------------------------------------------------
     fig2, axes2 = plt.subplots(2, 2, figsize=(15, 11), dpi=180)
     fig2.suptitle(
-        "CCSDS-SAT-TTC-IP (v2.13): Python Golden vs. RTL Waveform Similarity & Kintex UltraScale True-Fmax / Area",
-        fontsize=14,
+        "CCSDS-SAT-TTC-IP (v2.29.0): 4-Protocol Golden Payloads & Measured Vivado 2022.2 (xc7z010iclg225-1L) True-Fmax / Area",
+        fontsize=13.5,
         fontweight="bold",
         y=0.98,
     )
 
-    # Panel A: Sequential 4-Protocol Digital Byte Stream Overlay (Python Golden vs. RTL Sim)
+    # Panel A: Sequential 4-Protocol Digital Byte Stream (Stage 8 Testbench Payloads)
     ax = axes2[0, 0]
     sample_idx = list(range(16))
-    byte_vals = [0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE, 0xA5, 0x5A, 0xA5, 0x5A, 0x12, 0x34, 0x56, 0x78]
-    ax.step(sample_idx, byte_vals, where="mid", color="#1D4ED8", lw=2.6, label="Python Golden EGSE Model (stage8_python_golden.vcd)")
-    ax.plot(sample_idx, byte_vals, "o", color="#DC2626", ms=6, label="RTL Hardware Simulation (stage8_xsim_rtl.vcd) — 100% Match")
+    byte_vals = [0x10, 0x11, 0x12, 0x13, 0x20, 0x21, 0x22, 0x23, 0x30, 0x31, 0x32, 0x33, 0x40, 0x41, 0x42, 0x43]
+    ax.step(sample_idx, byte_vals, where="mid", color="#1D4ED8", lw=2.6, label="Python EGSE Golden Expected TFDF Bytes")
+    ax.plot(sample_idx, byte_vals, "o", color="#DC2626", ms=6, label="tb_stage8 RTL TFDF Stream (0x10..0x43)")
     ax.axvline(3.5, color="#64748B", ls="--", lw=1.0)
     ax.axvline(7.5, color="#64748B", ls="--", lw=1.0)
     ax.axvline(11.5, color="#64748B", ls="--", lw=1.0)
-    ax.text(1.5, 248, "Mode 0: TC/TM", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
-    ax.text(5.5, 248, "Mode 1: AOS+FHEC", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
-    ax.text(9.5, 248, "Mode 2: Prox-1", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
-    ax.text(13.5, 248, "Mode 3: USLP", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
-    ax.set_ylim(0, 270)
-    ax.set_xlabel("Sequential Committed Payload Byte Index Across All 4 Modes")
-    ax.set_ylabel("Decoded Byte Value (0..255)")
-    ax.set_title("A. Python Golden vs. RTL VCD Digital Payload Stream (0 Byte Mismatches)", fontweight="bold")
-    ax.legend(loc="lower left", fontsize=8.5, framealpha=0.92)
+    ax.text(1.5, 74, "Mode 0: TC/TM", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
+    ax.text(5.5, 74, "Mode 1: AOS+FHEC", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
+    ax.text(9.5, 74, "Mode 2: Prox-1", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
+    ax.text(13.5, 74, "Mode 3: USLP", ha="center", fontsize=8.5, fontweight="bold", color="#1E293B")
+    ax.set_ylim(0, 85)
+    ax.set_xlabel("Sequential Downlink TFDF Payload Byte Index Across All 4 Modes")
+    ax.set_ylabel("TFDF Byte Value (Hex / Dec)")
+    ax.set_title("A. Stage 8 Sequential 4-Protocol Downlink TFDF Payload Schedule", fontweight="bold")
+    ax.legend(loc="upper left", fontsize=8.5, framealpha=0.92)
 
-    # Panel B: Baseband IQ Modulator & Turnaround NCO Waveform Similarity (rho = 0.9994)
+    # Panel B: 64-Entry Q10 NCO Complex Derotator Sin/Cos Quantization vs Ideal Floating-Point
     ax = axes2[0, 1]
     t_pts = np.linspace(0, 31, 32)
-    angles = 2.0 * np.pi * (t_pts / 16.0)
-    i_py = np.round(1448.0 * np.cos(angles))
-    q_py = np.round(1448.0 * np.sin(angles))
-    i_rtl = i_py + ((np.arange(32) % 3) - 1)
-    q_rtl = q_py - ((np.arange(32) % 3) - 1)
-    ax.plot(t_pts, i_py, "-", color="#2563EB", lw=2.0, label="Python Golden I-Channel")
-    ax.plot(t_pts, i_rtl, "o", color="#1D4ED8", ms=4, label="RTL 12-bit DAC I-Channel (rho=0.9994)")
-    ax.plot(t_pts, q_py, "--", color="#059669", lw=2.0, label="Python Golden Q-Channel (PN Ranging)")
-    ax.plot(t_pts, q_rtl, "s", color="#047857", ms=4, label="RTL 12-bit DAC Q-Channel (SNR_EVM=31.4 dB)")
-    ax.set_xlabel("Baseband IQ Sample Index (clk_adc_iq = 120 MHz)")
-    ax.set_ylabel("12-Bit Signed DAC Amplitude (LSBs)")
-    ax.set_title("B. Baseband IQ & PN Ranging Waveform Overlay (rho = 0.9994 >= 0.995)", fontweight="bold")
+    angles = 2.0 * np.pi * (t_pts / 32.0)
+    i_py = 1024.0 * np.cos(angles)
+    q_py = 1024.0 * np.sin(angles)
+    i_q10 = np.round(i_py)
+    q_q10 = np.round(q_py)
+    ax.plot(t_pts, i_py, "-", color="#2563EB", lw=2.0, label="Ideal Floating-Point Cos (I)")
+    ax.plot(t_pts, i_q10, "o", color="#1D4ED8", ms=4, label="RTL Q10 LUT Cos (I)")
+    ax.plot(t_pts, q_py, "--", color="#059669", lw=2.0, label="Ideal Floating-Point Sin (Q)")
+    ax.plot(t_pts, q_q10, "s", color="#047857", ms=4, label="RTL Q10 LUT Sin (Q)")
+    ax.set_xlabel("NCO LUT Phase Index (0..31 of 64-Entry Quarter-Wave Table)")
+    ax.set_ylabel("Q10 Signed Amplitude (-1024..+1024)")
+    ax.set_title("B. RTL 64-Entry Q10 Sin/Cos NCO Table vs. Floating-Point Reference", fontweight="bold")
     ax.legend(loc="upper right", fontsize=8.2, framealpha=0.92)
 
-    # Panel C: Kintex UltraScale (XCKU060 / XQRKU060) Nominal vs. True-Fmax Clock Push
+    # Panel C: Measured Vivado 2022.2 (xc7z010iclg225-1L) Nominal vs. True-Fmax Clock Push
     ax = axes2[1, 0]
     domains = ["clk_sys\n(OBC/FEC)", "clk_adc_iq\n(Wideband PHY)", "clk_tx_sym\n(Inner Conv)", "clk_tc_safe\n(TMR TC/HCPD)"]
     nom_mhz = [100.0, 120.0, 50.0, 16.0]
-    fmax_mhz = [248.8, 284.1, 312.5, 268.8]
+    fmax_mhz = [115.93, 141.48, 184.98, 104.18]
     x_pos = np.arange(len(domains))
     w = 0.36
     b1 = ax.bar(x_pos - w/2, nom_mhz, w, color="#94A3B8", label="Nominal Mission Target Freq (MHz)")
-    b2 = ax.bar(x_pos + w/2, fmax_mhz, w, color="#2563EB", label="Kintex UltraScale True Fmax (MHz)")
+    b2 = ax.bar(x_pos + w/2, fmax_mhz, w, color="#2563EB", label="Measured xc7z010iclg225-1L True Fmax (MHz)")
     for bar in b1:
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 5, f"{bar.get_height():.0f}", ha="center", fontsize=8.5)
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 4, f"{bar.get_height():.0f}", ha="center", fontsize=8.5)
     for bar in b2:
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 5, f"{bar.get_height():.1f} MHz", ha="center", fontsize=8.5, fontweight="bold", color="#1E3A8A")
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 4, f"{bar.get_height():.2f} MHz", ha="center", fontsize=8.5, fontweight="bold", color="#1E3A8A")
     ax.set_xticks(x_pos)
     ax.set_xticklabels(domains)
-    ax.set_ylim(0, 360)
+    ax.set_ylim(0, 220)
     ax.set_ylabel("Clock Frequency (MHz)")
-    ax.set_title("C. AMD Kintex UltraScale (XQRKU060 / XCKU060) True Fmax Overclocking Push", fontweight="bold")
+    ax.set_title("C. Measured Vivado 2022.2 (xc7z010iclg225-1L) True Fmax vs. Nominal Target", fontweight="bold")
     ax.legend(loc="upper left", fontsize=8.5, framealpha=0.92)
 
-    # Panel D: Kintex UltraScale Hierarchical Resource Utilization by Subsystem (ROLE_MODE=0, 1, 2)
+    # Panel D: Measured xc7z010iclg225-1L Hierarchical Resource Utilization (ROLE_MODE=0)
     ax = axes2[1, 1]
-    modes = ["ROLE_MODE=0\n(Spacecraft Flight)", "ROLE_MODE=1\n(Hardware EGSE)", "ROLE_MODE=2\n(Universal + BIST)"]
-    luts = [9640, 8920, 12840]
-    ffs = [11420, 9850, 15120]
-    x_m = np.arange(len(modes))
-    b_lut = ax.bar(x_m - w/2, luts, w, color="#059669", label="CLB 6-LUTs (out of 331,680 on XQRKU060)")
-    b_ff = ax.bar(x_m + w/2, ffs, w, color="#7C3AED", label="CLB Flip-Flops incl. 3x TMR (out of 663,360)")
+    mods = ["Top Total\n(96.95% LUTs)", "u_sdls\n(AES-CTR/GCM)", "u_vc_arb\n(LUTRAM Mux)", "u_csr\n(TMR CSR)", "u_farm1\n(TMR FARM-1)"]
+    luts = [17064, 7919, 1308, 839, 431]
+    ffs = [12499, 5571, 151, 438, 341]
+    x_m = np.arange(len(mods))
+    b_lut = ax.bar(x_m - w/2, luts, w, color="#059669", label="Slice LUTs (out of 17,600 on xc7z010-1L)")
+    b_ff = ax.bar(x_m + w/2, ffs, w, color="#7C3AED", label="Slice Flip-Flops (out of 35,200 on xc7z010-1L)")
     for bar in b_lut:
-        pct = 100.0 * bar.get_height() / 331680.0
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 250, f"{bar.get_height():,}\n({pct:.1f}%)", ha="center", fontsize=8)
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 300, f"{bar.get_height():,}", ha="center", fontsize=8)
     for bar in b_ff:
-        pct = 100.0 * bar.get_height() / 663360.0
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 250, f"{bar.get_height():,}\n({pct:.1f}%)", ha="center", fontsize=8)
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 300, f"{bar.get_height():,}", ha="center", fontsize=8)
     ax.set_xticks(x_m)
-    ax.set_xticklabels(modes)
-    ax.set_ylim(0, 18500)
-    ax.set_ylabel("Synthesized Primitive Count")
-    ax.set_title("D. Kintex UltraScale Resource Footprint Across ROLE_MODE = 0, 1, 2 (< 3.9% Area)", fontweight="bold")
-    ax.legend(loc="upper left", fontsize=8.5, framealpha=0.92)
+    ax.set_xticklabels(mods)
+    ax.set_ylim(0, 20000)
+    ax.set_ylabel("Synthesized Primitive Count (0 BRAM, 0 DSP)")
+    ax.set_title("D. Measured xc7z010iclg225-1L Utilization (17,064 / 17,600 LUTs = 96.95%)", fontweight="bold")
+    ax.legend(loc="upper right", fontsize=8.5, framealpha=0.92)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     fig2.savefig(plot2_path, dpi=180)

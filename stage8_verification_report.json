@@ -4,7 +4,7 @@
   "results": {
     "stage1": {
       "sv_static_audit_pass_1_and_2": true,
-      "files_audited": 36,
+      "files_audited": 39,
       "struct_bit_widths": {
         "ccsds_space_pkt_hdr_t": 48,
         "ccsds_tc_prim_hdr_t": 40,
@@ -19,7 +19,7 @@
         "ccsds_plcw_t": 32,
         "ccsds_tuser_t": 64
       },
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
       "crc16_123456789_hex": "0x29B1",
       "tm_pn_40B_golden_match": true,
       "tc_pn_40B_golden_match": true,
@@ -27,8 +27,8 @@
       "bch_2bit_rejection_trials": 200,
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
-      "sdls_aes_gcm_256_verified": true,
-      "elapsed_sec": 3.193
+      "sdls_aes_128_gcm_verified": true,
+      "elapsed_sec": 2.284
     },
     "stage2": {
       "rtl_files_audited": [
@@ -61,37 +61,41 @@
         "ccsds_tm_aos_uslp_framer.sv",
         "ccsds_ul_short_ldpc_dec.sv",
         "ccsds_vc_arbiter_mux.sv",
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
         "tb_stage7_hw_egse_loopback.sv",
-        "tb_stage8_all_protocols_channel_loopback.sv"
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "tb_files_audited": [
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
         "tb_stage7_hw_egse_loopback.sv",
-        "tb_stage8_all_protocols_channel_loopback.sv"
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "sv_static_audit_0_errors_0_warnings": true,
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S2] Passed 10,000 CRC-16/32 tkeep fuzz packets, 1,000 TM/TC LFSR frames, 19,500 1-bit & 500 2-bit SECDED trials, 1,000 AOS FHEC headers, and Per-Frame Rollback FIFO isolation",
-      "vcd_waveform_generated": "stage2_primitives_sim.vcd",
-      "vcd_size_bytes": 6563,
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S2] Passed 10,000 CRC-16/32 tkeep fuzz packets, 1,000 TM/TC LFSR frames, 19,500 1-bit & 500 2-bit SECDED trials, 1,000 AOS FHEC headers, and Per-Frame Rollback FIFO isolation",
       "crc16_crc32_tkeep_fuzz_packets": 10000,
       "lfsr_tm_tc_sparse_tkeep_frames": 1000,
       "secded_1bit_correction_trials": 19500,
       "secded_2bit_detection_trials": 500,
       "aos_fhec_gf16_headers_verified": 1000,
       "rollback_fifo_multiframe_isolation_verified": true,
-      "elapsed_sec": 4.563
+      "elapsed_sec": 5.929
     },
     "stage3": {
-      "rtl_files_audited_count": 36,
+      "rtl_files_audited_count": 39,
       "rtl_files_audited": [
         "ccsds_pkg.sv",
         "ccsds_asm_correlator.sv",
@@ -122,86 +126,103 @@
         "ccsds_tm_aos_uslp_framer.sv",
         "ccsds_ul_short_ldpc_dec.sv",
         "ccsds_vc_arbiter_mux.sv",
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
         "tb_stage7_hw_egse_loopback.sv",
-        "tb_stage8_all_protocols_channel_loopback.sv"
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "tb_files_audited": [
+        "tb_stage10_full_matrix_link_stress.sv",
+        "tb_stage11_top_to_top_rf_link.sv",
         "tb_stage2_primitives.sv",
         "tb_stage3_vertical_slice.sv",
         "tb_stage4_multiprotocol.sv",
         "tb_stage5_fec_hcpd.sv",
         "tb_stage6_full_system.sv",
         "tb_stage7_hw_egse_loopback.sv",
-        "tb_stage8_all_protocols_channel_loopback.sv"
+        "tb_stage8_all_protocols_channel_loopback.sv",
+        "tb_stage9_external_ref_check.sv"
       ],
       "sv_static_audit_0_errors_0_warnings": true,
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S3] Verified 500 0/180-deg CLTU soft-LLR locks, 500 TMR FARM-1 SEU scrubs (500 healed), and generated Stage 3 VCD",
-      "vcd_waveform_generated": "stage3_vertical_slice_sim.vcd",
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S3] Verified 500 0/180-deg CLTU soft-LLR locks, 500 TMR FARM-1 SEU scrubs (500 healed), and generated Stage 3 VCD",
       "closed_loop_fop1_farm1_clcw_rs_cadu_pass": true,
       "telecommands_delivered_in_order": 16,
-      "elapsed_sec": 1.605
+      "elapsed_sec": 4.241
     },
     "stage4": {
-      "rtl_files_audited": 36,
-      "tb_files_audited": 7,
+      "rtl_files_audited": 39,
+      "tb_files_audited": 10,
       "sv_static_audit_pass_1_and_2": true,
-      "cpp20_stage4_cosim_stdout": "[CPP20-STAGE4-COSIM] PASS: 45000 AOS FHEC trials, 32 CSR TMR SEU scrubs (SVA-CSR-4), Prox-1 PLCW (V(R)=42), Space Pkt Reassembler (APID=0x701 & 0x7FF Idle stripped)",
-      "vcd_waveform_file": "stage4_multiprotocol_sim.vcd",
-      "vcd_waveform_bytes": 1101,
+      "cpp20_stage4_ref_crosscheck_stdout": "[CPP20-STAGE4-COSIM] PASS: 45000 AOS FHEC trials, 32 CSR TMR SEU scrubs (SVA-CSR-4), Prox-1 PLCW (V(R)=42), Space Pkt Reassembler (APID=0x701 & 0x7FF Idle stripped)",
       "aos_fhec_frames_verified": 8,
       "prox1_crc32_frames_verified": 50,
       "uslp_truncated_frames_verified": 50,
       "uslp_extended_variable_frames_verified": 50,
-      "elapsed_sec": 1.608
+      "elapsed_sec": 4.628
     },
     "stage5": {
-      "rtl_files_audited": 36,
-      "tb_files_audited": 7,
+      "rtl_files_audited": 39,
+      "tb_files_audited": 10,
       "sv_static_audit_pass_1_and_2": true,
-      "cpp20_stage5_cosim_stdout": "[CPP20-STAGE5-COSIM] PASS: 64000 Conv/Viterbi noisy bits corrected (0 errors), 500 Short-LDPC blocks converged, HCPD TMR SEU healed=7 (SVA-HCPD-5)",
-      "vcd_waveform_file": "stage5_fec_hcpd_sim.vcd",
-      "vcd_waveform_bytes": 2014,
+      "cpp20_stage5_ref_crosscheck_stdout": "[CPP20-STAGE5-COSIM] PASS: 64000 Conv/Viterbi noisy bits corrected (0 errors), 500 Short-LDPC blocks converged, HCPD TMR SEU healed=7 (SVA-HCPD-5)",
       "conv_k7_and_short_ldpc_golden_match": true,
       "viterbi_noisy_bits_corrected": 64000,
       "short_ldpc_noisy_blocks_converged": 500,
       "hcpd_tmr_seu_verified": true,
-      "elapsed_sec": 1.409
+      "elapsed_sec": 4.52
     },
     "stage6": {
-      "rtl_files_audited": 36,
-      "tb_files_audited": 7,
+      "rtl_files_audited": 39,
+      "tb_files_audited": 10,
       "sv_static_audit_pass_1_and_2": true,
-      "cpp20_stage6_cosim_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
-      "vcd_generated": true,
-      "elapsed_sec": 1.154
+      "cpp20_stage6_ref_crosscheck_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
+      "elapsed_sec": 4.083
     },
     "stage7": {
-      "rtl_files_audited": 36,
-      "tb_files_audited": 7,
+      "rtl_files_audited": 39,
+      "tb_files_audited": 10,
       "sv_static_audit_pass_1_and_2": true,
-      "cpp20_stage7_cosim_stdout": "[CPP20-STAGE7-COSIM] Verified Hardware EGSE (ROLE_MODE=1) <-> Spacecraft (ROLE_MODE=0) Loopback: 30/30 FOP-1<->FARM-1 Go-Back-N ARQ Frames, 1,000 BCH(63,56) CLTU Blocks, TM/AOS CUC OBT & CLCW Extraction, RS(255,223) Syndrome Decode & VCD",
-      "vcd_generated": true,
-      "elapsed_sec": 1.142
+      "cpp20_stage7_ref_crosscheck_stdout": "[CPP20-STAGE7-COSIM] Verified Hardware EGSE (ROLE_MODE=1) <-> Spacecraft (ROLE_MODE=0) Loopback: 30/30 FOP-1<->FARM-1 Go-Back-N ARQ Frames, 1,000 BCH(63,56) CLTU Blocks, TM/AOS CUC OBT & CLCW Extraction, RS(255,223) Syndrome Decode & VCD",
+      "elapsed_sec": 3.971
     },
     "stage8": {
-      "rtl_and_tb_files_audited": 36,
+      "rtl_and_tb_files_audited": 39,
       "sv_static_audit_pass_1_and_2": true,
-      "pillar1_waveform_similarity": {
-        "digital_sequence_match_pct": 100.0,
-        "max_handshake_cycle_delta_clks": 1,
-        "baseband_iq_cross_correlation_rho": 1.0,
-        "baseband_snr_evm_db": 61.9
+      "pillar1_real_vcd_verification": {
+        "status": "PENDING_RTL_SIM",
+        "rtl_vcd_present": false,
+        "python_golden_expectations": {
+          "ul_cltu_len_bytes": 26,
+          "dl_frames_expected": 4,
+          "tm_obt_cuc_hex": "653000428000",
+          "tm_clcw_hex": "01040001",
+          "dl_tfdf_payloads_hex": {
+            "PROTO_TM": "10111213",
+            "PROTO_AOS": "20212223",
+            "PROTO_PROX1": "30313233",
+            "PROTO_USLP": "40414243"
+          },
+          "channel_sweep": {
+            "injected_byte_errs": 1,
+            "fop1_nnr_after_5a": 2,
+            "fop1_vs_before_rollback": 4,
+            "fop1_vs_after_rollback": 2,
+            "fop1_retx_cnt": 1,
+            "tmr_seu_corrected": 1
+          }
+        }
       },
       "pillar2_sequential_4_protocols_verified": [
-        "TC_TM",
-        "AOS_FHEC",
-        "PROXIMITY_1",
-        "USLP"
+        "PROTO_TM",
+        "PROTO_AOS",
+        "PROTO_PROX1",
+        "PROTO_USLP"
       ],
       "pillar3_channel_sweep_and_corners": {
         "ebn0_sweep_points": 23,
@@ -211,13 +232,36 @@
           "reports/ccsds_waveform_and_kintex_fmax.png"
         ]
       },
-      "pillar4_kintex_ultrascale_true_fmax_mhz": {
-        "clk_sys_100mhz_nom": 248.8,
-        "clk_adc_iq_120mhz_nom": 284.1,
-        "clk_tx_sym_50mhz_nom": 312.5,
-        "clk_tc_safe_16mhz_nom": 268.8
+      "pillar4_vivado_xc7z010iclg225_1L_sta_and_utilization": {
+        "target_device": "xc7z010iclg225-1L (AMD/Xilinx Zynq-7000 28nm, -1L Low-Power Speed Grade)",
+        "total_luts": 17064,
+        "logic_luts": 15864,
+        "lutrams": 1200,
+        "slice_luts_pct": 96.95,
+        "slice_ffs": 12499,
+        "slice_ffs_pct": 35.51,
+        "ramb36": 0,
+        "dsp_blocks": 0,
+        "true_fmax_mhz": {
+          "clk_sys_100mhz_nom": 115.93,
+          "clk_adc_iq_120mhz_nom": 141.48,
+          "clk_tx_sym_50mhz_nom": 184.98,
+          "clk_tc_safe_16mhz_nom": 104.18
+        },
+        "nominal_wns_ns": {
+          "clk_sys": 1.374,
+          "clk_adc_iq": 1.265,
+          "clk_tx_sym": 14.594,
+          "clk_tc_safe": 52.901
+        },
+        "overclock_push_wns_ns": {
+          "clk_sys": -5.293,
+          "clk_adc_iq": -4.068,
+          "clk_tx_sym": -2.073,
+          "clk_tc_safe": -5.599
+        }
       },
-      "elapsed_sec": 6.553
+      "elapsed_sec": 7.468
     }
   }
 }

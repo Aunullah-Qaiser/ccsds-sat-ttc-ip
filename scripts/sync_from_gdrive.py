@@ -6,8 +6,9 @@ Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
 Description : Permanent Local Sync Script for Google Drive for Desktop.
               Finds the `CCSDS_SAT_TTC_IP_Sync` folder mounted by Google Drive
               for Desktop on Windows (e.g., `G:\\My Drive\\CCSDS_SAT_TTC_IP_Sync`),
-              reads the newest `ccsds_latest_sync*.json` bundle, and updates
-              changed files in the local repository.
+              reads the newest `ccsds_latest_sync*.json` bundle, updates
+              changed files in the local repository, and removes any deprecated
+              or temporary files listed in `delete_files` / `delete_globs`.
 
 Usage (PowerShell / CMD from your local repo root):
     python scripts/sync_from_gdrive.py
@@ -116,6 +117,8 @@ def main() -> None:
     ts_utc = payload.get("timestamp_utc", "")
     desc = payload.get("description", "")
     files_map = payload.get("files_zlib_b64", {})
+    delete_files = payload.get("delete_files", [])
+    delete_globs = payload.get("delete_globs", [])
 
     print(f"[GDRIVE-SYNC] Source Folder : {sync_dir}")
     print(f"[GDRIVE-SYNC] Active Bundle : {bundle_path.name} (version={version}, seq={sync_seq}, ts={ts_utc})")
@@ -125,6 +128,7 @@ def main() -> None:
 
     updated_cnt = 0
     unchanged_cnt = 0
+    deleted_cnt = 0
 
     for rel_path, b64_data in sorted(files_map.items()):
         raw_bytes = zlib.decompress(base64.b64decode(b64_data))
@@ -141,8 +145,29 @@ def main() -> None:
         updated_cnt += 1
         print(f"  [SYNCED] {rel_path} ({len(raw_bytes)} bytes)")
 
+    # Process explicit file deletions and glob pattern cleanups
+    to_remove: set[Path] = set()
+    for rel_del in delete_files:
+        cand = repo_root / rel_del
+        if cand.is_file():
+            to_remove.add(cand)
+    for pat in delete_globs:
+        for cand in repo_root.glob(pat):
+            if cand.is_file():
+                to_remove.add(cand)
+
+    for rem_path in sorted(to_remove):
+        try:
+            rel_str = str(rem_path.relative_to(repo_root))
+        except ValueError:
+            rel_str = str(rem_path)
+        rem_path.unlink(missing_ok=True)
+        deleted_cnt += 1
+        print(f"  [CLEANED] Removed deprecated/stale file: {rel_str}")
+
     print(
         f"\n[GDRIVE-SYNC SUCCESS] {updated_cnt} file(s) updated, "
+        f"{deleted_cnt} stale file(s) cleaned, "
         f"{unchanged_cnt} file(s) already up to date in {repo_root}"
     )
     next_cmds = payload.get("recommended_local_commands", [])

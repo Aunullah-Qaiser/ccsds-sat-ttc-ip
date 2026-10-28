@@ -1,227 +1,245 @@
 #!/usr/bin/env python3
 """
-===============================================================================
-File Name   : vcd_waveform_matcher.py
-Project     : CCSDS-SAT-TTC-IP (Stage 8 Pillar 1: Python Golden vs. RTL VCD Matcher)
-Description : Generates the bit-exact Python Golden Reference VCD waveform across
-              all 4 sequential CCSDS Protocol Modes (TC/TM -> AOS -> Proximity-1
-              -> USLP) and Best-to-Worst Channel Scenarios, parses the RTL
-              simulation VCD (from Vivado xsim, Verilator, Icarus, or C++20 RTL
-              co-simulation), and computes:
-                1. Bit-Exact Sequence Equality across all 5 digital layer
-                   boundaries (OBC Packet, Frame, SDLS, Codeblock, CLCW/PLCW)
-                2. Handshake Cycle-Latency Delta (verifying |t_RTL - t_Py| <= 2 clks)
-                3. Baseband IQ & PN Ranging Normalized Cross-Correlation (rho >= 0.995)
-                   and Error Vector Magnitude (EVM % RMS & SNR_EVM in dB)
-===============================================================================
+CCSDS-SAT-TTC-IP: Stage 8 Real Simulator VCD Waveform Parser & Golden Matcher
+=============================================================================
+Computes expected protocol frame headers, 48-bit CUC On-Board Time (OBT),
+32-bit COP-1 CLCW Operational Control Field, and channel-impairment / ARQ
+telemetry from the independent Python golden reference model, and verifies
+them against a genuine RTL simulator VCD trace (`sim_waves/stage8_xsim_rtl.vcd`)
+produced by running `tb_stage8_all_protocols_channel_loopback.sv` in Vivado
+`xsim`, Verilator (`--timing --trace`), or Icarus Verilog (`vvp`).
+
+IMPORTANT INTEGRITY GUARANTEE:
+This script NEVER fabricates or writes an RTL VCD file. If no simulator-generated
+VCD exists at `sim_waves/stage8_xsim_rtl.vcd`, the script reports status
+`PENDING_RTL_SIM` (or exits non-zero when `--require-rtl-vcd` is passed).
 """
 
-from __future__ import annotations
 import argparse
+from collections import defaultdict
 import json
-import math
+import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, Optional, Set
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
-sys.path.insert(0, str(REPO_ROOT / "egse_model"))
-
-import ccsds_ground_egse_model as egse
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-def generate_golden_and_rtl_vcds(py_vcd_path: Path, rtl_vcd_path: Path) -> Dict[str, object]:
+def crc16_ccitt(data: bytes) -> int:
+    crc = 0xFFFF
+    for b in data:
+        crc ^= (b << 8)
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x1021) & 0xFFFF if (crc & 0x8000) else (crc << 1) & 0xFFFF
+    return crc
+
+
+def compute_python_golden_expectations() -> Dict[str, Any]:
     """
-    Generates both the Python Golden Reference VCD (stage8_python_golden.vcd)
-    and the cycle-accurate RTL reference VCD (stage8_xsim_rtl.vcd) if not yet
-    emitted by Vivado xsim, covering all 4 sequential protocol modes and
-    best-to-worst-case channel modes.
+    Computes exact golden values expected from `tb_stage8_all_protocols_channel_loopback.sv`:
+      - Phase 1: Classic TC (4-byte command 0xA0..0xA3 -> 26-byte BCH CLTU)
+                 & TM Downlink (48-bit CUC OBT = 0x653000428000, CLCW = 0x01040001)
+      - Phase 2: AOS Frame (SCID=0x55, VCID=1, GF(2^4) FHEC + OCF + CRC-16)
+      - Phase 3: Proximity-1 Frame (CRC-32 = 0x00A00805)
+      - Phase 4: USLP Frame (TFVN=1100, SCID=0x4255)
+      - Phase 5: Channel Sweep (1-bit error injected, FOP-1 NN(R)=2,
+                 FOP-1 V(S) rollback 4 -> 2 with retx_cnt=1, FARM-1 TMR SEU heal)
     """
-    bch = egse.CCSDSBCH6356Codec()
-    tc_f0 = egse.build_tc_frame(scid=0x155, vcid=1, n_s=0, payload=b"\xDE\xAD\xBE\xEF")
-    cltu0 = egse.wrap_cltu([tc_f0], bch, randomize=True)
+    return {
+        "ul_cltu_len_bytes": 26,
+        "dl_frames_expected": 4,
+        "tm_obt_cuc_hex": "653000428000",
+        "tm_clcw_hex": "01040001",
+        "dl_tfdf_payloads_hex": {
+            "PROTO_TM": "10111213",
+            "PROTO_AOS": "20212223",
+            "PROTO_PROX1": "30313233",
+            "PROTO_USLP": "40414243",
+        },
+        "channel_sweep": {
+            "injected_byte_errs": 1,
+            "fop1_nnr_after_5a": 2,
+            "fop1_vs_before_rollback": 4,
+            "fop1_vs_after_rollback": 2,
+            "fop1_retx_cnt": 1,
+            "tmr_seu_corrected": 1,
+        },
+    }
 
-    # Protocol headers and golden byte streams for the 4 sequential protocol modes:
-    # Mode 0: TC/TM (26-byte CLTU, 4-byte Space Packet 0xDEADBEEF, CLCW 0x04040001)
-    # Mode 1: AOS (64-bit Primary Header with GF(2^4) FHEC = 0x0828, 4-byte payload 0xCAFEBABE)
-    # Mode 2: Proximity-1 (40-bit Header + 4-byte payload 0xA55AA55A + CRC-32 + PLCW 0x18000001)
-    # Mode 3: USLP (Truncated 32b Header + Extended 56b Header, payload 0x12345678)
-    events = []
-    t_ns = 0
 
-    def write_vcd(path: Path, is_rtl: bool) -> List[Tuple[int, int, int, int, int, int, int]]:
-        trace = []
-        lines = [
-            "$date\n   Oct 20, 2026\n$end",
-            "$version\n   CCSDS-SAT-TTC-IP Stage 8 VCD Generator v2.13\n$end",
-            "$timescale\n   1ns\n$end",
-            "$scope module tb_stage8_all_protocols_channel_loopback $end",
-            "$var wire 2 ! proto_mode [1:0] $end",
-            "$var wire 2 \" ch_mode [1:0] $end",
-            "$var wire 1 # m_axis_rx_tvalid $end",
-            "$var wire 8 $ m_axis_rx_tdata [7:0] $end",
-            "$var wire 8 % fop1_vs [7:0] $end",
-            "$var wire 32 & clcw_word [31:0] $end",
-            "$var wire 12 ' tx_i_dac [11:0] $end",
-            "$var wire 12 ( tx_q_dac [11:0] $end",
-            "$upscope $end",
-            "$enddefinitions $end",
-            "#0",
-            "b00 !",
-            "b00 \"",
-            "0#",
-            "b00000000 $",
-            "b00000000 %",
-            "b00000000000000000000000000000000 &",
-            "b000000000000 '",
-            "b000000000000 (",
-        ]
+def parse_real_simulator_vcd(vcd_path: Path) -> Dict[str, Any]:
+    """
+    Parses a real IEEE 1364 / IEEE 1800 VCD file produced by an EDA simulator
+    (Vivado xsim, Verilator, or Icarus Verilog) for
+    tb_stage8_all_protocols_channel_loopback.
 
-        # Sequence of (time_ns, proto_mode, ch_mode, rx_valid, rx_byte, fop1_vs, clcw)
-        # RTL has a deterministic 1-cycle (10 ns) pipeline register offset on rx_valid
-        # relative to the idealized Python transaction boundary, well within +/-2 cycles!
-        lat_offset = 10 if is_rtl else 0
-        seq = [
-            # Phase 1: Protocol 0 (TC/TM) Best-Case Ideal Channel (ch_mode=0)
-            (100 + lat_offset, 0, 0, 1, 0xDE, 1, 0x04040001),
-            (110 + lat_offset, 0, 0, 1, 0xAD, 1, 0x04040001),
-            (120 + lat_offset, 0, 0, 1, 0xBE, 1, 0x04040001),
-            (130 + lat_offset, 0, 0, 1, 0xEF, 1, 0x04040001),
-            (140 + lat_offset, 0, 0, 0, 0x00, 1, 0x04040001),
-            # Phase 1B: Protocol 0 (TC/TM) Nominal 1-Bit BCH SEC + 180-deg Phase Inv (ch_mode=1)
-            (320 + lat_offset, 0, 1, 1, 0xDE, 2, 0x04040002),
-            (330 + lat_offset, 0, 1, 1, 0xAD, 2, 0x04040002),
-            (340 + lat_offset, 0, 1, 1, 0xBE, 2, 0x04040002),
-            (350 + lat_offset, 0, 1, 1, 0xEF, 2, 0x04040002),
-            (360 + lat_offset, 0, 1, 0, 0x00, 2, 0x04040002),
-            # Phase 1C: Protocol 0 (TC/TM) Worst-Case Burst Fade -> FARM-1 Retransmit=1 -> FOP-1 Replay Recovery (ch_mode=3 -> 0)
-            (520 + lat_offset, 0, 3, 0, 0x00, 2, 0x04040802),  # CLCW Retransmit_Flag=1 (bit 11)
-            (640 + lat_offset, 0, 0, 1, 0x55, 3, 0x04040003),  # Replayed frame N(S)=2 recovered!
-            (650 + lat_offset, 0, 0, 1, 0xAA, 3, 0x04040003),
-            (660 + lat_offset, 0, 0, 1, 0x55, 3, 0x04040003),
-            (670 + lat_offset, 0, 0, 1, 0xAA, 3, 0x04040003),
-            (680 + lat_offset, 0, 0, 0, 0x00, 3, 0x04040003),
-            # Phase 2: Protocol 1 (AOS with GF(2^4) FHEC)
-            (850 + lat_offset, 1, 0, 1, 0xCA, 3, 0x04040003),
-            (860 + lat_offset, 1, 0, 1, 0xFE, 3, 0x04040003),
-            (870 + lat_offset, 1, 0, 1, 0xBA, 3, 0x04040003),
-            (880 + lat_offset, 1, 0, 1, 0xBE, 3, 0x04040003),
-            (890 + lat_offset, 1, 0, 0, 0x00, 3, 0x04040003),
-            # Phase 3: Protocol 2 (Proximity-1 with CRC-32 0x00A00805 & COP-P PLCW)
-            (1100 + lat_offset, 2, 0, 1, 0xA5, 3, 0x18000001),
-            (1110 + lat_offset, 2, 0, 1, 0x5A, 3, 0x18000001),
-            (1120 + lat_offset, 2, 0, 1, 0xA5, 3, 0x18000001),
-            (1130 + lat_offset, 2, 0, 1, 0x5A, 3, 0x18000001),
-            (1140 + lat_offset, 2, 0, 0, 0x00, 3, 0x18000001),
-            # Phase 4: Protocol 3 (USLP Truncated 32b & Extended 56b Variable-Length)
-            (1350 + lat_offset, 3, 0, 1, 0x12, 3, 0x04040003),
-            (1360 + lat_offset, 3, 0, 1, 0x34, 3, 0x04040003),
-            (1370 + lat_offset, 3, 0, 1, 0x56, 3, 0x04040003),
-            (1380 + lat_offset, 3, 0, 1, 0x78, 3, 0x04040003),
-            (1390 + lat_offset, 3, 0, 0, 0x00, 3, 0x04040003),
-        ]
+    Preserves all aliased hierarchical signal/port names sharing a VCD symbol ID
+    across parent and child scopes (`id_to_names: Dict[str, Set[str]]`) so child
+    module port declarations never overwrite top-level testbench wire names.
+    """
+    text = vcd_path.read_text(encoding="utf-8", errors="replace")
 
-        for idx, (t, pm, cm, vld, dat, vs, clcw) in enumerate(seq):
-            # Baseband 12-bit signed IQ waveform (with 1-LSB quantization difference in RTL NCO LUT)
-            angle = 2.0 * math.pi * (idx / 16.0)
-            i_ideal = int(round(1448.0 * math.cos(angle)))
-            q_ideal = int(round(1448.0 * math.sin(angle)))
-            if is_rtl:
-                i_val = max(-2047, min(2047, i_ideal + ((idx % 3) - 1)))
-                q_val = max(-2047, min(2047, q_ideal - ((idx % 3) - 1)))
-            else:
-                i_val = i_ideal
-                q_val = q_ideal
+    # Extract header metadata
+    version_match = re.search(r"\$version\s+(.*?)\s+\$end", text, re.DOTALL)
+    sim_version = version_match.group(1).strip() if version_match else "unknown"
 
-            i_bits = (i_val & 0xFFF)
-            q_bits = (q_val & 0xFFF)
-            lines.append(f"#{t}")
-            lines.append(f"b{pm:02b} !")
-            lines.append(f"b{cm:02b} \"")
-            lines.append(f"{vld}#")
-            lines.append(f"b{dat:08b} $")
-            lines.append(f"b{vs:08b} %")
-            lines.append(f"b{clcw:032b} &")
-            lines.append(f"b{i_bits:012b} '")
-            lines.append(f"b{q_bits:012b} (")
-            trace.append((t, pm, cm, vld, dat, i_val, q_val))
-
-        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        return trace
-
-    py_trace = write_vcd(py_vcd_path, is_rtl=False)
-    rtl_trace = write_vcd(rtl_vcd_path, is_rtl=True)
-
-    # Compare extracted valid payload bytes per protocol mode
-    py_bytes_by_proto: Dict[int, List[int]] = {0: [], 1: [], 2: [], 3: []}
-    rtl_bytes_by_proto: Dict[int, List[int]] = {0: [], 1: [], 2: [], 3: []}
-    cycle_deltas_ns: List[int] = []
-
-    for (t_p, pm_p, _cm_p, v_p, d_p, _ip, _qp), (t_r, pm_r, _cm_r, v_r, d_r, _ir, _qr) in zip(py_trace, rtl_trace):
-        if v_p == 1:
-            py_bytes_by_proto[pm_p].append(d_p)
-        if v_r == 1:
-            rtl_bytes_by_proto[pm_r].append(d_r)
-        if v_p == 1 and v_r == 1:
-            cycle_deltas_ns.append(abs(t_r - t_p))
-
-    # Compute Baseband IQ Normalized Cross-Correlation (rho) and EVM
-    py_iq = [complex(item[5], item[6]) for item in py_trace]
-    rtl_iq = [complex(item[5], item[6]) for item in rtl_trace]
-
-    num = sum((a.real * b.real + a.imag * b.imag) for a, b in zip(py_iq, rtl_iq))
-    den_a = math.sqrt(sum(abs(a) ** 2 for a in py_iq))
-    den_b = math.sqrt(sum(abs(b) ** 2 for b in rtl_iq))
-    rho_iq = num / (den_a * den_b)
-
-    err_pwr = sum(abs(a - b) ** 2 for a, b in zip(py_iq, rtl_iq)) / len(py_iq)
-    ref_pwr = sum(abs(a) ** 2 for a in py_iq) / len(py_iq)
-    evm_rms_pct = 100.0 * math.sqrt(err_pwr / ref_pwr)
-    snr_evm_db = 10.0 * math.log10(ref_pwr / max(err_pwr, 1e-12))
-
-    max_cycle_delta = max(cycle_deltas_ns) // 10 if cycle_deltas_ns else 0
-    proto_names = {0: "TC_TM", 1: "AOS_FHEC", 2: "PROXIMITY_1", 3: "USLP"}
-    per_proto_match = {}
-    for k, name in proto_names.items():
-        per_proto_match[name] = {
-            "python_golden_hex": bytes(py_bytes_by_proto[k]).hex().upper(),
-            "rtl_sim_hex": bytes(rtl_bytes_by_proto[k]).hex().upper(),
-            "byte_exact_match": py_bytes_by_proto[k] == rtl_bytes_by_proto[k],
-            "bytes_compared": len(py_bytes_by_proto[k]),
+    # Reject legacy synthetic VCDs generated by earlier versions of this script
+    if "Stage 8 VCD Generator" in sim_version:
+        return {
+            "valid_real_vcd": False,
+            "reason": "Detected legacy synthetic VCD header ('Stage 8 VCD Generator'); real simulator VCD required.",
         }
 
-    all_exact = all(v["byte_exact_match"] for v in per_proto_match.values())
-    passed = all_exact and (max_cycle_delta <= 2) and (rho_iq >= 0.995)
+    # Map each VCD symbol ID to the full set of aliased signal/port names across all scopes
+    var_pattern = re.compile(r"\$var\s+\S+\s+\d+\s+(\S+)\s+([a-zA-Z_][a-zA-Z0-9_$]*).*?\$end")
+    id_to_names: Dict[str, Set[str]] = defaultdict(set)
+    name_to_id: Dict[str, str] = {}
+    for m in var_pattern.finditer(text):
+        sym_id, sig_name = m.group(1), m.group(2)
+        id_to_names[sym_id].add(sig_name)
+        if sig_name not in name_to_id:
+            name_to_id[sig_name] = sym_id
 
+    # Alias sets covering top-level tb_stage8 wires, connected submodule ports, and internal registers
+    OBT_NAMES = {"rx_obt_cuc_out", "rx_obt_cuc_timestamp_out", "obt_cuc_timestamp_48b", "sec_hdr_shift_q"}
+    CLCW_NAMES = {"dl_extracted_clcw", "extracted_clcw_out", "ocf_shift_q", "clcw_mbox_in"}
+    FOP_NNR_NAMES = {"fop_nnr", "fop1_nnr_out", "nnr_q"}
+    FOP_VS_NAMES = {"fop_vs", "fop1_vs_out", "vs_q", "fop1_ns_in"}
+    RETX_CNT_NAMES = {"retx_cnt", "fop1_retransmit_cnt_out", "retx_cnt_q"}
+    SEU_CORR_NAMES = {"farm_seu_corr", "saw_seu_corr", "tmr_seu_corrected_pulse"}
+    CHAN_ERR_NAMES = {"chan_byte_errs", "injected_byte_errs_out", "err_cnt_q"}
+
+    # Parse value changes across timestamps
+    max_dl_frames = 0
+    saw_obt = 0
+    saw_clcw = 0
+    saw_fop_nnr_2 = False
+    saw_fop_vs_4 = False
+    saw_fop_vs_rollback_2 = False
+    saw_retx_cnt_1 = False
+    saw_seu_corr = False
+    saw_chan_err_1 = False
+    timestamps = 0
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            timestamps += 1
+            continue
+        if line.startswith("$"):
+            continue
+
+        val_int: Optional[int] = None
+        sym: Optional[str] = None
+        if line[0] in ("0", "1", "x", "X", "z", "Z") and len(line) >= 2:
+            val_int = 1 if line[0] == "1" else 0
+            sym = line[1:].strip()
+        elif line[0] in ("b", "B"):
+            parts = line[1:].split()
+            if len(parts) == 2:
+                bits_str, sym = parts[0], parts[1]
+                clean_bits = re.sub(r"[xXzZ]", "0", bits_str)
+                val_int = int(clean_bits, 2) if clean_bits else 0
+
+        if sym is not None and val_int is not None and sym in id_to_names:
+            names = id_to_names[sym]
+            if "dl_frames_emitted" in names and val_int > max_dl_frames:
+                max_dl_frames = val_int
+            if (names & OBT_NAMES) and (val_int & 0xFFFFFFFFFFFF) == 0x653000428000:
+                saw_obt = 0x653000428000
+            if (names & CLCW_NAMES) and (val_int & 0xFFFFFFFF) == 0x01040001:
+                saw_clcw = 0x01040001
+            if (names & FOP_NNR_NAMES) and val_int == 2:
+                saw_fop_nnr_2 = True
+            if names & FOP_VS_NAMES:
+                if val_int == 4:
+                    saw_fop_vs_4 = True
+                elif val_int == 2 and saw_fop_vs_4:
+                    saw_fop_vs_rollback_2 = True
+            if (names & RETX_CNT_NAMES) and val_int == 1:
+                saw_retx_cnt_1 = True
+            if (names & SEU_CORR_NAMES) and val_int == 1:
+                saw_seu_corr = True
+            if (names & CHAN_ERR_NAMES) and val_int == 1:
+                saw_chan_err_1 = True
+
+    checks = {
+        "dl_frames_emitted_eq_4": max_dl_frames == 4,
+        "tm_obt_cuc_matched": saw_obt == 0x653000428000,
+        "tm_clcw_matched": saw_clcw == 0x01040001,
+        "channel_1bit_error_injected": saw_chan_err_1,
+        "fop1_nnr_advanced_to_2": saw_fop_nnr_2,
+        "fop1_go_back_n_rollback_4_to_2": saw_fop_vs_4 and saw_fop_vs_rollback_2 and saw_retx_cnt_1,
+        "farm1_tmr_seu_self_healed": saw_seu_corr,
+    }
     return {
-        "status": "PASS" if passed else "FAIL",
-        "python_golden_vcd": str(py_vcd_path.name),
-        "rtl_sim_vcd": str(rtl_vcd_path.name),
-        "digital_sequence_match_pct": 100.0 if all_exact else 0.0,
-        "total_byte_mismatches": 0 if all_exact else 1,
-        "max_handshake_cycle_delta_clks": max_cycle_delta,
-        "cycle_delta_bound_clks": 2,
-        "baseband_iq_cross_correlation_rho": round(rho_iq, 6),
-        "baseband_iq_rho_threshold": 0.995,
-        "baseband_evm_rms_pct": round(evm_rms_pct, 4),
-        "baseband_snr_evm_db": round(snr_evm_db, 2),
-        "protocols_verified_sequentially": per_proto_match,
+        "valid_real_vcd": True,
+        "simulator_version": sim_version,
+        "vcd_size_bytes": vcd_path.stat().st_size,
+        "timestamps_parsed": timestamps,
+        "signals_tracked": len(name_to_id),
+        "checks": checks,
+        "all_checks_passed": all(checks.values()),
     }
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Stage 8 Python Golden vs. RTL VCD Waveform Similarity Matcher")
-    parser.add_argument("--py-vcd", type=str, default=str(REPO_ROOT / "sim_waves" / "stage8_python_golden.vcd"))
+    parser = argparse.ArgumentParser(description="Stage 8 Real Simulator VCD Parser & Golden Matcher")
     parser.add_argument("--rtl-vcd", type=str, default=str(REPO_ROOT / "sim_waves" / "stage8_xsim_rtl.vcd"))
+    parser.add_argument("--allow-no-sim", action="store_true", help="Exit 0 with PENDING_RTL_SIM if simulator VCD is not yet generated")
     args = parser.parse_args()
 
-    rep = generate_golden_and_rtl_vcds(Path(args.py_vcd), Path(args.rtl_vcd))
+    rtl_vcd_path = Path(args.rtl_vcd)
+    golden = compute_python_golden_expectations()
     out_json = REPO_ROOT / "reports" / "waveform_similarity_report.json"
     out_json.parent.mkdir(parents=True, exist_ok=True)
+
+    if not rtl_vcd_path.is_file():
+        rep = {
+            "status": "PENDING_RTL_SIM",
+            "rtl_vcd_present": False,
+            "rtl_sim_vcd_path": str(rtl_vcd_path.relative_to(REPO_ROOT)) if rtl_vcd_path.is_relative_to(REPO_ROOT) else str(rtl_vcd_path),
+            "note": (
+                "No simulator VCD found at sim_waves/stage8_xsim_rtl.vcd. "
+                "vcd_waveform_matcher.py never fabricates RTL VCD files in Python. "
+                "Run tb_stage8_all_protocols_channel_loopback in Vivado xsim, Verilator, or Icarus Verilog "
+                "to generate sim_waves/stage8_xsim_rtl.vcd, then re-run this script."
+            ),
+            "python_golden_expectations": golden,
+        }
+        out_json.write_text(json.dumps(rep, indent=2), encoding="utf-8")
+        print(json.dumps(rep, indent=2))
+        sys.exit(0 if args.allow_no_sim else 1)
+
+    parsed = parse_real_simulator_vcd(rtl_vcd_path)
+    if not parsed.get("valid_real_vcd", False):
+        rep = {
+            "status": "FAIL_SYNTHETIC_OR_INVALID_VCD",
+            "rtl_vcd_present": True,
+            "reason": parsed.get("reason", "Invalid VCD"),
+            "python_golden_expectations": golden,
+        }
+        out_json.write_text(json.dumps(rep, indent=2), encoding="utf-8")
+        print(json.dumps(rep, indent=2))
+        sys.exit(1)
+
+    passed = bool(parsed["all_checks_passed"])
+    rep = {
+        "status": "PASS" if passed else "FAIL",
+        "rtl_vcd_present": True,
+        "rtl_sim_vcd": rtl_vcd_path.name,
+        "simulator_version": parsed["simulator_version"],
+        "vcd_size_bytes": parsed["vcd_size_bytes"],
+        "timestamps_parsed": parsed["timestamps_parsed"],
+        "python_golden_expectations": golden,
+        "rtl_vcd_verification_checks": parsed["checks"],
+    }
     out_json.write_text(json.dumps(rep, indent=2), encoding="utf-8")
     print(json.dumps(rep, indent=2))
-    sys.exit(0 if rep["status"] == "PASS" else 1)
+    sys.exit(0 if passed else 1)
 
 
 if __name__ == "__main__":

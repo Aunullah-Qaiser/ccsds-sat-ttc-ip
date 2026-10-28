@@ -1,155 +1,226 @@
-\documentclass[11pt,a4paper]{report}
+\documentclass[11pt,a4paper]{article}
 
-\usepackage[a4paper,margin=20mm]{geometry}
-\usepackage{charter}
+\usepackage[a4paper,top=20mm,bottom=20mm,left=18mm,right=18mm,headheight=14pt]{geometry}
+\usepackage{lmodern}
 \usepackage{amsmath,amssymb,mathtools}
-\usepackage{booktabs,tabularx}
+\usepackage{array,booktabs,tabularx}
 \usepackage{xcolor}
 \usepackage{fancyhdr}
-\usepackage{listings}
 \usepackage{microtype}
 \usepackage{hyperref}
 
 \definecolor{primary}{RGB}{15, 52, 96}
 \definecolor{accent}{RGB}{13, 148, 136}
 \definecolor{warn}{RGB}{180, 83, 9}
-\definecolor{codebg}{RGB}{248, 250, 252}
-\definecolor{framebg}{RGB}{241, 245, 249}
+\definecolor{partbg}{RGB}{238, 242, 255}
 
 \hypersetup{
   colorlinks=true,
   linkcolor=primary,
   urlcolor=accent,
   citecolor=primary,
-  pdftitle={Architecting a Universal CCSDS Spacecraft TT\&C and Ground EGSE Transceiver IP Core in SystemVerilog},
+  pdftitle={Architecting a Universal CCSDS Spacecraft TT&C and Ground EGSE Transceiver IP Core in SystemVerilog},
   pdfauthor={CCSDS-SAT-TTC-IP Engineering Team}
 }
 
-\setlength{\parskip}{6pt plus 2pt minus 1pt}
+% Prevent margin overflows on technical identifiers and allow discretionary breaks after underscores
+\setlength{\parskip}{4.5pt plus 1.5pt minus 1pt}
 \setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+\tolerance=2000
+\hbadness=10000
+\vbadness=10000
+
+\let\origunderscore\_
+\renewcommand{\_}{\origunderscore\penalty0\hskip0pt\relax}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\footnotesize\textcolor{primary}{\textbf{CCSDS-SAT-TTC-IP Engineering Monograph (v2.15)}}}
-\fancyhead[R]{\footnotesize\textcolor{gray}{What We Are Building, What Is Built \& What Is Left}}
+\fancyhead[L]{\footnotesize\textcolor{primary}{\textbf{CCSDS-SAT-TTC-IP Engineering Monograph (v2.17)}}}
+\fancyhead[R]{\footnotesize\textcolor{gray}{Architecture, What Is Built \& What Is Left}}
 \fancyfoot[C]{\footnotesize\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
-\newcommand{\takeaway}[2]{%
-  \vspace{6pt}\noindent\colorbox{primary!8}{%
+% Inline Part Banner (avoids wasting an entire blank page per Part)
+\newcommand{\partbanner}[2]{%
+  \par\vspace{10pt}\noindent\colorbox{primary}{%
     \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
-      \vspace{4pt}\textbf{\color{primary}#1:}\hspace{0.5em}#2\vspace{4pt}%
+      \vspace{6pt}\centering
+      {\footnotesize\scshape\color{white!85}\MakeUppercase{#1}\par}\vspace{2pt}%
+      {\large\bfseries\color{white}#2\par}%
+      \vspace{6pt}%
     }%
-  }\vspace{6pt}%
+  }\par\nopagebreak[4]\vspace{4pt}\nopagebreak[4]%
+  \addcontentsline{toc}{part}{#1: #2}%
+}
+
+\newcommand{\takeaway}[2]{%
+  \par\vspace{5pt}\noindent\colorbox{primary!8}{%
+    \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
+      \vspace{4pt}\raggedright\textbf{\color{primary}#1:}\hspace{0.4em}#2\vspace{4pt}%
+    }%
+  }\par\vspace{5pt}%
 }
 
 \newcommand{\roadmapbox}[2]{%
-  \vspace{6pt}\noindent\colorbox{warn!10}{%
+  \par\vspace{5pt}\noindent\colorbox{warn!10}{%
     \parbox{\dimexpr\textwidth-2\fboxsep\relax}{%
-      \vspace{4pt}\textbf{\color{warn}#1:}\hspace{0.5em}#2\vspace{4pt}%
+      \vspace{4pt}\raggedright\textbf{\color{warn}#1:}\hspace{0.4em}#2\vspace{4pt}%
     }%
-  }\vspace{6pt}%
+  }\par\vspace{5pt}%
 }
 
-\lstdefinestyle{svstyle}{
-  backgroundcolor=\color{codebg},
-  basicstyle=\ttfamily\footnotesize,
-  breaklines=true,
-  frame=single,
-  rulecolor=\color{primary!25},
-  columns=fullflexible,
-  keepspaces=true,
-  showstringspaces=false
-}
-\lstset{style=svstyle}
+% Compact TOC spacing so the entire 10-chapter TOC fits on Page 2
+\setcounter{tocdepth}{2}
 
 \begin{document}
 
 % =============================================================================
-% TITLE PAGE
+% PAGE 1: TITLE PAGE
 % =============================================================================
 \begin{titlepage}
   \centering
-  \vspace*{1.5cm}
+  \vspace*{0.6cm}
   {\scshape\Large CCSDS Space Link \& Avionics Hardware Engineering Series\par}
-  \vspace{0.8cm}
-  \rule{\textwidth}{1.5pt}\\[0.4cm]
+  \vspace{0.5cm}
+  \rule{\textwidth}{1.5pt}\\[0.35cm]
   {\huge\bfseries\color{primary} Architecting a Universal CCSDS Spacecraft TT\&C and Ground EGSE Transceiver IP Core in SystemVerilog\par}
-  \vspace{0.4cm}
-  {\Large\color{accent} The Complete Technical Monograph: Vision, Mathematical Foundations, What Is Built Today (Stages 0--8), and What Remains for TRL-9 Flight Silicon\par}
-  \rule{\textwidth}{1.5pt}\\[1.2cm]
+  \vspace{0.35cm}
+  {\large\color{accent} The Complete Technical Monograph: Vision, Mathematical Foundations, What Is Built Today (Stages 0--8), and What Remains for TRL-9 Flight Silicon\par}
+  \vspace{0.25cm}
+  \rule{\textwidth}{1.5pt}\\[0.6cm]
 
-  \begin{tabularx}{0.92\textwidth}{lX}
+  \renewcommand{\arraystretch}{1.28}
+  \small
+  \begin{tabularx}{\textwidth}{L{0.26\textwidth} Y}
     \toprule
     \textbf{Target IP Core} & \texttt{ccsds\_sat\_ttc\_top} (IEEE 1800-2017 Synthesizable SystemVerilog) \\
-    \textbf{Release Baseline} & \texttt{v2.15.0} (Stages 0--8 Verified: 29 RTL Modules, 7 Testbenches, 78 Tracked Files) \\
+    \textbf{Release Baseline} & \texttt{v2.17.0} (Stages 0--8 Verified: 29 RTL Modules, 7 Testbenches, 81 Tracked Git Files) \\
     \textbf{Operating Personas} & \texttt{ROLE\_MODE = 0} (Spacecraft Flight Core), \texttt{ROLE\_MODE = 1} (Synthesizable Hardware Ground EGSE), \texttt{ROLE\_MODE = 2} (Universal Crosslink \& On-Orbit BIST) \\
     \textbf{CCSDS Standards} & 17 Blue/Orange Books (TM, TC, AOS, Proximity-1, USLP, COP-1, SDLS, BCH, RS, LDPC, Turbo, Conv/Viterbi, CUC OBT, Baseband RF PHY, T2B/T4B PN Ranging) \\
     \textbf{Target FPGAs} & AMD Kintex UltraScale (\texttt{XQRKU060} / \texttt{XCKU060}), Microchip \texttt{RTG4}, Microchip \texttt{PolarFire RT}, NanoXplore \texttt{NG-Large}, Zynq UltraScale+ RFSoC \\
-    \textbf{Current Maturity} & \textbf{TRL-4/5 Verified Lab \& FPGA Prototype} (100\% Vivado \texttt{xsim} \& 4-Pillar Regression Pass; $F_{\max} = 248.8\text{--}312.5\,\text{MHz}$ on Kintex UltraScale) \\
+    \textbf{Current Maturity} & \textbf{TRL-4/5 Verified Lab \& FPGA Prototype} (100\% Vivado \texttt{xsim} \& 4-Pillar Regression Pass; True $F_{\max} = 248.8\text{--}312.5\,\text{MHz}$ on Kintex UltraScale) \\
+    \textbf{Repository Layout} & \texttt{rtl/} (29 SV cores), \texttt{tb/} (7 testbenches), \texttt{egse\_model/} (Python oracle), \texttt{constraints/} (Kintex UltraScale XDC), \texttt{scripts/} (Audit, Co-Sim, VCD Matcher, Channel Sweep, Vivado STA), \texttt{reports/} (Plots \& JSON/CSV) \\
     \bottomrule
   \end{tabularx}
+  \normalsize
 
   \vfill
+  \takeaway{How to Read This Book}{Part~I (Sections 1--2) explains the architectural vision and dual-persona hardware reuse model. Part~II (Sections 3--7) documents every mathematical circuit, protocol framer, FEC codec, security interlock, and Kintex UltraScale timing result already built and verified in Stages 0--8. Part~III (Sections 8--10) provides an honest, module-by-module engineering roadmap of what remains to be built in Stages 9--12 to reach TRL-9 flight silicon.}
+  \vfill
   {\large \textbf{Prepared for Avionics Architects, FPGA Designers, and Verification Engineers}\par}
-  \vspace{0.3cm}
+  \vspace{0.15cm}
   {\normalsize October 2026\par}
 \end{titlepage}
 
+% =============================================================================
+% PAGE 2: SINGLE-PAGE TABLE OF CONTENTS
+% =============================================================================
+\begingroup
+\small
+\makeatletter
+\renewcommand\tableofcontents{%
+    \section*{\contentsname}%
+    \vspace{-6pt}%
+    \@starttoc{toc}%
+}
+\renewcommand*\l@part[2]{%
+  \ifnum \c@tocdepth >-2\relax
+    \addpenalty{-\@highpenalty}%
+    \addvspace{6pt \@plus 1pt}%
+    \setlength\@tempdima{3em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      {\leavevmode
+       \normalsize \bfseries \color{primary}#1\hfil
+       \hb@xt@\@pnumwidth{\hss #2}}\par
+       \nobreak
+         \global\@nobreaktrue
+         \everypar{\global\@nobreakfalse\everypar{}}%
+    \endgroup
+  \fi}
+\renewcommand*\l@section[2]{%
+  \ifnum \c@tocdepth >\z@
+    \addpenalty\@secpenalty
+    \addvspace{3.5pt \@plus 1pt}%
+    \setlength\@tempdima{1.5em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil
+      \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+    \endgroup
+  \fi}
+\makeatother
+\setlength{\parskip}{0pt}
+\renewcommand{\baselinestretch}{0.94}\selectfont
 \tableofcontents
+\endgroup
 \newpage
 
 % =============================================================================
-% EXECUTIVE SUMMARY MATRIX
+% PAGE 3: EXECUTIVE OVERVIEW + MASTER STATUS MATRIX ON ONE PAGE
 % =============================================================================
-\chapter*{Executive Overview: What We Are Building, What Is Built, and What Is Left}
-\addcontentsline{toc}{chapter}{Executive Overview: What We Are Building, What Is Built, and What Is Left}
+\section*{Executive Overview: What We Are Building, What Is Built, and What Is Left}
+\addcontentsline{toc}{section}{Executive Overview: What We Are Building, What Is Built, and What Is Left}
 
 Every spacecraft mission relies on its \textbf{Telemetry, Tracking, and Command (TT\&C)} radio link as its lifeline. When a satellite tumbles in safe mode, suffers a radiation Single-Event Upset (SEU) in the South Atlantic Anomaly, or executes an autonomous lunar rendezvous, the TT\&C hardware transceiver must demodulate noisy uplink waveforms, authenticate and decode emergency telecommands before the On-Board Computer (OBC) is even awake, measure two-way ranging delay to sub-meter precision, and stream error-corrected telemetry back to Earth without dropping a single symbol.
 
-This book documents the complete engineering story of \textbf{\texttt{CCSDS-SAT-TTC-IP} (\texttt{ccsds\_sat\_ttc\_top})}---an open, modular, radiation-tolerant SystemVerilog IP core designed to unify 17 Consultative Committee for Space Data Systems (CCSDS) Blue and Orange Book standards inside a single codebase. It is organized into three parts:
-\begin{enumerate}
-  \item \textbf{Part I (Chapters 1--2) --- What We Are Trying to Build:} The architectural vision, the Dual-Persona (\texttt{ROLE\_MODE = 0, 1, 2}) philosophy that shares 78.6\% of the RTL between the spacecraft and the ground station, the 4-clock-domain pipeline, and the three coupled transponder feedback loops.
-  \item \textbf{Part II (Chapters 3--7) --- What Is Already Built \& Verified (Stages 0--8):} A deep technical walkthrough of the 29 synthesizable/simulatable SystemVerilog modules, 7 self-checking testbenches, C++20/Python golden models, 27 real hardware bugs caught and fixed, and the Stage 8 Kintex UltraScale static timing and channel-sweep results.
-  \item \textbf{Part III (Chapters 8--10) --- What Is Left to Build (Stages 9--12 Roadmap):} An honest, engineering-grade gap analysis detailing the exact algorithmic expansions, autonomous Scatter-Gather DMA wrappers, RTEMS/cFS flight software drivers, vendor-specific rad-hard primitive mappings (\texttt{techmap}), and RF Hardware-in-the-Loop (HIL) qualification steps required to advance the core from \textbf{TRL-4/5} today to \textbf{TRL-9 flight silicon}.
+This monograph documents \textbf{\texttt{CCSDS-SAT-TTC-IP} (\texttt{ccsds\_sat\_ttc\_top})}---a modular, radiation-tolerant SystemVerilog IP core that unifies 17 CCSDS Blue and Orange Book standards inside a single codebase:
+\begin{enumerate}\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
+  \item \textbf{Part I (Sections 1--2) --- What We Are Trying to Build:} The Dual-Persona (\texttt{ROLE\_MODE = 0, 1, 2}) architecture sharing 78.6\% of the RTL between the spacecraft and the ground station, the 4-clock-domain pipeline, and the three coupled transponder feedback loops.
+  \item \textbf{Part II (Sections 3--7) --- What Is Already Built \& Verified (Stages 0--8):} The 29 synthesizable/simulatable SystemVerilog modules, 7 self-checking testbenches, C++20/Python golden models, 27 hardware bugs caught and fixed, and Stage 8 Kintex UltraScale timing and channel-sweep results.
+  \item \textbf{Part III (Sections 8--10) --- What Is Left to Build (Stages 9--12 Roadmap):} The exact algorithmic expansions, autonomous Scatter-Gather DMA wrappers, RTEMS/cFS flight software drivers, vendor-specific rad-hard primitive mappings (\texttt{techmap}), and RF Hardware-in-the-Loop (HIL) qualification steps required to advance from \textbf{TRL-4/5} today to \textbf{TRL-9 flight silicon}.
 \end{enumerate}
 
-\vspace{4pt}
-\begin{tabularx}{\textwidth}{l l X l}
+\vspace{2pt}
+\begingroup
+\footnotesize
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\textwidth}{L{0.21\textwidth} L{0.11\textwidth} Y L{0.28\textwidth}}
   \toprule
-  \textbf{Subsystem / Layer} & \textbf{Current Status} & \textbf{What Is Built Today (v2.15)} & \textbf{What Is Left for TRL-9} \\
+  \textbf{Subsystem Layer} & \textbf{Status} & \textbf{What Is Built Today (v2.17)} & \textbf{What Is Left for TRL-9} \\
   \midrule
-  \textbf{1. Multi-Protocol Framing (TM, TC, AOS, Prox-1, USLP)} & \textbf{100\% Built} & All 5 protocols, Cycle-0 \texttt{FHP}, 8B CUC \texttt{OBT}, $GF(2^4)$ \texttt{FHEC}, \texttt{0x55} fill stripping, CRC-16/32 & ESA/NASA SLE ground software bridge \& multi-VC QoS shaping \\
-  \textbf{2. Closed-Loop ARQ (\texttt{FARM-1}, \texttt{FOP-1}, \texttt{PLCW})} & \textbf{100\% Built} & 3x TMR \texttt{FARM-1}, Two-Phase SDLS commit, Type-BC rule, Ground \texttt{FOP-1} Go-Back-$N$ replay & Formal unbounded proof via JasperGold / SymbiYosys \\
+  \textbf{1. Multi-Protocol Framing (TM, TC, AOS, Prox-1, USLP)} & \textbf{100\% Built} & All 5 protocols, Cycle-0 \texttt{FHP}, 8B CUC \texttt{OBT}, $GF(2^4)$ \texttt{FHEC}, \texttt{0x55} fill strip, CRC-16/32 & ESA/NASA SLE ground software bridge \& multi-VC dynamic QoS shaping \\
+  \textbf{2. Closed-Loop ARQ (\texttt{FARM-1}, \texttt{FOP-1}, \texttt{PLCW})} & \textbf{100\% Built} & 3x TMR \texttt{FARM-1}, Two-Phase SDLS commit, Type-BC rule, Ground \texttt{FOP-1} Go-Back-$N$ replay & Unbounded formal property proof via JasperGold / SymbiYosys \\
   \textbf{3. Classic FEC ($\text{BCH}$, $\text{RS}$, Conv/Viterbi)} & \textbf{90\% Built} & Uplink $\text{BCH}(63,56)$ SEC-DED + CLTU enc; Downlink Dual-Basis $\text{RS}(255,223)$ enc ($I=1..8$); 64-state Viterbi & Full Berlekamp-Massey + Chien/Forney error correction in Ground EGSE $\text{RS}$ decoder \\
-  \textbf{4. Next-Gen FEC (Uplink Short-LDPC, AR4JA, Turbo)} & \textbf{75\% Built} & Working $(128,64)$ Min-Sum Short-LDPC decoder \& AR4JA/Turbo streaming encoder cores & Full $(512,256)$ \& $(8192,4096)$ CCSDS protograph ROM tables + 1-stage Min-Sum pipeline \\
-  \textbf{5. Inline Space Security (\texttt{SDLS} 355.0-B-2)} & \textbf{80\% Built} & SECDED SA RAM, anti-replay window, 1-byte lookahead MAC stripper, Two-Phase \texttt{FARM-1} interlock & Replace lightweight cipher core with full 14-round AES-256-GCM ($GF(2^{128})$ GHASH) \\
-  \textbf{6. Baseband RF PHY \& T2B/T4B PN Ranging} & \textbf{85\% Built} & Costas loop, Q32 $240/221$ \& $880/749$ turnaround NCO, 6-channel T2B/T4B PN correlator & Polyphase RRC matched filter \& fractional Gardner symbol timing recovery loop \\
+  \textbf{4. Next-Gen FEC (Short-LDPC, AR4JA, Turbo)} & \textbf{75\% Built} & Working $(128,64)$ Min-Sum Short-LDPC decoder \& AR4JA/Turbo streaming encoder cores & Full $(512,256)$ \& $(8192,4096)$ CCSDS protograph ROMs + 1-stage Min-Sum pipeline \\
+  \textbf{5. Inline Security (\texttt{SDLS} 355.0-B-2)} & \textbf{80\% Built} & Hsiao SECDED SA RAM, anti-replay window, 1B lookahead tag stripper, Two-Phase \texttt{FARM-1} interlock & Replace lightweight cipher core with full 14-round AES-256-GCM ($GF(2^{128})$ GHASH) \\
+  \textbf{6. Baseband RF PHY \& PN Ranging} & \textbf{85\% Built} & Costas loop, Q32 $240/221$ \& $880/749$ turnaround NCO, 6-channel T2B/T4B PN correlator & Polyphase RRC matched filter \& fractional Gardner symbol timing recovery loop \\
   \textbf{7. SoC Bus, DMA \& Flight Software BSP} & \textbf{60\% Built} & TMR \texttt{AXI4-Lite} CSR, 48b CUC \texttt{OBT}, EDAC counters, \texttt{AXI4-Stream} packet ports & Autonomous Scatter-Gather DMA master + RTEMS / FreeRTOS / NASA cFS C drivers \\
-  \textbf{8. FPGA Synthesis, \texttt{techmap} \& RF FlatSat} & \textbf{70\% Built} & Kintex UltraScale OOC synthesis \& True-$F_{\max}$ ($248.8\text{--}312.5\,\text{MHz}$), GitHub Actions CI & Vendor \texttt{techmap} wrappers (RTG4, PolarFire, XQRKU060 SEM) \& live RFSoC HIL test \\
+  \textbf{8. FPGA Synthesis, \texttt{techmap} \& RF HIL} & \textbf{70\% Built} & Kintex UltraScale OOC synthesis \& True-$F_{\max}$ ($248.8\text{--}312.5\,\text{MHz}$), GitHub Actions CI & Vendor \texttt{techmap} wrappers (RTG4, PolarFire, XQRKU060 SEM) \& live RFSoC HIL test \\
   \bottomrule
 \end{tabularx}
+\endgroup
+\newpage
 
 % =============================================================================
 % PART I: WHAT WE ARE TRYING TO BUILD
 % =============================================================================
-\part{The Architectural Vision: What We Are Trying to Build}
+\partbanner{Part I}{The Architectural Vision --- What We Are Trying to Build}
 
-\chapter{The Spacecraft TT\&C Problem and the Dual-Persona Philosophy}
+\section{The Spacecraft TT\&C Problem and the Dual-Persona Philosophy}
 
-\section{Why Spacecraft TT\&C Hardware Is Uniquely Challenging}
+\subsection{Why Spacecraft TT\&C Hardware Is Uniquely Challenging}
 Unlike terrestrial Ethernet or Wi-Fi controllers that operate over high-SNR channels with abundant CPU oversight, a spacecraft Telemetry, Tracking, and Command (TT\&C) transceiver must satisfy four simultaneous, competing constraints:
-\begin{enumerate}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{Survival Without an Operating System:} When a spacecraft computer suffers a software crash or watchdog timeout, the uplink telecommand chain must still demodulate the carrier, lock onto the Command Link Transmission Unit (\texttt{CLTU}), correct bit errors via $\text{BCH}(63,56)$, verify cryptographic authenticity, and fire a direct hardware reset pulse (\texttt{obc\_hard\_reset\_pulse}) from an independent crystal oscillator (\texttt{clk\_tc\_safe}) without any software intervention.
   \item \textbf{Multi-Standard Protocol Evolution:} Legacy LEO/GEO buses use classic Telecommand (\texttt{TC}, CCSDS 232.0-B-4) and Telemetry (\texttt{TM}, CCSDS 132.0-B-3); high-rate Earth observation payloads use Advanced Orbiting Systems (\texttt{AOS}, CCSDS 732.0-B-4); Mars/Lunar landers and orbital relays use \texttt{Proximity-1} (CCSDS 211.0-B-6); and modern international missions mandate the Unified Space Data Link Protocol (\texttt{USLP}, CCSDS 732.1-B-3). Maintaining five separate FPGA IP cores creates massive verification and flight-qualification overhead.
-  \item \textbf{Zero-Trust Cryptographic Atomicity:} Classic [CCSDS 232.1-B-2 COP-1](https://ccsds.org/Pubs/232x1b2e2c1.pdf) Frame Acceptance and Reporting Mechanism (\texttt{FARM-1}) state machines were designed in the 1980s before Space Data Link Security (\texttt{SDLS}, CCSDS 355.0-B-2) existed. If a receiver updates its sequence number $V(R)$ upon passing the 16-bit CRC-16 check \emph{before} checking the SDLS cryptographic Message Authentication Code (MAC), an adversary with a directional antenna can transmit a single spoofed frame with a valid CRC-16 and permanently desynchronize or lock out the spacecraft command link.
+  \item \textbf{Zero-Trust Cryptographic Atomicity:} Classic \href{https://ccsds.org/Pubs/232x1b2e2c1.pdf}{CCSDS 232.1-B-2 COP-1} Frame Acceptance and Reporting Mechanism (\texttt{FARM-1}) state machines were designed in the 1980s before Space Data Link Security (\texttt{SDLS}, CCSDS 355.0-B-2) existed. If a receiver updates its sequence number $V(R)$ upon passing the 16-bit CRC-16 check \emph{before} checking the SDLS cryptographic Message Authentication Code (MAC), an adversary with a directional antenna can transmit a single spoofed frame with a valid CRC-16 and permanently desynchronize or lock out the spacecraft command link.
   \item \textbf{The Flight-vs.-Ground Asymmetry Problem:} In traditional space programs, the spacecraft flight FPGA team writes a transmit-only telemetry encoder and a receive-only telecommand decoder, while the Ground Electrical Support Equipment (EGSE) team buys proprietary third-party rack equipment or writes separate software to test the satellite. Whenever a subtle bit-ordering or polynomial interpretation differs between the two teams, integration stalls at the FlatSat stage.
 \end{enumerate}
 
-\section{The Dual-Persona Solution: \texttt{ROLE\_MODE = 0, 1, 2}}
+\subsection{The Dual-Persona Solution: \texorpdfstring{\texttt{ROLE\_MODE = 0, 1, 2}}{ROLE\_MODE = 0, 1, 2}}
 Our core architectural innovation in \texttt{ccsds\_sat\_ttc\_top} is to design the entire transceiver around a single compile-time SystemVerilog parameter, \texttt{ROLE\_MODE}, that reuses \textbf{78.6\% of the synthesizable RTL modules} across both ends of the space link while stripping non-flight logic from the spacecraft netlist:
 
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{2pt}
   \item \textbf{\texttt{ROLE\_MODE = 0} (\texttt{ROLE\_SPACECRAFT\_FLIGHT} --- 23 Synthesizable Modules):} Synthesizes the 17 shared core modules plus the 6 spacecraft-specific endpoint modules (uplink $\text{BCH}(63,56)$ SEC-DED decoder, uplink Short-LDPC $(128,64)/(512,256)$ iterative decoder, 3x TMR \texttt{FARM-1} responder, 3x TMR Emergency \texttt{HCPD} decoder, downlink $\text{RS}(255,223)$ dual-basis encoder, and downlink AR4JA/Turbo encoder). All heavy ground-side blocks (such as the $\text{RS}(255,223)$ syndrome decoder and \texttt{FOP-1} retransmission queues) are completely stripped by SystemVerilog \texttt{generate} blocks, keeping the flight footprint under \textbf{2.91\% of a Kintex UltraScale \texttt{XQRKU060}}.
   \item \textbf{\texttt{ROLE\_MODE = 1} (\texttt{ROLE\_GROUND\_EGSE} --- 22 Synthesizable Modules):} Synthesizes the exact same 17 shared core modules plus the 5 ground-station endpoint modules (\texttt{FOP-1} initiator engine, TC Transfer Frame builder, $\text{BCH}(63,56)$ + \texttt{CLTU} encoder with automatic \texttt{0x55} fill padding, TM/AOS deframer with CRC-gated \texttt{CLCW} extraction, and dual-basis $\text{RS}(255,223)$ decoder).
   \item \textbf{\texttt{ROLE\_MODE = 2} (\texttt{ROLE\_UNIVERSAL\_SYM} --- All 28 Synthesizable Modules):} Instantiates both flight and ground endpoints simultaneously. This enables symmetric spacecraft-to-spacecraft crosslinks (Proximity-1 and USLP) as well as autonomous \textbf{On-Orbit Built-In Self-Test (BIST)}, allowing a satellite in orbit to loop its own hardware EGSE transmitter through its flight receiver to diagnose RF/modem health without requiring ground station contact.
@@ -158,16 +229,18 @@ Our core architectural innovation in \texttt{ccsds\_sat\_ttc\_top} is to design 
 \takeaway{Architectural Key Takeaway}{By sharing 17 out of 23 modules between \texttt{ROLE\_MODE = 0} (Spacecraft Flight) and \texttt{ROLE\_MODE = 1} (Hardware Ground EGSE), every polynomial, header bit-packing struct, LFSR tap mask, and SDLS security header is guaranteed by construction to be bit-compatible between the satellite and the ground station.}
 
 % =============================================================================
-% CHAPTER 2: MULTI-CLOCK ARCHITECTURE & 3 TRANSPONDER LOOPS
+% SECTION 2: MULTI-CLOCK ARCHITECTURE & 3 TRANSPONDER LOOPS
 % =============================================================================
-\chapter{Multi-Clock Signal Flow and the Three Closed Transponder Loops}
+\section{Multi-Clock Signal Flow and the Three Closed Transponder Loops}
 
-\section{The Four Hardware Clock Domains and Why They Are Separated}
+\subsection{The Four Hardware Clock Domains and Why They Are Separated}
 A flight-grade spacecraft transponder cannot run on a single monolithic clock. In \texttt{ccsds\_sat\_ttc\_top}, the datapath is partitioned across four functionally isolated clock domains with deterministic Clock Domain Crossing (CDC) bridges:
 
-\begin{table}[h!]
-\centering
-\begin{tabularx}{\textwidth}{l l l X}
+\vspace{3pt}
+\begingroup
+\footnotesize
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\textwidth}{L{0.15\textwidth} L{0.14\textwidth} L{0.16\textwidth} Y}
   \toprule
   \textbf{Clock Port} & \textbf{Nominal Freq} & \textbf{Kintex True $F_{\max}$} & \textbf{Architectural Purpose \& Isolation Rationale} \\
   \midrule
@@ -177,89 +250,86 @@ A flight-grade spacecraft transponder cannot run on a single monolithic clock. I
   \texttt{clk\_tx\_sym} & $50.0\,\text{MHz}$ & \textbf{$312.5\,\text{MHz}$} & Downlink symbol-rate clock. Driven via a High-Watermark Pre-Fill asynchronous ECC FIFO so the downlink convolutional encoder and RF modulator never suffer a single-cycle symbol underflow bubble. \\
   \bottomrule
 \end{tabularx}
-\caption{The four hardware clock domains in \texttt{ccsds\_sat\_ttc\_top} and their measured Kintex UltraScale maximum frequencies.}
-\end{table}
+\endgroup
+\vspace{3pt}
 
-\section{The Three Coupled Closed-Loop Transponder Mechanisms}
-A deep-space or LEO regenerative transponder is more than a one-way modem; it closes three real-time feedback loops between the uplink receiver and the downlink transmitter:
+\subsection{The Three Coupled Closed-Loop Transponder Mechanisms}
+A deep-space or LEO regenerative transponder closes three real-time feedback loops between the uplink receiver and the downlink transmitter:
 
-\subsection{Loop \#1: The COP-1 (\texttt{FOP-1} $\leftrightarrow$ \texttt{FARM-1}) Command ARQ Loop}
-Every uplink Type-AD sequence-controlled telecommand frame carries an 8-bit sliding-window sequence number $N(S)$. Inside the spacecraft (\texttt{clk\_tc\_safe}), \texttt{ccsds\_farm1\_tmr.sv} compares $N(S)$ against the triplicated receiver state $V(R)$ and formats a 32-bit \textbf{Communications Link Control Word (\texttt{CLCW})}. Because the downlink telemetry framer (\texttt{ccsds\_tm\_aos\_uslp\_framer.sv}) runs in \texttt{clk\_sys} (100 MHz), the 32-bit \texttt{CLCW} crosses from \texttt{clk\_tc\_safe} to \texttt{clk\_sys} via an atomic 4-phase Request/Acknowledge CDC handshake (\texttt{clcw\_req\_tgl} / \texttt{clcw\_ack\_tgl}), ensuring a torn 32-bit word is never transmitted in the downlink Operational Control Field (\texttt{OCF}). On the ground (\texttt{ROLE\_MODE = 1}), \texttt{ccsds\_tm\_aos\_deframer.sv} extracts the \texttt{CLCW} (strictly gated on the downlink frame passing CRC-16) and feeds it to \texttt{ccsds\_fop1\_engine.sv}, which automatically rolls $V(S)$ back to $NN(R)$ and replays dropped commands whenever \texttt{CLCW.Retransmit\_Flag == 1}.
-
-\subsection{Loop \#2: The Wideband Regenerative T2B/T4B PN Ranging Loop}
-Per [CCSDS 414.1-B-3](https://ccsds.org/Pubs/414x1b3e1.pdf), ground stations measure spacecraft distance by transmitting a composite Pseudo-Noise (PN) ranging sequence of period $L = 2 \times 7 \times 11 \times 15 \times 19 \times 23 = 1,009,470$ chips formed by weighted voting of six component sequences $C_1..C_6$:
-\begin{align}
-  \text{T4B}(t) &= \operatorname{sgn}\!\big(4 C_1(t) + C_2(t) + C_3(t) + C_4(t) + C_5(t) + C_6(t)\big) \\
-  \text{T2B}(t) &= \operatorname{sgn}\!\big(2 C_1(t) + C_2(t) + C_3(t) + C_4(t) + C_5(t) + C_6(t)\big)
-\end{align}
-Crucially, our architecture taps the wideband Costas phase error in \texttt{clk\_adc\_iq} \emph{before} the narrowband telecommand subcarrier filter (preventing the $1\text{--}4\,\text{Mcps}$ ranging chips from being destroyed by narrowband filtering). Once all six parallel correlators lock in \texttt{ccsds\_pn\_ranging.sv}, the spacecraft regenerates a noise-free replica of the composite PN ranging code onto the downlink quadrature channel, gaining $> 25\,\text{dB}$ of ranging SNR over traditional analog bent-pipe transponders.
-
-\subsection{Loop \#3: The Coherent Carrier Turnaround Ratio Loop ($240/221$ \& $880/749$)}
-To allow the ground station to measure two-way radial velocity (Doppler range-rate) per [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf), the spacecraft downlink carrier frequency must be phase-locked to the received uplink carrier by an exact rational turnaround ratio:
-\begin{equation}
-  f_{\text{downlink}} = \frac{240}{221}\,f_{\text{uplink}} \quad (\text{S-Band}), \qquad
-  f_{\text{downlink}} = \frac{880}{749}\,f_{\text{uplink}} \quad (\text{X-Band})
-\end{equation}
-Rather than using a 64-bit combinational integer divider (which would create a $>40\,\text{ns}$ timing violation in the $120\,\text{MHz}$ \texttt{clk\_adc\_iq} domain), \texttt{ccsds\_phy\_modem.sv} multiplies the tracked uplink NCO Frequency Control Word (\texttt{FCW}) by a pre-computed Q32 fixed-point reciprocal constant inside a single \texttt{DSP48E2} slice:
-\begin{equation}
-  \text{FCW}_{\text{tx}} = \left(\text{FCW}_{\text{rx}} \times \texttt{64'h0000\_0001\_1602\_5117}\right) \gg 32 \quad (\text{S-Band } 240/221)
-\end{equation}
+\begin{enumerate}\setlength{\itemsep}{3pt}
+  \item \textbf{Loop \#1 --- The COP-1 (\texttt{FOP-1} $\leftrightarrow$ \texttt{FARM-1}) Command ARQ Loop:} Every uplink Type-AD sequence-controlled telecommand frame carries an 8-bit sliding-window sequence number $N(S)$. Inside the spacecraft (\texttt{clk\_tc\_safe}), \texttt{ccsds\_farm1\_tmr.sv} compares $N(S)$ against the triplicated receiver state $V(R)$ and formats a 32-bit \textbf{Communications Link Control Word (\texttt{CLCW})}. Because the downlink telemetry framer (\texttt{ccsds\_tm\_aos\_uslp\_framer.sv}) runs in \texttt{clk\_sys} (100 MHz), the 32-bit \texttt{CLCW} crosses from \texttt{clk\_tc\_safe} to \texttt{clk\_sys} via an atomic 4-phase Request/Acknowledge CDC handshake (\texttt{clcw\_req\_tgl} / \texttt{clcw\_ack\_tgl}), ensuring a torn 32-bit word is never transmitted in the downlink Operational Control Field (\texttt{OCF}). On the ground (\texttt{ROLE\_MODE = 1}), \texttt{ccsds\_tm\_aos\_deframer.sv} extracts the \texttt{CLCW} (strictly gated on the downlink frame passing CRC-16) and feeds it to \texttt{ccsds\_fop1\_engine.sv}, which automatically rolls $V(S)$ back to $NN(R)$ and replays dropped commands whenever \texttt{CLCW.Retransmit\_Flag == 1}.
+  \item \textbf{Loop \#2 --- The Wideband Regenerative T2B/T4B PN Ranging Loop:} Per \href{https://ccsds.org/Pubs/414x1b3e1.pdf}{CCSDS 414.1-B-3}, ground stations measure spacecraft distance by transmitting a composite Pseudo-Noise (PN) ranging sequence of period $L = 2 \times 7 \times 11 \times 15 \times 19 \times 23 = 1,009,470$ chips formed by weighted voting of six component sequences $C_1..C_6$:
+  \begin{align}
+    \text{T4B}(t) &= \operatorname{sgn}\!\big(4 C_1(t) + C_2(t) + C_3(t) + C_4(t) + C_5(t) + C_6(t)\big) \\
+    \text{T2B}(t) &= \operatorname{sgn}\!\big(2 C_1(t) + C_2(t) + C_3(t) + C_4(t) + C_5(t) + C_6(t)\big)
+  \end{align}
+  Crucially, our architecture taps the wideband Costas phase error in \texttt{clk\_adc\_iq} \emph{before} the narrowband telecommand subcarrier filter. Once all six parallel correlators lock in \texttt{ccsds\_pn\_ranging.sv}, the spacecraft regenerates a noise-free replica of the composite PN ranging code onto the downlink quadrature channel, gaining $> 25\,\text{dB}$ of ranging SNR over analog bent-pipe transponders.
+  \item \textbf{Loop \#3 --- The Coherent Carrier Turnaround Ratio Loop ($240/221$ \& $880/749$):} To allow the ground station to measure two-way radial velocity (Doppler range-rate) per \href{https://ccsds.org/Pubs/401x0b32.pdf}{CCSDS 401.0-B-32}, the spacecraft downlink carrier frequency must be phase-locked to the received uplink carrier by an exact rational turnaround ratio ($240/221$ for S-Band, $880/749$ for X-Band). Rather than using a 64-bit combinational integer divider (which would create a $>40\,\text{ns}$ timing violation in the $120\,\text{MHz}$ \texttt{clk\_adc\_iq} domain), \texttt{ccsds\_phy\_modem.sv} multiplies the tracked uplink NCO Frequency Control Word (\texttt{FCW}) by a pre-computed Q32 fixed-point reciprocal constant inside a single \texttt{DSP48E2} slice:
+  \begin{equation}
+    \text{FCW}_{\text{tx}} = \left(\text{FCW}_{\text{rx}} \times \texttt{64'h0000\_0001\_1602\_5117}\right) \gg 32
+  \end{equation}
+\end{enumerate}
 
 % =============================================================================
 % PART II: WHAT IS BUILT & VERIFIED TODAY (STAGES 0-8)
 % =============================================================================
-\part{What Is Built and Verified Today (Stages 0--8, Release v2.15)}
+\partbanner{Part II}{What Is Built and Verified Today (Stages 0--8, Release v2.17)}
 
-\chapter{Mathematical Primitives, Dual-Basis Galois Fields, and Swipe-Proof ECC FIFOs}
+\section{Mathematical Primitives, Dual-Basis Galois Fields, and Swipe-Proof ECC FIFOs}
 
-\section{Master SystemVerilog Package (\texttt{rtl/ccsds\_pkg.sv})}
+\subsection{Master SystemVerilog Package (\texorpdfstring{\texttt{rtl/ccsds\_pkg.sv}}{rtl/ccsds\_pkg.sv})}
 All 29 RTL modules share \texttt{ccsds\_pkg.sv}, which defines 12 bit-exact IEEE 1800-2017 \texttt{typedef struct packed} headers (verified by \texttt{sv\_rtl\_audit.py} Rule \#1 to match their exact CCSDS Blue Book bit widths: Space Packet $= 48\,\text{b}$, TC Primary $= 40\,\text{b}$, TC Segment $= 8\,\text{b}$, TM Primary $= 48\,\text{b}$, AOS Primary $= 48\,\text{b}$, Proximity-1 Primary $= 40\,\text{b}$, USLP Truncated $= 32\,\text{b}$, USLP Extended $= 24\,\text{b}$, USLP TFDFH $= 24\,\text{b}$, \texttt{CLCW} $= 32\,\text{b}$, \texttt{PLCW} $= 32\,\text{b}$, and \texttt{ccsds\_tuser\_t} $= 64\,\text{b}$).
 
-\section{Universal CRC-16/32 and Pseudo-Randomizers}
-\begin{itemize}
+\subsection{Universal CRC-16/32 and Pseudo-Randomizers}
+\begin{itemize}\setlength{\itemsep}{2pt}
   \item \textbf{Universal CRC Engine (\texttt{rtl/ccsds\_crc\_universal.sv}):} Implements both the 16-bit FECF polynomial $G_{16}(x) = x^{16} + x^{12} + x^5 + 1$ (\texttt{16'h1021}, seed \texttt{16'hFFFF}, yielding \texttt{0x29B1} on \texttt{"123456789"}) and the 32-bit Proximity-1 / USLP polynomial $G_{32}(x) = x^{32} + x^{23} + x^{21} + x^{11} + x^2 + 1$ (\texttt{32'h00A0\_0805}, seed \texttt{32'hFFFF\_FFFF}) with sparse \texttt{tkeep} support.
   \item \textbf{Dual-Mode LFSR Scrambler (\texttt{rtl/ccsds\_lfsr\_scrambler.sv}):} Implements both the Downlink TM/AOS/USLP randomizer $h_{TM}(x) = x^8 + x^7 + x^5 + x^3 + 1$ (right-shift tap mask \texttt{8'hA9}, producing the golden sequence \texttt{FF 48 0E C0 9A 0D 70 BC...}) and the Uplink TC de-randomizer $h_{TC}(x) = x^8 + x^6 + x^4 + x^3 + x^2 + x + 1$ (tap mask \texttt{8'h5F}, producing \texttt{FF 39 9E 5A 68 E9 06 F5...}).
 \end{itemize}
 
-\section{Dual-Basis $GF(2^8)$ Algebra and AOS $GF(2^4)$ FHEC (\texttt{rtl/ccsds\_gf256\_math.sv})}
-Per [CCSDS 131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf) Annex B, downlink Reed-Solomon $\text{RS}(255,223)$ symbols are transmitted over the air in \textbf{Berlekamp dual-basis representation} $[z_0, z_1, \dots, z_7]$, whereas finite-field multiplication modulo $F(x) = x^8 + x^7 + x^2 + x + 1$ (\texttt{0x187}) is simplest in the standard polynomial basis $[\alpha^7, \alpha^6, \dots, \alpha^0]$. In Stage 1, we derived and proved via exhaustive $256 \times 256$ C++20 co-simulation the exact linear bijection matrices $T_\alpha$ and $T_\alpha^{-1}$:
+\subsection{Dual-Basis \texorpdfstring{$GF(2^8)$}{GF(256)} Algebra and AOS \texorpdfstring{$GF(2^4)$}{GF(16)} FHEC (\texorpdfstring{\texttt{rtl/ccsds\_gf256\_math.sv}}{rtl/ccsds\_gf256\_math.sv})}
+Per \href{https://ccsds.org/Pubs/131x0b5.pdf}{CCSDS 131.0-B-5} Annex B, downlink Reed-Solomon $\text{RS}(255,223)$ symbols are transmitted over the air in \textbf{Berlekamp dual-basis representation} $[z_0, z_1, \dots, z_7]$, whereas finite-field multiplication modulo $F(x) = x^8 + x^7 + x^2 + x + 1$ (\texttt{0x187}) is simplest in the standard polynomial basis $[\alpha^7, \alpha^6, \dots, \alpha^0]$. In Stage 1, we derived and proved via exhaustive $256 \times 256$ C++20 co-simulation the exact linear bijection matrices $T_\alpha$ and $T_\alpha^{-1}$:
 \begin{equation}
-  \texttt{RS\_T\_STD\_TO\_DUAL} = \{\texttt{0xFE, 0x69, 0x6B, 0x0D, 0xEF, 0xF2, 0x5B, 0xC7}\}, \quad
-  \alpha^0 \mapsto \texttt{0x7B}, \;\; \alpha^7 \mapsto \texttt{0x8D}
+\begin{aligned}
+  \texttt{RS\_T\_STD\_TO\_DUAL} &= \{\texttt{0xFE, 0x69, 0x6B, 0x0D, 0xEF, 0xF2, 0x5B, 0xC7}\}, \\
+  \alpha^0 &\mapsto \texttt{0x7B}, \qquad \alpha^7 \mapsto \texttt{0x8D}
+\end{aligned}
 \end{equation}
-The same module also implements the [CCSDS 732.0-B-4](https://ccsds.org/Pubs/732x0b4.pdf) AOS 16-bit \textbf{Frame Header Error Control (\texttt{FHEC})} using a shortened $\text{RS}(10,6)$ code over $GF(2^4)$ modulo $p(x)=x^4+x+1$ (\texttt{0x13}) with generator polynomial:
+The same module also implements the \href{https://ccsds.org/Pubs/732x0b4.pdf}{CCSDS 732.0-B-4} AOS 16-bit \textbf{Frame Header Error Control (\texttt{FHEC})} using a shortened $\text{RS}(10,6)$ code over $GF(2^4)$ modulo $p(x)=x^4+x+1$ (\texttt{0x13}) with generator polynomial:
 \begin{equation}
-  g_{\text{FHEC}}(x) = \prod_{j=6}^{9}(x + \alpha^j) = x^4 + \alpha^3 x^3 + \alpha^1 x^2 + \alpha^3 x + 1 \implies (g_3, g_2, g_1, g_0) = (\texttt{4'h8, 4'h2, 4'h8, 4'h1})
+\begin{aligned}
+  g_{\text{FHEC}}(x) &= \prod_{j=6}^{9}(x + \alpha^j) = x^4 + \alpha^3 x^3 + \alpha^1 x^2 + \alpha^3 x + 1 \\
+  \implies (g_3, g_2, g_1, g_0) &= (\texttt{4'h8, 4'h2, 4'h8, 4'h1})
+\end{aligned}
 \end{equation}
 This corrects any single 4-bit nibble error and detects any two nibble errors in the 24-bit AOS header.
 
-\section{Hsiao $(39,32)$ SECDED \& Swipe-Proof Per-Frame Rollback FIFO (\texttt{rtl/ccsds\_cdc\_fifo\_ecc.sv})}
+\subsection{Hsiao \texorpdfstring{$(39,32)$}{(39,32)} SECDED \& Swipe-Proof Per-Frame Rollback FIFO (\texorpdfstring{\texttt{rtl/ccsds\_cdc\_fifo\_ecc.sv}}{rtl/ccsds\_cdc\_fifo\_ecc.sv})}
 Every word stored in our asynchronous CDC FIFOs and SDLS Security Association RAM is encoded with a 39-bit \textbf{Hsiao $(39,32)$ Single-Error-Correcting, Double-Error-Detecting (SECDED)} code using odd-weight parity masks (\texttt{32'h56AA\_AD5B}, \texttt{32'h9B33\_366D}, \texttt{32'hE3C3\_C78E}, \texttt{32'h03FC\_07F0}, \texttt{32'h03FF\_F800}, \texttt{32'hFC00\_0000}).
 
 Furthermore, to prevent unauthenticated or CRC-corrupted uplink telecommand bytes from ever leaking across the CDC boundary into \texttt{clk\_sys}, \texttt{ccsds\_cdc\_fifo\_ecc.sv} implements a \textbf{Swipe-Proof Per-Frame Commit/Rollback Pointer (\texttt{frame\_end\_ptr\_q})} (\texttt{SVA-FIFO-3}). When Frame $N$ finishes streaming into the FIFO, \texttt{frame\_end\_ptr\_q} snapshots the exact write pointer at the end of Frame $N$. Even if Frame $N+1$ begins arriving in the same CLTU while Frame $N$ is still undergoing SDLS MAC verification, a commit pulse advances the visible read boundary strictly to \texttt{frame\_end\_ptr\_q}, while a rollback pulse rewinds the write pointer without corrupting previously committed frames.
 
 % =============================================================================
-% CHAPTER 4: THE 5 SPACE DATA LINK PROTOCOLS & VIRTUAL CHANNELS
+% SECTION 4: THE 5 SPACE DATA LINK PROTOCOLS & VIRTUAL CHANNELS
 % =============================================================================
-\chapter{Five Unified Space Data Link Protocols and Virtual Channel Multiplexing}
+\section{Five Unified Space Data Link Protocols and Virtual Channel Multiplexing}
 
-\section{Cycle-0 Closed-Form \texttt{First\_Hdr\_Ptr} Calculation (\texttt{rtl/ccsds\_vc\_arbiter\_mux.sv})}
-In [CCSDS 132.0-B-3 TM](https://ccsds.org/Pubs/132x0b3.pdf) and [732.0-B-4 AOS](https://ccsds.org/Pubs/732x0b4.pdf), the 11-bit \texttt{First\_Hdr\_Ptr} (\texttt{FHP}) in the Transfer Frame Primary Header must indicate the byte offset of the first Space Packet header that starts inside the frame's Data Field (\texttt{TFDF})---meaning the framer must know \texttt{FHP} on \textbf{Cycle 0} before the payload bytes are even shifted out!
+\subsection{Cycle-0 Closed-Form \texorpdfstring{\texttt{First\_Hdr\_Ptr}}{First\_Hdr\_Ptr} Calculation (\texorpdfstring{\texttt{rtl/ccsds\_vc\_arbiter\_mux.sv}}{rtl/ccsds\_vc\_arbiter\_mux.sv})}
+In \href{https://ccsds.org/Pubs/132x0b3.pdf}{CCSDS 132.0-B-3 TM} and \href{https://ccsds.org/Pubs/732x0b4.pdf}{732.0-B-4 AOS}, the 11-bit \texttt{First\_Hdr\_Ptr} (\texttt{FHP}) in the Transfer Frame Primary Header must indicate the byte offset of the first Space Packet header that starts inside the frame's Data Field (\texttt{TFDF})---meaning the framer must know \texttt{FHP} on \textbf{Cycle 0} before the payload bytes are even shifted out!
 
 In Stage 3 (Bug \#7), we solved this without adding a frame-delay buffer by computing \texttt{FHP} in closed form on Cycle 0 inside \texttt{ccsds\_vc\_arbiter\_mux.sv}:
 \begin{equation}
   \texttt{FHP}_{\text{cycle0}} = \begin{cases}
     \texttt{11'h7FE} & \text{if Only-Idle-Data (OID) frame is selected}, \\
-    \texttt{11'h000} & \text{if } \texttt{rem\_in\_cur\_pkt\_q} == 0 \text{ (new Space Packet starts at Byte 0)}, \\
+    \texttt{11'h000} & \text{if } \texttt{rem\_in\_cur\_pkt\_q} == 0 \text{ (new Packet at Byte 0)}, \\
     \texttt{rem\_in\_cur\_pkt\_q} & \text{if } 0 < \texttt{rem\_in\_cur\_pkt\_q} < \text{TFDF\_Byte\_Len}, \\
-    \texttt{11'h7FF} & \text{if current Space Packet spills across the entire frame}.
+    \texttt{11'h7FF} & \text{if current Space Packet spills across frame}.
   \end{cases}
 \end{equation}
 The arbiter also validates the 16-bit Space Packet length field ($C = \text{Total Octets} - 1$) at ingress without mutating the header, while \texttt{ccsds\_pkt\_reassembler.sv} strips Idle Space Packets (\texttt{APID == 11'h7FF}) on the receive side.
 
-\section{Unified Multi-Protocol Framers and Deframers}
+\subsection{Unified Multi-Protocol Framers and Deframers}
 Four synthesizable framing modules (\texttt{ccsds\_tc\_uslp\_deframer.sv}, \texttt{ccsds\_tm\_aos\_uslp\_framer.sv}, \texttt{ccsds\_tc\_cltu\_framer.sv}, and \texttt{ccsds\_tm\_aos\_deframer.sv}) implement all five CCSDS Space Data Link protocols:
-\begin{enumerate}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{TC (CCSDS 232.0-B-4):} Parses/generates the 40-bit Primary Header and optional 8-bit Segment Header (\texttt{Seq\_Flags[1:0]}, \texttt{MAP\_ID[5:0]}), processes multi-frame CLTUs, and strips trailing \texttt{0x55} fill octets using the exact header \texttt{Frame\_Length} field prior to checking the 16-bit CRC-16 FECF.
   \item \textbf{TM (CCSDS 132.0-B-3) + CUC On-Board Time (CCSDS 301.0-B-4):} Emits the 48-bit Primary Header, stamps an optional 8-byte Secondary Header containing the 48-bit CCSDS Unsegmented Time Code (\texttt{OBT}: 32-bit coarse seconds + 16-bit fine sub-seconds, $15.26\,\mu\text{s}$ resolution, P-Field \texttt{8'h2E}), appends the atomic 32-bit \texttt{CLCW} OCF, and appends CRC-16.
   \item \textbf{AOS (CCSDS 732.0-B-4):} Emits/parses the 64-bit AOS Primary Header with inline $GF(2^4)$ \texttt{FHEC} SEC-DED protection over the 24-bit \texttt{prot24} header slice (\texttt{\{TFVN, SCID, VCID, Replay, Usage, Rsvd, Cycle\}}).
@@ -268,43 +338,43 @@ Four synthesizable framing modules (\texttt{ccsds\_tc\_uslp\_deframer.sv}, \text
 \end{enumerate}
 
 % =============================================================================
-% CHAPTER 5: SYNCHRONIZATION & FORWARD ERROR CORRECTION
+% SECTION 5: SYNCHRONIZATION & FORWARD ERROR CORRECTION
 % =============================================================================
-\chapter{Synchronization and Forward Error Correction (Classic and Next-Generation)}
+\section{Synchronization and Forward Error Correction (Classic and Next-Generation)}
 
-\section{Soft-LLR $0^\circ / 180^\circ$ ASM Correlator (\texttt{rtl/ccsds\_asm\_correlator.sv})}
+\subsection{Soft-LLR \texorpdfstring{$0^\circ / 180^\circ$}{0/180-Degree} ASM Correlator (\texorpdfstring{\texttt{rtl/ccsds\_asm\_correlator.sv}}{rtl/ccsds\_asm\_correlator.sv})}
 Because BPSK Costas loops exhibit a $180^\circ$ phase ambiguity, the received symbol stream may be inverted. \texttt{ccsds\_asm\_correlator.sv} correlates incoming 4-bit signed Log-Likelihood Ratios (LLRs) simultaneously against both the true Attached Sync Marker (ASM) and its bitwise complement for all four CCSDS sync patterns (\texttt{16'hEB90} CLTU Start, \texttt{32'h1ACFFC1D} TM/AOS ASM, \texttt{24'hFAF320} Proximity-1 ASM, and \texttt{64'hF62B2840E71C8E2A} Short-LDPC Start), automatically correcting inverted streams upon lock.
 
-\section{Uplink Expurgated $\text{BCH}(63,56)$ SEC-DED \& Ground CLTU Wrapper}
-\begin{itemize}
+\subsection{Uplink Expurgated \texorpdfstring{$\text{BCH}(63,56)$}{BCH(63,56)} SEC-DED \& Ground CLTU Wrapper}
+\begin{itemize}\setlength{\itemsep}{2pt}
   \item \textbf{Spacecraft Decoder (\texttt{rtl/ccsds\_bch6356\_dec.sv}):} Evaluates the 7-bit syndrome over $g_{\text{BCH}}(x) = x^7 + x^6 + x^2 + 1$ (\texttt{7'h45}) and overall codeblock parity. Single-bit errors (\texttt{syn != 0 \&\& odd\_parity == 1}) are corrected in hardware; double-bit errors (\texttt{syn != 0 \&\& odd\_parity == 0}) and the 64-bit CLTU Tail sequence (\texttt{64'hC5C5\_C5C5\_C5C5\_C579}) deterministically terminate CLTU decoding.
   \item \textbf{Ground EGSE Encoder (\texttt{rtl/ccsds\_bch6356\_enc.sv}):} Prepends \texttt{16'hEB90}, scrambles each 7-octet block with $h_{TC}(x)$, automatically pads non-multiple-of-7 frames with \texttt{0x55} fill octets in \texttt{ST\_PAD\_FILL} before computing inverted parity (Bug \#16), and appends the 8-octet tail sequence.
 \end{itemize}
 
-\section{Uplink Short-Block LDPC, Downlink Dual-Basis RS, Viterbi \& Turbo/AR4JA}
-\begin{itemize}
-  \item \textbf{Uplink Short-LDPC Iterative Decoder (\texttt{rtl/ccsds\_ul\_short\_ldpc\_dec.sv}):} Implements the [CCSDS 231.1-O-1](https://ccsds.org/Pubs/231x1o1s.pdf) rate-$1/2$ quasi-cyclic uplink LDPC decoder using scaled Min-Sum message passing (up to 16 iterations with early syndrome termination $\mathbf{s} = \mathbf{c}H^T = \mathbf{0}$). In Stage 5 (Bug \#12), we aligned the variable-to-check circulant shifts $(0, +57, +41) \pmod{64}$ as the exact transpose $H^T$ of the check-to-variable shifts $(0, +7, +23) \pmod{64}$.
+\subsection{Uplink Short-Block LDPC, Downlink Dual-Basis RS, Viterbi \& Turbo/AR4JA}
+\begin{itemize}\setlength{\itemsep}{2pt}
+  \item \textbf{Uplink Short-LDPC Iterative Decoder (\texttt{rtl/ccsds\_ul\_short\_ldpc\_dec.sv}):} Implements the \href{https://ccsds.org/Pubs/231x1o1s.pdf}{CCSDS 231.1-O-1} rate-$1/2$ quasi-cyclic uplink LDPC decoder using scaled Min-Sum message passing (up to 16 iterations with early syndrome termination $\mathbf{s} = \mathbf{c}H^T = \mathbf{0}$). In Stage 5 (Bug \#12), we aligned the variable-to-check circulant shifts $(0, +57, +41) \pmod{64}$ as the exact transpose $H^T$ of the check-to-variable shifts $(0, +7, +23) \pmod{64}$.
   \item \textbf{Downlink Dual-Basis $\text{RS}(255,223)$ Codec (\texttt{ccsds\_dl\_rs255\_223\_enc.sv}, \texttt{ccsds\_dl\_rs255\_223\_dec.sv}):} Supports interleaving depths $I \in \{1, 2, 3, 4, 5, 8\}$ and 0-cycle implicit virtual fill $Q \in [0..200]$ over generator polynomial $g_{\text{RS}}(x) = \prod_{j=112}^{143}(x - \alpha^{11j})$.
   \item \textbf{Rate-$1/2, K=7$ Convolutional \& 64-State Radix-2 ACS Viterbi (\texttt{ccsds\_conv\_viterbi\_codec.sv}):} Implements $G_1 = 171_8, G_2 = 133_8$ with selectable $C_2$ symbol inversion and a 64-state Add-Compare-Select (ACS) Viterbi decoder with a 35-stage traceback unit (including Step-0 combinational \texttt{nxt\_surv} alignment, Bug \#11).
   \item \textbf{Downlink AR4JA LDPC \& 16-State RSC Turbo Encoder (\texttt{ccsds\_dl\_turbo\_ldpc\_enc.sv}):} Provides zero-wait information streaming followed by parity/tail emission for high-rate downlink missions.
 \end{itemize}
 
 % =============================================================================
-% CHAPTER 6: SDLS SECURITY, COP-1, HCPD & RADIATION HARDENING
+% SECTION 6: SDLS SECURITY, COP-1, HCPD & RADIATION HARDENING
 % =============================================================================
-\chapter{Zero-Trust Space Security (SDLS), COP-1 ARQ, Emergency HCPD, and Radiation Hardening}
+\section{Zero-Trust Space Security (SDLS), COP-1 ARQ, Emergency HCPD, and Radiation Hardening}
 
-\section{Solving the \texttt{FARM-1} / \texttt{SDLS} Ordering Paradox (\texttt{SVA-FARM1-1} \& \texttt{SVA-FARM1-2})}
-In a naive implementation, placing `FARM-1` before `SDLS` allows a spoofed frame with a valid CRC-16 to corrupt $V(R)$, whereas placing `SDLS` before `FARM-1` causes out-of-window frames to burn cryptographic anti-replay sequence counters.
+\subsection{Solving the \texorpdfstring{\texttt{FARM-1} / \texttt{SDLS}}{FARM-1 / SDLS} Ordering Paradox (\texorpdfstring{\texttt{SVA-FARM1-1} \& \texttt{SVA-FARM1-2}}{SVA-FARM1-1 and SVA-FARM1-2})}
+In a naive implementation, placing \texttt{FARM-1} before \texttt{SDLS} allows a spoofed frame with a valid CRC-16 to corrupt $V(R)$, whereas placing \texttt{SDLS} before \texttt{FARM-1} causes out-of-window frames to burn cryptographic anti-replay sequence counters.
 
 We resolved this in Stage 0 and Stage 3 by implementing a \textbf{Two-Phase Commit Protocol} between \texttt{ccsds\_farm1\_tmr.sv} and \texttt{ccsds\_sdls\_engine.sv}:
-\begin{enumerate}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{Phase A (Pre-Check in \texttt{FARM-1}):} Upon FECF CRC-16 pass, \texttt{FARM-1} checks whether $N(S)$ is within the sliding window without mutating its committed architectural state $V(R)$.
   \item \textbf{Phase B (Cryptographic Commit/Rollback in \texttt{SDLS}):} \texttt{ccsds\_sdls\_engine.sv} looks up the 16-bit Security Parameter Index (\texttt{SPI}) in its Hsiao $(39,32)$ SECDED-protected 64-entry Security Association (SA) RAM, verifies anti-replay monotonicity, strips the trailing MAC tag using a 1-byte lookahead buffer (\texttt{rx\_prev\_pt\_q}, Bug \#13 / \texttt{SVA-SDLS-6}), and pulses either \texttt{sdls\_commit\_pulse} (which commits $V(R) \leftarrow V(R)+1$ and releases the frame in \texttt{ccsds\_cdc\_fifo\_ecc.sv}) or \texttt{sdls\_rollback\_pulse} (which leaves $V(R)$ untouched and rewinds the FIFO).
-  \item \textbf{Audit R3-1 Type-BC Recovery Exemption (\texttt{SVA-FARM1-2}):} Per [CCSDS 355.0-B-2](https://ccsds.org/Pubs/355x0b2.pdf) Section 3.3.2.3, when \texttt{bc\_require\_sdls\_cfg == 0}, Type-BC control commands (\texttt{Unlock 0x00} and \texttt{Set V(R) 0x82 0x00 V*}) bypass SDLS so ground operators can recover a locked-out spacecraft even if cryptographic sequence counters desynchronize.
+  \item \textbf{Audit R3-1 Type-BC Recovery Exemption (\texttt{SVA-FARM1-2}):} Per \href{https://ccsds.org/Pubs/355x0b2.pdf}{CCSDS 355.0-B-2} Section 3.3.2.3, when \texttt{bc\_require\_sdls\_cfg == 0}, Type-BC control commands (\texttt{Unlock 0x00} and \texttt{Set V(R) 0x82 0x00 V*}) bypass SDLS so ground operators can recover a locked-out spacecraft even if cryptographic sequence counters desynchronize.
 \end{enumerate}
 
-\section{Triple-Modular Redundancy (3x TMR) \& Emergency HCPD (\texttt{ccsds\_hcpd\_ctrl.sv})}
+\subsection{Triple-Modular Redundancy (3x TMR) \& Emergency HCPD (\texorpdfstring{\texttt{ccsds\_hcpd\_ctrl.sv}}{ccsds\_hcpd\_ctrl.sv})}
 All mission-critical state machines---\texttt{FARM-1} ($V(R)$, state, \texttt{FARM-B} counter), the Emergency Hardware Command Pulse Decoder (\texttt{ccsds\_hcpd\_ctrl.sv}), and the Control/Status Register file (\texttt{ccsds\_axi\_lite\_csr.sv})---store their state in triplicated flip-flop banks (\texttt{*\_a\_q}, \texttt{*\_b\_q}, \texttt{*\_c\_q}) guarded by \texttt{(* syn\_preserve = 1, dont\_touch = "true" *)} attributes and combinational majority voters:
 \begin{equation}
   \operatorname{vote3}(a, b, c) = (a \land b) \lor (b \land c) \lor (a \land c)
@@ -312,18 +382,18 @@ All mission-critical state machines---\texttt{FARM-1} ($V(R)$, state, \texttt{FA
 Whenever a radiation Single-Event Upset (SEU) flips a bit in any replica, the majority voter masks the glitch with zero output latency, heals the upset register on the very next clock edge (\texttt{SVA-CSR-4}), increments \texttt{cnt\_tmr\_scrub\_q}, and asserts \texttt{edac\_scrub\_req\_out}.
 
 % =============================================================================
-% CHAPTER 7: THE 4-PILLAR VERIFICATION SUITE & KINTEX ULTRASCALE RESULTS
+% SECTION 7: THE 4-PILLAR VERIFICATION SUITE & KINTEX ULTRASCALE RESULTS
 % =============================================================================
-\chapter{The 4-Pillar Verification Suite, 27 Hardware Bugs Caught, and Kintex UltraScale Timing}
+\section{The 4-Pillar Verification Suite, 27 Hardware Bugs Caught, and Kintex UltraScale Timing}
 
-\section{Summary of the 4-Pillar Verification Results (Stages 1--8)}
+\subsection{Summary of the 4-Pillar Verification Results (Stages 1--8)}
 Across Stages 1--8, every module and protocol mode was verified through four independent pillars:
-\begin{enumerate}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{Pillar 1 --- Static AST, Hierarchy Elaboration, Symbol Resolver \& Timescale Auditor (\texttt{scripts/sv\_rtl\_audit.py}):} Audits all 36 \texttt{.sv} files (29 RTL + 7 TB) across 7 strict rules (packed struct bit widths, balanced blocks, \texttt{always\_ff}/\texttt{always\_comb} discipline, zero non-power-of-two 64-bit division, full cross-module port elaboration, symbol/struct-field resolution, and \texttt{`timescale 1ns / 1ps}) plus Python Golden vs.\ RTL VCD waveform matching (\texttt{scripts/vcd\_waveform\_matcher.py}, achieving \textbf{100.0\% byte-sequence equality}, \textbf{1-cycle latency delta}, and \textbf{$\rho = 0.999412 \ge 0.995$} baseband IQ cross-correlation).
   \item \textbf{Pillar 2 --- Native Vivado 2022.2 \texttt{xsim} \& Verilator RTL Simulation (\texttt{tb\_stage2..8}):} Confirmed working in Xilinx Vivado 2022.2 (\texttt{xvlog}, \texttt{xelab}, \texttt{xsim}) across both hardware EGSE loopback (\texttt{STAGE=7}) and all four sequential protocol modes (\texttt{TC/TM} $\rightarrow$ \texttt{AOS} $\rightarrow$ \texttt{Proximity-1} $\rightarrow$ \texttt{USLP}) with channel impairments (\texttt{STAGE=8}).
   \item \textbf{Pillar 3 --- Best-to-Worst-Case Channel Model \& Continuous $E_b/N_0$ Sweep (\texttt{scripts/run\_channel\_ber\_sweep.py}):} Verified all 4 corner scenarios plus a 23-point $E_b/N_0$ waterfall sweep ($0.0\text{--}11.0\,\text{dB}$), demonstrating net coding gains at $\text{BER}=10^{-6}$ from $10.5\,\text{dB}$ (Uncoded BPSK) down to $8.8\,\text{dB}$ ($\text{BCH}$), $5.4\,\text{dB}$ (Viterbi), $4.2\,\text{dB}$ (Short-LDPC), $2.9\,\text{dB}$ (Concatenated Viterbi+$\text{RS}$), and $1.9\,\text{dB}$ (AR4JA LDPC).
   \item \textbf{Pillar 4 --- AMD Kintex UltraScale Out-of-Context Synthesis \& Overclocked True-$F_{\max}$ Push (\texttt{scripts/run\_vivado\_synth\_sta.tcl}):} Achieved positive slack across all domains at nominal clocks and pushed constraints to identify the exact physical critical paths:
-    \begin{itemize}
+    \begin{itemize}\setlength{\itemsep}{1pt}
       \item \texttt{clk\_sys} ($100\,\text{MHz}$ nominal): \textbf{True $F_{\max} = 248.8\,\text{MHz}$} ($T_{\min} = 4.019\,\text{ns}$, 7 logic levels in \texttt{u\_ul\_ldpc} Min-Sum check node).
       \item \texttt{clk\_adc\_iq} ($120\,\text{MHz}$ nominal): \textbf{True $F_{\max} = 284.1\,\text{MHz}$} ($T_{\min} = 3.520\,\text{ns}$, 5 logic levels through \texttt{DSP48E2} Q32 turnaround multiplier in \texttt{u\_phy}).
       \item \texttt{clk\_tx\_sym} ($50\,\text{MHz}$ nominal): \textbf{True $F_{\max} = 312.5\,\text{MHz}$} ($T_{\min} = 3.200\,\text{ns}$, 6 logic levels in \texttt{u\_conv\_vit} 64-state Radix-2 ACS).
@@ -331,10 +401,17 @@ Across Stages 1--8, every module and protocol mode was verified through four ind
     \end{itemize}
 \end{enumerate}
 
-\section{Complete Inventory of All 36 Built SystemVerilog Files (29 RTL + 7 Testbenches)}
-\begin{tabularx}{\textwidth}{l l X}
+\subsection{Complete Inventory of All 36 Built SystemVerilog Files (Stages 1--8)}
+
+The two tables below catalog all 29 synthesizable/simulatable SystemVerilog modules and 7 self-checking testbenches built and verified across Stages 1--8.
+
+\vspace{2pt}
+\par\vspace{3pt}\noindent\begin{minipage}{\textwidth}
+\scriptsize
+\renewcommand{\arraystretch}{1.17}
+\begin{tabularx}{\textwidth}{L{0.31\textwidth} L{0.06\textwidth} Y}
   \toprule
-  \textbf{File Path} & \textbf{Stage} & \textbf{Built \& Verified Functionality} \\
+  \textbf{File Path (Stages 1--4)} & \textbf{Stage} & \textbf{Built \& Verified Hardware Functionality} \\
   \midrule
   \texttt{rtl/ccsds\_pkg.sv} & S1 & Master package: 12 packed structs, $GF(2^8)$ dual-basis $T_\alpha / T_\alpha^{-1}$, RS roots \\
   \texttt{rtl/ccsds\_crc\_universal.sv} & S2 & Byte-wide / sparse-\texttt{tkeep} CRC-16 (\texttt{0x1021}) \& Prox-1 CRC-32 (\texttt{0x00A00805}) \\
@@ -351,6 +428,18 @@ Across Stages 1--8, every module and protocol mode was verified through four ind
   \texttt{rtl/ccsds\_pkt\_reassembler.sv} & S4 & Uplink Space Packet / MAP SDU reassembler + \texttt{APID 0x7FF} Idle stripper \\
   \texttt{rtl/ccsds\_prox1\_plcw\_ctrl.sv} & S4 & Proximity-1 COP-P 32-bit \texttt{PLCW} sequence \& retransmit controller \\
   \texttt{rtl/ccsds\_axi\_lite\_csr.sv} & S4 & 3x TMR \texttt{AXI4-Lite} CSR slave, 48-bit CUC \texttt{OBT} timer, saturating EDAC counters \\
+  \bottomrule
+\end{tabularx}
+\vspace{3pt}{\footnotesize\textbf{Table 7.1:} Built SystemVerilog RTL Modules --- Part 1: Core Primitives, Multi-Protocol Framing, COP-1 ARQ \& TMR CSR (Stages 1--4, 15 Modules).\par}
+\end{minipage}\par\vspace{4pt}
+
+\par\vspace{3pt}\noindent\begin{minipage}{\textwidth}
+\scriptsize
+\renewcommand{\arraystretch}{1.17}
+\begin{tabularx}{\textwidth}{L{0.31\textwidth} L{0.06\textwidth} Y}
+  \toprule
+  \textbf{File Path (Stages 5--8)} & \textbf{Stage} & \textbf{Built \& Verified Hardware Functionality} \\
+  \midrule
   \texttt{rtl/ccsds\_conv\_viterbi\_codec.sv} & S5 & Rate-$1/2, K=7$ convolutional encoder \& 64-State Radix-2 ACS Viterbi decoder \\
   \texttt{rtl/ccsds\_ul\_short\_ldpc\_dec.sv} & S5 & Uplink Short-Block LDPC $(128,64)/(512,256)$ scaled Min-Sum iterative decoder \\
   \texttt{rtl/ccsds\_dl\_turbo\_ldpc\_enc.sv} & S5 & Downlink AR4JA quasi-cyclic LDPC \& 16-state RSC Turbo streaming encoder \\
@@ -368,73 +457,72 @@ Across Stages 1--8, every module and protocol mode was verified through four ind
   \texttt{tb/tb\_stage2..8\_*.sv} (7 files) & S2--8 & Self-checking testbenches covering primitives, vertical slice, all 4 protocols, and EGSE \\
   \bottomrule
 \end{tabularx}
+\vspace{3pt}{\footnotesize\textbf{Table 7.2:} Built SystemVerilog RTL Modules \& Testbenches --- Part 2: Next-Gen FEC, SDLS Security, Baseband PHY, Ground EGSE \& Channel Suite (Stages 5--8, 14 Modules + 7 Testbenches).\par}
+\end{minipage}\par\vspace{4pt}
 
 % =============================================================================
 % PART III: WHAT IS LEFT TO BUILD (STAGES 9-12 ROADMAP TO TRL-9)
 % =============================================================================
-\part{What Is Left to Build: The Roadmap from TRL-5 Prototype to TRL-9 Flight Silicon}
+\newpage
+\partbanner{Part III}{What Is Left to Build --- Roadmap from TRL-5 to TRL-9 Flight Silicon}
 
-\chapter{Stage 9 Roadmap: Algorithmic and Datapath Completions Inside the RTL}
+\section{Stage 9 Roadmap: Algorithmic and Datapath Completions Inside the RTL}
 
-While all 29 RTL modules compile, synthesize, and pass end-to-end closed-loop simulation across all four CCSDS protocols, a rigorous engineering distinction must be drawn between modules that are already **100\% flight-complete at the bit level** (such as CRC-16/32, LFSR randomizers, $\text{BCH}(63,56)$ SEC-DED, AOS $GF(2^4)$ \texttt{FHEC}, $\text{RS}(255,223)$ encoding, 64-state Viterbi, 3x TMR \texttt{FARM-1}, \texttt{FOP-1}, \texttt{HCPD}, and Swipe-Proof SECDED FIFOs) and four modules that currently use **architectural/behavioral datapath cores** which must be expanded to full production complexity in **Stage 9**:
+While all 29 RTL modules compile, synthesize, and pass end-to-end closed-loop simulation across all four CCSDS protocols, a rigorous engineering distinction must be drawn between modules that are already \textbf{100\% flight-complete at the bit level} (such as CRC-16/32, LFSR randomizers, $\text{BCH}(63,56)$ SEC-DED, AOS $GF(2^4)$ \texttt{FHEC}, $\text{RS}(255,223)$ encoding, 64-state Viterbi, 3x TMR \texttt{FARM-1}, \texttt{FOP-1}, \texttt{HCPD}, and Swipe-Proof SECDED FIFOs) and four modules that currently use \textbf{architectural/behavioral datapath cores} which must be expanded to full production complexity in \textbf{Stage 9}:
 
 \roadmapbox{Stage 9 Item \#1: Full 14-Round AES-256-GCM \& HMAC-SHA-256 Core in \texttt{ccsds\_sdls\_engine.sv}}{
-  \textbf{What Is Built Today:} \texttt{ccsds\_sdls\_engine.sv} implements the complete [CCSDS 355.0-B-2](https://ccsds.org/Pubs/355x0b2.pdf) framing wrapper, 64-entry Hsiao $(39,32)$ SECDED Security Association (SA) RAM, monotonic anti-replay window comparator, Two-Phase \texttt{FARM-1} commit/rollback handshake (\texttt{SVA-FARM1-1}), Type-BC exemption (\texttt{SVA-FARM1-2}), runt-frame abort handling (\texttt{CR-04}), and 1-byte lookahead MAC tag stripper (\texttt{SVA-SDLS-6}). However, to keep simulation fast and self-contained during Stages 1--8, the internal keystream/tag generator uses a lightweight deterministic keystream mixer rather than a full 14-round AES-256 block cipher and $GF(2^{128})$ Galois Hash (\texttt{GHASH}) multiplier (whereas our Python Golden Model \texttt{ccsds\_ground\_egse\_model.py} already implements full NIST/CCSDS AES-GCM-256).\\
+  \textbf{What Is Built Today:} \texttt{ccsds\_sdls\_engine.sv} implements the complete \href{https://ccsds.org/Pubs/355x0b2.pdf}{CCSDS 355.0-B-2} framing wrapper, 64-entry Hsiao $(39,32)$ SECDED Security Association (SA) RAM, monotonic anti-replay window comparator, Two-Phase \texttt{FARM-1} commit/rollback handshake (\texttt{SVA-FARM1-1}), Type-BC exemption (\texttt{SVA-FARM1-2}), runt-frame abort handling (\texttt{CR-04}), and 1-byte lookahead MAC tag stripper (\texttt{SVA-SDLS-6}). However, to keep simulation fast and self-contained during Stages 1--8, the internal keystream/tag generator uses a lightweight deterministic keystream mixer rather than a full 14-round AES-256 block cipher and $GF(2^{128})$ Galois Hash (\texttt{GHASH}) multiplier (whereas our Python Golden Model \texttt{ccsds\_ground\_egse\_model.py} already implements full NIST/CCSDS AES-GCM-256).\\[3pt]
   \textbf{What Is Left to Build:} Drop in a synthesizable 14-round pipelined or iterative AES-256-CTR + $GF(2^{128})$ Karatsuba \texttt{GHASH} engine (and optional HMAC-SHA-256 authentication core) inside \texttt{ccsds\_sdls\_engine.sv} so the RTL keystream and 128-bit MAC tag match NIST SP 800-38D test vectors bit-for-bit.
 }
 
 \roadmapbox{Stage 9 Item \#2: Full Berlekamp-Massey, Chien Search \& Forney Error Corrector in Ground EGSE \texttt{ccsds\_dl\_rs255\_223\_dec.sv}}{
-  \textbf{What Is Built Today:} On the spacecraft flight side (\texttt{ROLE\_MODE = 0}), the downlink $\text{RS}(255,223)$ encoder (\texttt{ccsds\_dl\_rs255\_223\_enc.sv}) is 100\% complete across all interleaving depths $I \in \{1..8\}$ and virtual fill $Q \in [0..200]$. On the Ground EGSE receive side (\texttt{ROLE\_MODE = 1}), \texttt{ccsds\_dl\_rs255\_223\_dec.sv} performs inverse dual-basis conversion ($T_\alpha^{-1}$), evaluates dual syndrome roots ($S_0, S_1$ at $j=112, 113$), and strips the 32 parity bytes.\\
+  \textbf{What Is Built Today:} On the spacecraft flight side (\texttt{ROLE\_MODE = 0}), the downlink $\text{RS}(255,223)$ encoder (\texttt{ccsds\_dl\_rs255\_223\_enc.sv}) is 100\% complete across all interleaving depths $I \in \{1..8\}$ and virtual fill $Q \in [0..200]$. On the Ground EGSE receive side (\texttt{ROLE\_MODE = 1}), \texttt{ccsds\_dl\_rs255\_223\_dec.sv} performs inverse dual-basis conversion ($T_\alpha^{-1}$), evaluates dual syndrome roots ($S_0, S_1$ at $j=112, 113$), and strips the 32 parity bytes.\\[3pt]
   \textbf{What Is Left to Build:} For full ground-station error correction under deep-space burst noise, expand \texttt{ccsds\_dl\_rs255\_223\_dec.sv} with a full 32-syndrome evaluator ($S_0..S_{31}$), a shared-multiplier Berlekamp-Massey key-equation solver ($\Lambda(x), \Omega(x)$), a Chien root search, and Forney's algorithm to actively correct up to $E=16$ arbitrary symbol errors per interleaved codeword in hardware.
 }
 
 \roadmapbox{Stage 9 Item \#3: Full $(512,256)$ Uplink \& AR4JA Downlink Quasi-Cyclic Protograph ROMs + 1-Stage Check-Node Pipeline}{
-  \textbf{What Is Built Today:} \texttt{ccsds\_ul\_short\_ldpc\_dec.sv} implements a working scaled Min-Sum iterative message-passing decoder verified over 500 noisy $(128,64)$ codeblocks, and \texttt{ccsds\_dl\_turbo\_ldpc\_enc.sv} implements the streaming AR4JA and 16-state RSC Turbo encoder datapaths.\\
-  \textbf{What Is Left to Build:}
-  \begin{enumerate}
-    \item Populate the complete [CCSDS 231.1-O-1](https://ccsds.org/Pubs/231x1o1s.pdf) Annex A circulant sub-matrix tables for the $(512,256)$ uplink code and the [CCSDS 131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf) AR4JA generator matrix ROMs for block lengths $k \in \{1024, 4096, 16384\}$ across rates $1/2, 2/3, 4/5$.
-    \item Insert a single pipeline register stage between the first-minimum (\texttt{min1}) and second-minimum (\texttt{min2}) comparator tree in \texttt{ccsds\_ul\_short\_ldpc\_dec.sv}. As shown by our Stage 8 Kintex UltraScale STA push, this 7-level path currently limits \texttt{clk\_sys} to $248.8\,\text{MHz}$; pipelining it will push \texttt{clk\_sys} $F_{\max}$ above \textbf{$310\,\text{MHz}$}.
-  \end{enumerate}
+  \textbf{What Is Built Today:} \texttt{ccsds\_ul\_short\_ldpc\_dec.sv} implements a working scaled Min-Sum iterative message-passing decoder verified over 500 noisy $(128,64)$ codeblocks, and \texttt{ccsds\_dl\_turbo\_ldpc\_enc.sv} implements the streaming AR4JA and 16-state RSC Turbo encoder datapaths.\\[3pt]
+  \textbf{What Is Left to Build:} (1) Populate the complete \href{https://ccsds.org/Pubs/231x1o1s.pdf}{CCSDS 231.1-O-1} Annex A circulant sub-matrix tables for the $(512,256)$ uplink code and the \href{https://ccsds.org/Pubs/131x0b5.pdf}{CCSDS 131.0-B-5} AR4JA generator matrix ROMs for block lengths $k \in \{1024, 4096, 16384\}$ across rates $1/2, 2/3, 4/5$. (2) Insert a single pipeline register stage between the first-minimum (\texttt{min1}) and second-minimum (\texttt{min2}) comparator tree in \texttt{ccsds\_ul\_short\_ldpc\_dec.sv}. As shown by our Stage 8 Kintex UltraScale STA push, this 7-level path currently limits \texttt{clk\_sys} to $248.8\,\text{MHz}$; pipelining it will push \texttt{clk\_sys} $F_{\max}$ above \textbf{$310\,\text{MHz}$}.
 }
 
 \roadmapbox{Stage 9 Item \#4: Polyphase RRC Matched Filter \& Fractional Gardner Timing Recovery in \texttt{ccsds\_phy\_modem.sv}}{
-  \textbf{What Is Built Today:} \texttt{ccsds\_phy\_modem.sv} implements the Costas carrier phase detector, Q32 reciprocal turnaround NCO ($240/221$ and $880/749$), NRZ-L/M and Bi-$\phi$-L line coders, and BPSK/QPSK/OQPSK/PCM-PM IQ modulation.\\
+  \textbf{What Is Built Today:} \texttt{ccsds\_phy\_modem.sv} implements the Costas carrier phase detector, Q32 reciprocal turnaround NCO ($240/221$ and $880/749$), NRZ-L/M and Bi-$\phi$-L line coders, and BPSK/QPSK/OQPSK/PCM-PM IQ modulation.\\[3pt]
   \textbf{What Is Left to Build:} For direct RF sampling receivers with large symbol-clock PPM offsets and inter-symbol interference (ISI), add a 16-tap Root-Raised-Cosine (RRC, $\alpha = 0.35 / 0.50$) FIR matched filter and a Farrow-interpolated Gardner timing error detector (TED) loop ahead of the soft-LLR slicer.
 }
 
 % =============================================================================
-% CHAPTER 9: STAGE 10 ROADMAP - SOC DMA & FLIGHT SOFTWARE DRIVERS
+% SECTION 9: STAGE 10 ROADMAP - SOC DMA & FLIGHT SOFTWARE DRIVERS
 % =============================================================================
-\chapter{Stage 10 Roadmap: Autonomous Scatter-Gather DMA and Flight Software Drivers}
+\section{Stage 10 Roadmap: Autonomous Scatter-Gather DMA and Flight Software Drivers}
 
-As highlighted in our architectural comparison against the Frontgrade Gaisler \texttt{GRLIB} (\texttt{GRTM} / \texttt{GRTC}) IP cores in Section 14 of the specification, our current IP core exposes clean, industry-standard \textbf{\texttt{AXI4-Stream}} packet interfaces (\texttt{s\_axis\_tx\_pkt}, \texttt{m\_axis\_rx\_pkt}) and a TMR-protected \textbf{\texttt{AXI4-Lite}} Control/Status Register bus (\texttt{ccsds\_axi\_lite\_csr.sv}). To achieve complete parity with commercial flight SoC subsystems on LEON3FT/LEON4, NOEL-V (RISC-V), and ARM Cortex-R52/A53 processors, **Stage 10** will add:
+As highlighted in our architectural comparison against the Frontgrade Gaisler \texttt{GRLIB} (\texttt{GRTM} / \texttt{GRTC}) IP cores in Section 14 of the specification, our current IP core exposes clean, industry-standard \textbf{\texttt{AXI4-Stream}} packet interfaces (\texttt{s\_axis\_tx\_pkt}, \texttt{m\_axis\_rx\_pkt}) and a TMR-protected \textbf{\texttt{AXI4-Lite}} Control/Status Register bus (\texttt{ccsds\_axi\_lite\_csr.sv}). To achieve complete parity with commercial flight SoC subsystems on LEON3FT/LEON4, NOEL-V (RISC-V), and ARM Cortex-R52/A53 processors, \textbf{Stage 10} will add:
 
-\section{1. Autonomous Scatter-Gather Descriptor Ring DMA Wrapper (\texttt{ccsds\_axi4\_sg\_dma.sv})}
+\subsection{Autonomous Scatter-Gather Descriptor Ring DMA Wrapper (\texorpdfstring{\texttt{ccsds\_axi4\_sg\_dma.sv}}{ccsds\_axi4\_sg\_dma.sv})}
 Rather than requiring the spacecraft On-Board Computer (OBC) CPU to service an interrupt for every Space Packet or instantiate a separate vendor AXI DMA block, \texttt{ccsds\_axi4\_sg\_dma.sv} will provide a dual-channel \textbf{\texttt{AXI4} Memory-Mapped Master} (with an optional \textbf{\texttt{AMBA AHB} Master} bridge for GRLIB LEON/NOEL-V SoCs):
-\begin{itemize}
+\begin{itemize}\setlength{\itemsep}{2pt}
   \item \textbf{Tx Descriptor Ring (Telemetry Offload):} Autonomously walks a circular descriptor table in main EDAC SDRAM, fetching Space Packet buffers by Virtual Channel priority, feeding \texttt{s\_axis\_tx\_pkt}, and marking descriptors complete with zero CPU intervention during nominal orbit passes.
   \item \textbf{Rx Descriptor Ring (Telecommand Deposit):} Autonomously writes authenticated, reassembled telecommand Space Packets from \texttt{m\_axis\_rx\_pkt} into pre-allocated OBC memory rings and fires a coalesced completion interrupt (\texttt{irq\_rx\_pkt\_done}).
 \end{itemize}
 
-\section{2. Production Flight Software BSP \& OS Drivers (RTEMS, FreeRTOS, NASA cFS)}
+\subsection{Production Flight Software BSP \& OS Drivers (RTEMS, FreeRTOS, NASA cFS)}
 To make the IP core drop-in ready for flight software teams, Stage 10 will deliver a portable C11 hardware abstraction layer (\texttt{sw/ccsds\_ttc\_driver.h}, \texttt{sw/ccsds\_ttc\_driver.c}) and three OS integrations:
-\begin{enumerate}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{NASA Core Flight System (cFS) Command Ingest (\texttt{CI\_LAB}) \& Telemetry Output (\texttt{TO\_LAB}) Apps:} Direct zero-copy binding between the cFS Software Bus (\texttt{CFE\_SB}) and the hardware Virtual Channel queues.
   \item \textbf{RTEMS 6 \& FreeRTOS Board Support Package (BSP):} Interrupt Service Routines (ISRs) for \texttt{fault\_irq\_out} and \texttt{edac\_scrub\_req\_out} that automatically log SECDED single/double-bit counters (\texttt{REG\_EDAC\_CNT}), $\text{BCH}$ error rates (\texttt{REG\_BCH\_CNT}), SDLS authentication failures (\texttt{REG\_LINK\_ERR\_CNT}), and TMR SEU scrub counts (\texttt{REG\_TMR\_SCRUB}) into spacecraft Housekeeping (HK) telemetry packets.
-  \item \textbf{1-PPS Time Synchronization Task:} Discipline routine latching the GPS/star-tracker 1-PPS pulse into \texttt{REG\_OBT\_COARSE} and \texttt{REG\_OBT\_FINE} per [CCSDS 301.0-B-4](https://ccsds.org/Pubs/301x0b4e1.pdf).
+  \item \textbf{1-PPS Time Synchronization Task:} Discipline routine latching the GPS/star-tracker 1-PPS pulse into \texttt{REG\_OBT\_COARSE} and \texttt{REG\_OBT\_FINE} per \href{https://ccsds.org/Pubs/301x0b4e1.pdf}{CCSDS 301.0-B-4}.
 \end{enumerate}
 
 % =============================================================================
-% CHAPTER 10: STAGES 11-12 ROADMAP - RAD-HARD TECHMAP, FORMAL & RF HIL
+% SECTION 10: STAGES 11-12 ROADMAP - RAD-HARD TECHMAP, FORMAL & RF HIL
 % =============================================================================
-\chapter{Stages 11--12 Roadmap: Rad-Hard Silicon Mapping, Unbounded Formal Proofs, and RF FlatSat Qualification}
+\section{Stages 11--12 Roadmap: Rad-Hard Silicon Mapping, Unbounded Formal Proofs, and RF FlatSat Qualification}
 
 The final two stages bridge the gap from a verified FPGA design (\textbf{TRL-5/6}) to a flight-qualified subsystem (\textbf{TRL-8/9}):
 
-\section{Stage 11: Vendor-Specific Radiation-Hardened \texttt{techmap} Wrappers \& Formal Verification}
-\begin{enumerate}
+\subsection{Stage 11: Vendor-Specific Radiation-Hardened \texorpdfstring{\texttt{techmap}}{techmap} Wrappers \& Formal Verification}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{Rad-Hard Primitive Technology Mapping (\texttt{rtl/techmap/}):}
-    \begin{itemize}
+    \begin{itemize}\setlength{\itemsep}{1pt}
       \item \textbf{Microchip RTG4 (\texttt{RT4G150}) \& PolarFire RT (\texttt{RTPF500T}):} Map our behavioral Hsiao $(39,32)$ SECDED memories onto native \texttt{LSRAM} blocks with hardwired EDAC controllers, and verify that Synplify Pro preserves all \texttt{(* syn\_preserve = 1 *)} TMR triplets without LUT sharing.
       \item \textbf{AMD Space-Grade Kintex UltraScale (\texttt{XQRKU060}):} Connect \texttt{edac\_scrub\_req\_out} and \texttt{fault\_irq\_out} directly to the Xilinx \textbf{Soft Error Mitigation (SEM) UltraScale IP} controller so configuration-frame CRAM upsets are scrubbed alongside our user-logic TMR flip-flops.
       \item \textbf{NanoXplore \texttt{NG-Large} (\texttt{NX1H140TSP}):} Provide NanoXplore Impulse synthesis constraints mapping TMR voters to DICE (Dual Interlocked Storage Cell) latches.
@@ -443,10 +531,10 @@ The final two stages bridge the gap from a verified FPGA design (\textbf{TRL-5/6
     Convert our seven invariant specifications (\texttt{SVA-FARM1-1}, \texttt{SVA-FARM1-2}, \texttt{SVA-FIFO-3}, \texttt{SVA-CSR-4}, \texttt{SVA-HCPD-5}, \texttt{SVA-SDLS-6}, and \texttt{SVA-FOP1-7}) into formal \texttt{assert} / \texttt{assume} / \texttt{cover} properties proven across unbounded clock cycles using SymbiYosys (open-source Yosys + Z3/Bitwuzla) and Cadence JasperGold / Mentor Questa Formal.
 \end{enumerate}
 
-\section{Stage 12: Hardware-in-the-Loop (HIL) RF FlatSat \& Cross-Agency Interoperability}
-\begin{enumerate}
+\subsection{Stage 12: Hardware-in-the-Loop (HIL) RF FlatSat \& Cross-Agency Interoperability}
+\begin{enumerate}\setlength{\itemsep}{2pt}
   \item \textbf{Dual-Board FPGA FlatSat Loopback Over Coaxial RF:}
-    \begin{itemize}
+    \begin{itemize}\setlength{\itemsep}{1pt}
       \item Synthesize \textbf{\texttt{ROLE\_MODE = 0} (Spacecraft Flight Core)} onto an AMD Kintex UltraScale (\texttt{KCU105} / \texttt{XCKU040}) evaluation board connected to an FMC RF transceiver daughter card (e.g., AD9361 / ADRV9009).
       \item Synthesize \textbf{\texttt{ROLE\_MODE = 1} (Hardware Ground EGSE)} onto a second FPGA/RFSoC board (or Zynq UltraScale+ RFSoC) connected via coaxial cables, a programmable step attenuator, and an AWGN noise source.
       \item Measure real hardware waterfall BER/FER curves, S/X-band coherent turnaround phase noise, T2B/T4B ranging jitter ($< 10\,\text{cm}$ RMS), and Emergency \texttt{HCPD} hardware reset latency under live RF fading.
@@ -455,7 +543,7 @@ The final two stages bridge the gap from a verified FPGA design (\textbf{TRL-5/6
     Validate bit-level over-the-air interoperability against external reference implementations, including \textbf{Frontgrade Gaisler \texttt{GRTM}/\texttt{GRTC}} simulation models, \textbf{NASA ITC / NOS3} ground-station software, and \textbf{GNU Radio \texttt{gr-satellites} / \texttt{gr-ccsds}} bitstreams.
 \end{enumerate}
 
-\takeaway{Summary Conclusion}{With Stages 0--8 (\texttt{v2.15.0}) complete, \texttt{CCSDS-SAT-TTC-IP} already provides a fully working, 36-file synthesizable/simulatable SystemVerilog architecture verified in Vivado 2022.2 \texttt{xsim} and static timing analysis ($F_{\max} = 248.8\text{--}312.5\,\text{MHz}$ on Kintex UltraScale). Executing Stages 9--12 (full AES-GCM/RS-BM/LDPC-ROM expansion, Scatter-Gather DMA + cFS/RTEMS drivers, rad-hard \texttt{techmap}, and RF FlatSat HIL testing) will complete its journey from a verified TRL-5 FPGA prototype to a TRL-9 flight-ready spacecraft transceiver.}
+\takeaway{Summary Conclusion}{With Stages 0--8 (\texttt{v2.17.0}) complete, \texttt{CCSDS-SAT-TTC-IP} already provides a fully working, 36-file synthesizable/simulatable SystemVerilog architecture verified in Vivado 2022.2 \texttt{xsim} and static timing analysis ($F_{\max} = 248.8\text{--}312.5\,\text{MHz}$ on Kintex UltraScale). Executing Stages 9--12 (full AES-GCM/RS-BM/LDPC-ROM expansion, Scatter-Gather DMA + cFS/RTEMS drivers, rad-hard \texttt{techmap}, and RF FlatSat HIL testing) will complete its journey from a verified TRL-5 FPGA prototype to a TRL-9 flight-ready spacecraft transceiver.}
 
 \begin{thebibliography}{99}
 \bibitem{ccsds133} CCSDS 133.0-B-2, \emph{Space Packet Protocol}, Blue Book, Issue 2, June 2020.

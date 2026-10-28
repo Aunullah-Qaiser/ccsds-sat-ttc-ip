@@ -4,7 +4,7 @@
   "results": {
     "stage1": {
       "sv_static_audit_pass_1_and_2": true,
-      "files_audited": 34,
+      "files_audited": 39,
       "struct_bit_widths": {
         "ccsds_space_pkt_hdr_t": 48,
         "ccsds_tc_prim_hdr_t": 40,
@@ -19,7 +19,7 @@
         "ccsds_plcw_t": 32,
         "ccsds_tuser_t": 64
       },
-      "cpp20_cosim_stdout": "[CPP20-COSIM-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
+      "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S1] Verified 256x256 GF(2^8) dual-basis bijection (alpha^0->0x7B, alpha^7->0x8D) & all 32 RS(255,223) generator roots",
       "crc16_123456789_hex": "0x29B1",
       "tm_pn_40B_golden_match": true,
       "tc_pn_40B_golden_match": true,
@@ -27,8 +27,8 @@
       "bch_2bit_rejection_trials": 200,
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
-      "sdls_aes_gcm_256_verified": true,
-      "elapsed_sec": 1.984
+      "sdls_aes_128_gcm_verified": true,
+      "elapsed_sec": 2.946
     }
   }
 }
