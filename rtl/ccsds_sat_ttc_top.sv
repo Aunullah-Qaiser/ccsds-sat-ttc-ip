@@ -1,17 +1,25 @@
 //=============================================================================
 // File Name   : ccsds_sat_ttc_top.sv
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-// Version     : v2.32.0 (Full 28-Module Dual-Clock CDC, TMR & Modular Build Release)
+// Version     : v2.34.0 (Pre-Hardware Deployment Audit Release)
 // Description : Top-Level Parameterized Spacecraft Flight Transceiver
 //               (ROLE_MODE=0), Hardware Ground EGSE Transceiver (ROLE_MODE=1),
 //               and Symmetric Crosslink / On-Orbit BIST Transceiver (ROLE_MODE=2).
 //               Supports compile-time modular feature parameterization
-//               (ENABLE_SDLS, ENABLE_UL_LDPC) for compact FPGA targets (xc7z010)
-//               as well as full-featured deployment on xc7z020 / Kintex UltraScale.
-//               Integrates all 27 synthesizable sub-modules with verified
-//               cross-module port bindings, 2-FF ASYNC_REG CDC synchronizers,
-//               dual-clock Gray-code Hsiao SECDED store-and-forward / high-
-//               watermark / PHY-bridge FIFOs, and triplicated TMR next-state voting.
+//               (ENABLE_SDLS, ENABLE_UL_LDPC, IQ_BUS_WIDTH) for compact FPGA
+//               targets (xc7z010) as well as full-featured deployment on
+//               xc7z020 / Kintex UltraScale + Analog Devices axi_ad9361.
+//               Includes:
+//                 1. Internal 4-bit AD9361 I/Q Bus Slice/Pad (IQ_BUS_WIDTH=16/12)
+//                 2. Uplink Rx CDC FIFO (`u_rx_phy_cdc_fifo`) + MSB-first
+//                    bit-to-LLR serializer (`clk_adc_iq` -> `clk_tc_safe`)
+//                 3. Standard 2-FF Asynchronous-Assert / Synchronous-Deassert
+//                    Reset Synchronizer Bridges across all 4 clock domains
+//                 4. Runtime SDLS 256-bit Master Key & Security Association
+//                    Provisioning via AXI4-Lite CSR (`0x28..0x50`)
+//                 5. External `pps_1hz_in` pin with 2-FF `ASYNC_REG` synchronizer,
+//                    rising-edge detector, and 100 MHz internal 1 Hz fallback divider
+//                 6. Programmable Downlink CADU Pseudo-Randomizer (`tm_rand_en_cfg`)
 //=============================================================================
 `timescale 1ns / 1ps
 
@@ -20,13 +28,15 @@ module ccsds_sat_ttc_top
 #(
   parameter int unsigned ROLE_MODE      = 0,
   parameter bit          ENABLE_SDLS    = 1'b1,
-  parameter bit          ENABLE_UL_LDPC = 1'b1
+  parameter bit          ENABLE_UL_LDPC = 1'b1,
+  parameter int unsigned IQ_BUS_WIDTH   = 16
 ) (
   input  logic               clk_sys,
   input  logic               clk_tc_safe,
   input  logic               clk_tx_sym,
   input  logic               clk_adc_iq,
   input  logic               rst_n,
+  input  logic               pps_1hz_in,
 
   // AXI4-Lite Control & Status Register Interface
   input  logic               s_axi_awvalid,
@@ -59,13 +69,13 @@ module ccsds_sat_ttc_top
   input  logic [1:0]         line_code_cfg,
 
   // Uplink Baseband IQ ADC & Direct Symbol Stream Inputs
-  input  logic signed [11:0] rx_i_adc_in,
-  input  logic signed [11:0] rx_q_adc_in,
-  input  logic               rx_iq_valid_in,
-  input  logic               s_axis_ul_sym_tvalid,
-  output logic               s_axis_ul_sym_tready,
-  input  logic [7:0]         s_axis_ul_sym_tdata,
-  input  logic               s_axis_ul_sym_tlast,
+  input  logic signed [IQ_BUS_WIDTH-1:0] rx_i_adc_in,
+  input  logic signed [IQ_BUS_WIDTH-1:0] rx_q_adc_in,
+  input  logic                           rx_iq_valid_in,
+  input  logic                           s_axis_ul_sym_tvalid,
+  output logic                           s_axis_ul_sym_tready,
+  input  logic [7:0]                     s_axis_ul_sym_tdata,
+  input  logic                           s_axis_ul_sym_tlast,
 
   // Uplink Reassembled Space Packet / MAP SDU Output to OBC
   output logic               m_axis_rx_pkt_tvalid,
@@ -82,13 +92,13 @@ module ccsds_sat_ttc_top
   input  ccsds_tuser_t       s_axis_tx_pkt_tuser,
 
   // Downlink CADU / Baseband IQ DAC Outputs
-  output logic               m_axis_dl_cad_tvalid,
-  input  logic               m_axis_dl_cad_tready,
-  output logic [7:0]         m_axis_dl_cad_tdata,
-  output logic               m_axis_dl_cad_tlast,
-  output logic signed [11:0] tx_i_dac_out,
-  output logic signed [11:0] tx_q_dac_out,
-  output logic               tx_iq_valid_out,
+  output logic                           m_axis_dl_cad_tvalid,
+  input  logic                           m_axis_dl_cad_tready,
+  output logic [7:0]                     m_axis_dl_cad_tdata,
+  output logic                           m_axis_dl_cad_tlast,
+  output logic signed [IQ_BUS_WIDTH-1:0] tx_i_dac_out,
+  output logic signed [IQ_BUS_WIDTH-1:0] tx_q_dac_out,
+  output logic                           tx_iq_valid_out,
 
   // Emergency HCPD & Fault Outputs
   output logic               hcpd_obc_reset_pulse,
@@ -100,31 +110,152 @@ module ccsds_sat_ttc_top
 );
 
   //---------------------------------------------------------------------------
+  // 0A. Internal 4-Bit AD9361 I/Q Bus Adaptation (`IQ_BUS_WIDTH` 16 <-> 12-bit Q1.11)
+  //     - Rx ADC (`axi_ad9361` sign-extends 12-bit two's complement in [11:0]):
+  //       slices lower 12 bits `rx_i_adc_in[11:0]` / `rx_q_adc_in[11:0]`.
+  //     - Tx DAC (`axi_ad9361` expects 12-bit sample MSB-aligned in [15:4]):
+  //       pads 4 LSB zeros `{phy_tx_i_12b, 4'b0000}` / `{phy_tx_q_12b, 4'b0000}`.
+  //---------------------------------------------------------------------------
+  logic signed [11:0] phy_rx_i_12b, phy_rx_q_12b;
+  logic signed [11:0] phy_tx_i_12b, phy_tx_q_12b;
+
+  generate
+    if (IQ_BUS_WIDTH == 16) begin : g_ad9361_16b_iq_slice_pad
+      assign phy_rx_i_12b = rx_i_adc_in[11:0];
+      assign phy_rx_q_12b = rx_q_adc_in[11:0];
+      assign tx_i_dac_out = {phy_tx_i_12b, 4'b0000};
+      assign tx_q_dac_out = {phy_tx_q_12b, 4'b0000};
+    end else begin : g_direct_12b_iq
+      assign phy_rx_i_12b = rx_i_adc_in[11:0];
+      assign phy_rx_q_12b = rx_q_adc_in[11:0];
+      assign tx_i_dac_out = phy_tx_i_12b;
+      assign tx_q_dac_out = phy_tx_q_12b;
+    end
+  endgenerate
+
+  //---------------------------------------------------------------------------
+  // 0B. Per-Domain 2-FF Reset Synchronizer Bridges (Async-Assert, Sync-Deassert)
+  //---------------------------------------------------------------------------
+  (* ASYNC_REG = "TRUE" *) logic rst_sys_meta_q, rst_sys_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic rst_tc_meta_q,  rst_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic rst_tx_meta_q,  rst_tx_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic rst_adc_meta_q, rst_adc_sync_q;
+
+  logic rst_sys_n, rst_tc_n, rst_tx_n, rst_adc_n;
+
+  always_ff @(posedge clk_sys or negedge rst_n) begin
+    if (!rst_n) begin
+      rst_sys_meta_q <= 1'b0;
+      rst_sys_sync_q <= 1'b0;
+    end else begin
+      rst_sys_meta_q <= 1'b1;
+      rst_sys_sync_q <= rst_sys_meta_q;
+    end
+  end
+  assign rst_sys_n = rst_sys_sync_q;
+
+  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
+    if (!rst_n) begin
+      rst_tc_meta_q <= 1'b0;
+      rst_tc_sync_q <= 1'b0;
+    end else begin
+      rst_tc_meta_q <= 1'b1;
+      rst_tc_sync_q <= rst_tc_meta_q;
+    end
+  end
+  assign rst_tc_n = rst_tc_sync_q;
+
+  always_ff @(posedge clk_tx_sym or negedge rst_n) begin
+    if (!rst_n) begin
+      rst_tx_meta_q <= 1'b0;
+      rst_tx_sync_q <= 1'b0;
+    end else begin
+      rst_tx_meta_q <= 1'b1;
+      rst_tx_sync_q <= rst_tx_meta_q;
+    end
+  end
+  assign rst_tx_n = rst_tx_sync_q;
+
+  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
+    if (!rst_n) begin
+      rst_adc_meta_q <= 1'b0;
+      rst_adc_sync_q <= 1'b0;
+    end else begin
+      rst_adc_meta_q <= 1'b1;
+      rst_adc_sync_q <= rst_adc_meta_q;
+    end
+  end
+  assign rst_adc_n = rst_adc_sync_q;
+
+  //---------------------------------------------------------------------------
+  // 0C. 1 PPS Synchronization & Internal 100 MHz Fallback Timebase Divider
+  //---------------------------------------------------------------------------
+  (* ASYNC_REG = "TRUE" *) logic pps_meta_q, pps_sync_q;
+  logic        pps_prev_q;
+  logic        pps_ext_rising;
+  logic [26:0] pps_fallback_cnt_q;
+  logic        pps_1hz_pulse_sys;
+
+  assign pps_ext_rising = pps_sync_q && !pps_prev_q;
+
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
+      pps_meta_q         <= 1'b0;
+      pps_sync_q         <= 1'b0;
+      pps_prev_q         <= 1'b0;
+      pps_fallback_cnt_q <= 27'd0;
+      pps_1hz_pulse_sys  <= 1'b0;
+    end else begin
+      pps_meta_q <= pps_1hz_in;
+      pps_sync_q <= pps_meta_q;
+      pps_prev_q <= pps_sync_q;
+
+      if (pps_ext_rising) begin
+        pps_fallback_cnt_q <= 27'd0;
+        pps_1hz_pulse_sys  <= 1'b1;
+      end else if (pps_fallback_cnt_q == 27'd99_999_999) begin
+        pps_fallback_cnt_q <= 27'd0;
+        pps_1hz_pulse_sys  <= 1'b1;
+      end else begin
+        pps_fallback_cnt_q <= pps_fallback_cnt_q + 27'd1;
+        pps_1hz_pulse_sys  <= 1'b0;
+      end
+    end
+  end
+
+  //---------------------------------------------------------------------------
   // 1. CSR & Runtime Configuration Buses (clk_sys)
   //---------------------------------------------------------------------------
-  logic [9:0]  csr_scid_10b;
-  logic [15:0] csr_scid_16b;
-  logic [2:0]  csr_proto_mode;
-  logic [3:0]  csr_fec_mode;
-  logic        csr_ocf_en;
-  logic        csr_fecf_en;
-  logic        csr_fecf_crc32;
-  logic        csr_aos_fhec_en;
-  logic        csr_tc_seg_hdr_en;
-  logic        csr_obt_sec_hdr_en;
-  logic        csr_sdls_en;
-  logic        csr_bc_req_sdls;
-  logic        csr_srrc_4sps_en;
-  logic        csr_gardner_ted_en;
-  logic        csr_fll_assist_en;
-  logic        csr_sdls_gcm_mode;
-  logic [1:0]  csr_turnaround_kaband;
-  logic [7:0]  csr_win_half_w;
-  logic [3:0]  csr_rs_interleave;
-  logic [7:0]  csr_rs_q_fill;
-  logic [10:0] csr_tfdf_len;
-  logic [47:0] csr_obt_cuc_ts;
-  logic        csr_tmr_seu_pulse;
+  logic [9:0]   csr_scid_10b;
+  logic [15:0]  csr_scid_16b;
+  logic [2:0]   csr_proto_mode;
+  logic [3:0]   csr_fec_mode;
+  logic         csr_ocf_en;
+  logic         csr_fecf_en;
+  logic         csr_fecf_crc32;
+  logic         csr_aos_fhec_en;
+  logic         csr_tc_seg_hdr_en;
+  logic         csr_obt_sec_hdr_en;
+  logic         csr_sdls_en;
+  logic         csr_bc_req_sdls;
+  logic         csr_srrc_4sps_en;
+  logic         csr_gardner_ted_en;
+  logic         csr_fll_assist_en;
+  logic         csr_sdls_gcm_mode;
+  logic         csr_tm_rand_en;
+  logic [1:0]   csr_turnaround_kaband;
+  logic [7:0]   csr_win_half_w;
+  logic [3:0]   csr_rs_interleave;
+  logic [7:0]   csr_rs_q_fill;
+  logic [10:0]  csr_tfdf_len;
+  logic [15:0]  csr_tx_default_spi;
+  logic [255:0] csr_master_key;
+  logic         csr_sa_wr_en;
+  logic [5:0]   csr_sa_wr_addr;
+  logic [15:0]  csr_sa_wr_spi;
+  logic [31:0]  csr_sa_wr_seq_low;
+  logic [47:0]  csr_obt_cuc_ts;
+  logic         csr_tmr_seu_pulse;
 
   logic [2:0]  active_proto_mode;
   logic        active_sdls_en;
@@ -143,10 +274,14 @@ module ccsds_sat_ttc_top
   logic        sa_secded_double_pulse;
   logic        rx_fifo_secded_single;
   logic        rx_fifo_secded_double;
+  logic        rx_phy_fifo_secded_single;
+  logic        rx_phy_fifo_secded_double;
   logic        tx_fifo_secded_single;
   logic        tx_fifo_secded_double;
   logic        tx_phy_fifo_secded_single;
   logic        tx_phy_fifo_secded_double;
+  logic        rx_phy_fifo_ovf_unused;
+  logic        tx_phy_fifo_ovf_unused;
   logic        ul_fecf_crc_err_pulse;
   logic        farm_tmr_seu_pulse;
   logic        hcpd_tmr_seu_pulse;
@@ -162,18 +297,46 @@ module ccsds_sat_ttc_top
   ccsds_plcw_t plcw_scheduled_sys_q;
   logic        plcw_valid_pulse_tc;
 
-  // 2-FF CDC Synchronizers for CSR control signals into clk_tc_safe
-  (* ASYNC_REG = "TRUE" *) logic        sdls_en_tc_meta_q,    sdls_en_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic        sdls_gcm_tc_meta_q,   sdls_gcm_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic        bc_req_tc_meta_q,     bc_req_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic        fecf_crc32_tc_meta_q, fecf_crc32_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic        tc_seg_tc_meta_q,     tc_seg_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic [9:0]  scid_10b_tc_meta_q,   scid_10b_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic [15:0] scid_16b_tc_meta_q,   scid_16b_tc_sync_q;
-  (* ASYNC_REG = "TRUE" *) logic [7:0]  win_half_w_tc_meta_q, win_half_w_tc_sync_q;
+  // Runtime SDLS Provisioning CDC (clk_sys -> clk_tc_safe)
+  logic         sa_wr_tog_sys_q;
+  logic [5:0]   sa_wr_addr_hold_sys_q;
+  logic [15:0]  sa_wr_spi_hold_sys_q;
+  logic [31:0]  sa_wr_seq_hold_sys_q;
 
-  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
+      sa_wr_tog_sys_q       <= 1'b0;
+      sa_wr_addr_hold_sys_q <= 6'd1;
+      sa_wr_spi_hold_sys_q  <= 16'h0001;
+      sa_wr_seq_hold_sys_q  <= 32'd0;
+    end else if (csr_sa_wr_en) begin
+      sa_wr_tog_sys_q       <= ~sa_wr_tog_sys_q;
+      sa_wr_addr_hold_sys_q <= csr_sa_wr_addr;
+      sa_wr_spi_hold_sys_q  <= csr_sa_wr_spi;
+      sa_wr_seq_hold_sys_q  <= csr_sa_wr_seq_low;
+    end
+  end
+
+  // 2-FF CDC Synchronizers for CSR control signals into clk_tc_safe
+  (* ASYNC_REG = "TRUE" *) logic         sdls_en_tc_meta_q,    sdls_en_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic         sdls_gcm_tc_meta_q,   sdls_gcm_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic         bc_req_tc_meta_q,     bc_req_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic         fecf_crc32_tc_meta_q, fecf_crc32_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic         tc_seg_tc_meta_q,     tc_seg_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [9:0]   scid_10b_tc_meta_q,   scid_10b_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [15:0]  scid_16b_tc_meta_q,   scid_16b_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [7:0]   win_half_w_tc_meta_q, win_half_w_tc_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic         tc_sa_wr_tog_meta_q,  tc_sa_wr_tog_sync_q;
+  logic                                  tc_sa_wr_tog_prev_q;
+  logic                                  tc_sa_wr_en_pulse;
+  (* ASYNC_REG = "TRUE" *) logic [5:0]   tc_sa_wr_addr_meta_q, tc_sa_wr_addr_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [15:0]  tc_sa_wr_spi_meta_q,  tc_sa_wr_spi_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [31:0]  tc_sa_wr_seq_meta_q,  tc_sa_wr_seq_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [15:0]  tc_tx_spi_meta_q,     tc_tx_spi_sync_q;
+  (* ASYNC_REG = "TRUE" *) logic [255:0] tc_mkey_meta_q,       tc_mkey_sync_q;
+
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
       sdls_en_tc_meta_q    <= 1'b0;
       sdls_en_tc_sync_q    <= 1'b0;
       sdls_gcm_tc_meta_q   <= 1'b0;
@@ -190,6 +353,19 @@ module ccsds_sat_ttc_top
       scid_16b_tc_sync_q   <= 16'h1AB0;
       win_half_w_tc_meta_q <= 8'd16;
       win_half_w_tc_sync_q <= 8'd16;
+      tc_sa_wr_tog_meta_q  <= 1'b0;
+      tc_sa_wr_tog_sync_q  <= 1'b0;
+      tc_sa_wr_tog_prev_q  <= 1'b0;
+      tc_sa_wr_addr_meta_q <= 6'd1;
+      tc_sa_wr_addr_sync_q <= 6'd1;
+      tc_sa_wr_spi_meta_q  <= 16'h0001;
+      tc_sa_wr_spi_sync_q  <= 16'h0001;
+      tc_sa_wr_seq_meta_q  <= 32'd0;
+      tc_sa_wr_seq_sync_q  <= 32'd0;
+      tc_tx_spi_meta_q     <= 16'h0001;
+      tc_tx_spi_sync_q     <= 16'h0001;
+      tc_mkey_meta_q       <= 256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F;
+      tc_mkey_sync_q       <= 256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F;
     end else begin
       sdls_en_tc_meta_q    <= active_sdls_en;
       sdls_en_tc_sync_q    <= sdls_en_tc_meta_q;
@@ -207,8 +383,22 @@ module ccsds_sat_ttc_top
       scid_16b_tc_sync_q   <= scid_16b_tc_meta_q;
       win_half_w_tc_meta_q <= csr_win_half_w;
       win_half_w_tc_sync_q <= win_half_w_tc_meta_q;
+      tc_sa_wr_tog_meta_q  <= sa_wr_tog_sys_q;
+      tc_sa_wr_tog_sync_q  <= tc_sa_wr_tog_meta_q;
+      tc_sa_wr_tog_prev_q  <= tc_sa_wr_tog_sync_q;
+      tc_sa_wr_addr_meta_q <= sa_wr_addr_hold_sys_q;
+      tc_sa_wr_addr_sync_q <= tc_sa_wr_addr_meta_q;
+      tc_sa_wr_spi_meta_q  <= sa_wr_spi_hold_sys_q;
+      tc_sa_wr_spi_sync_q  <= tc_sa_wr_spi_meta_q;
+      tc_sa_wr_seq_meta_q  <= sa_wr_seq_hold_sys_q;
+      tc_sa_wr_seq_sync_q  <= tc_sa_wr_seq_meta_q;
+      tc_tx_spi_meta_q     <= csr_tx_default_spi;
+      tc_tx_spi_sync_q     <= tc_tx_spi_meta_q;
+      tc_mkey_meta_q       <= csr_master_key;
+      tc_mkey_sync_q       <= tc_mkey_meta_q;
     end
   end
+  assign tc_sa_wr_en_pulse = tc_sa_wr_tog_sync_q ^ tc_sa_wr_tog_prev_q;
 
   // Toggle-to-Pulse 2-FF ASYNC_REG Event Synchronizers into clk_sys for CSR counters
   logic [6:0] evt_tc_pulse_vec;
@@ -222,32 +412,32 @@ module ccsds_sat_ttc_top
     sdls_auth_done_pulse & ~sdls_auth_ok,
     ul_fecf_crc_err_pulse,
     farm_tmr_seu_pulse | hcpd_tmr_seu_pulse,
-    sa_secded_double_pulse,
-    sa_secded_single_pulse,
+    sa_secded_double_pulse | rx_phy_fifo_secded_double,
+    sa_secded_single_pulse | rx_phy_fifo_secded_single,
     bch_double_err_pulse,
     bch_single_err_pulse
   };
-  assign evt_tx_pulse_vec  = {tx_fifo_secded_double, tx_fifo_secded_single};
-  assign evt_adc_pulse_vec = {tx_phy_fifo_secded_double, tx_phy_fifo_secded_single};
+  assign evt_tx_pulse_vec  = {tx_fifo_secded_double | tx_phy_fifo_ovf_unused, tx_fifo_secded_single};
+  assign evt_adc_pulse_vec = {tx_phy_fifo_secded_double | rx_phy_fifo_ovf_unused, tx_phy_fifo_secded_single};
 
-  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
       evt_tc_tog_q <= 7'd0;
     end else begin
       evt_tc_tog_q <= evt_tc_tog_q ^ evt_tc_pulse_vec;
     end
   end
 
-  always_ff @(posedge clk_tx_sym or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tx_sym or negedge rst_tx_n) begin
+    if (!rst_tx_n) begin
       evt_tx_tog_q <= 2'd0;
     end else begin
       evt_tx_tog_q <= evt_tx_tog_q ^ evt_tx_pulse_vec;
     end
   end
 
-  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_adc_iq or negedge rst_adc_n) begin
+    if (!rst_adc_n) begin
       evt_adc_tog_q <= 2'd0;
     end else begin
       evt_adc_tog_q <= evt_adc_tog_q ^ evt_adc_pulse_vec;
@@ -258,8 +448,8 @@ module ccsds_sat_ttc_top
   logic [10:0] evt_sys_prev_q;
   logic [10:0] evt_sys_pulse;
 
-  always_ff @(posedge clk_sys or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
       evt_sys_meta_q <= 11'd0;
       evt_sys_sync_q <= 11'd0;
       evt_sys_prev_q <= 11'd0;
@@ -274,7 +464,7 @@ module ccsds_sat_ttc_top
 
   ccsds_axi_lite_csr u_csr (
     .clk                         (clk_sys),
-    .rst_n                       (rst_n),
+    .rst_n                       (rst_sys_n),
     .s_axi_awaddr                (s_axi_awaddr),
     .s_axi_awvalid               (s_axi_awvalid),
     .s_axi_awready               (s_axi_awready),
@@ -292,7 +482,7 @@ module ccsds_sat_ttc_top
     .s_axi_rresp                 (s_axi_rresp),
     .s_axi_rvalid                (s_axi_rvalid),
     .s_axi_rready                (s_axi_rready),
-    .pps_1hz_pulse               (1'b0),
+    .pps_1hz_pulse               (pps_1hz_pulse_sys),
     .csr_seu_inject_en           (1'b0),
     .csr_seu_xor_mask            (32'd0),
     .bch_single_err_pulse        (evt_sys_pulse[0]),
@@ -321,11 +511,18 @@ module ccsds_sat_ttc_top
     .gardner_ted_en_cfg          (csr_gardner_ted_en),
     .fll_assist_en_cfg           (csr_fll_assist_en),
     .sdls_gcm_mode_cfg           (csr_sdls_gcm_mode),
+    .tm_rand_en_cfg              (csr_tm_rand_en),
     .turnaround_kaband_cfg       (csr_turnaround_kaband),
     .window_half_w_cfg           (csr_win_half_w),
     .rs_interleave_i_cfg         (csr_rs_interleave),
     .rs_virt_fill_q_cfg          (csr_rs_q_fill),
     .tfdf_byte_len_cfg           (csr_tfdf_len),
+    .tx_default_spi_cfg          (csr_tx_default_spi),
+    .master_key_cfg              (csr_master_key),
+    .sa_wr_en                    (csr_sa_wr_en),
+    .sa_wr_addr                  (csr_sa_wr_addr),
+    .sa_wr_spi                   (csr_sa_wr_spi),
+    .sa_wr_seq_low               (csr_sa_wr_seq_low),
     .obt_cuc_timestamp_48b       (csr_obt_cuc_ts),
     .csr_tmr_seu_corrected_pulse (csr_tmr_seu_pulse),
     .fault_irq_out               (fault_irq_out),
@@ -354,8 +551,8 @@ module ccsds_sat_ttc_top
   (* ASYNC_REG = "TRUE" *) logic       fll_en_meta_q,     fll_en_sync_q;
   (* ASYNC_REG = "TRUE" *) logic [1:0] kaband_meta_q,     kaband_sync_q;
 
-  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_adc_iq or negedge rst_adc_n) begin
+    if (!rst_adc_n) begin
       srrc_en_meta_q    <= 1'b0;
       srrc_en_sync_q    <= 1'b0;
       gardner_en_meta_q <= 1'b0;
@@ -378,7 +575,7 @@ module ccsds_sat_ttc_top
 
   ccsds_phy_modem u_phy_modem (
     .clk                      (clk_adc_iq),
-    .rst_n                    (rst_n),
+    .rst_n                    (rst_adc_n),
     .mod_mode_cfg             (mod_mode_cfg),
     .line_code_cfg            (line_code_cfg),
     .turnaround_xband_cfg     (turnaround_xband_cfg),
@@ -388,8 +585,8 @@ module ccsds_sat_ttc_top
     .gardner_ted_en_cfg       (gardner_en_sync_q),
     .fll_assist_en_cfg        (fll_en_sync_q),
     .tx_pn_chip_in            (tx_pn_chip),
-    .rx_i_in                  (rx_i_adc_in),
-    .rx_q_in                  (rx_q_adc_in),
+    .rx_i_in                  (phy_rx_i_12b),
+    .rx_q_in                  (phy_rx_q_12b),
     .rx_iq_valid_in           (rx_iq_valid_in),
     .rx_sym_valid_out         (phy_rx_sym_valid),
     .rx_sym_byte_out          (phy_rx_sym_byte),
@@ -401,14 +598,14 @@ module ccsds_sat_ttc_top
     .s_axis_tx_tvalid         (tx_phy_tvalid),
     .s_axis_tx_tready         (tx_phy_tready),
     .s_axis_tx_tdata          (tx_phy_tdata),
-    .tx_i_out                 (tx_i_dac_out),
-    .tx_q_out                 (tx_q_dac_out),
+    .tx_i_out                 (phy_tx_i_12b),
+    .tx_q_out                 (phy_tx_q_12b),
     .tx_iq_valid_out          (tx_iq_valid_out)
   );
 
   ccsds_pn_ranging u_pn_ranging (
     .clk                     (clk_adc_iq),
-    .rst_n                   (rst_n),
+    .rst_n                   (rst_adc_n),
     .pn_ranging_en_cfg       (pn_ranging_en_cfg),
     .t4b_mode_cfg            (pn_t4b_mode_cfg),
     .chip_en_in              (rx_iq_valid_in),
@@ -423,8 +620,8 @@ module ccsds_sat_ttc_top
   (* ASYNC_REG = "TRUE" *) logic carrier_lock_meta_q, carrier_lock_sync_q;
   (* ASYNC_REG = "TRUE" *) logic symbol_lock_meta_q,  symbol_lock_sync_q;
 
-  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
       carrier_lock_meta_q <= 1'b0;
       carrier_lock_sync_q <= 1'b0;
       symbol_lock_meta_q  <= 1'b0;
@@ -438,8 +635,61 @@ module ccsds_sat_ttc_top
   end
 
   //---------------------------------------------------------------------------
-  // 3. Uplink ASM Correlator, BCH(63,56), Short-LDPC & TC Scrambler (clk_tc_safe)
+  // 2B. Uplink Rx Asynchronous CDC FIFO (`u_rx_phy_cdc_fifo`) & MSB-First
+  //     Bit-to-LLR Serializer (`clk_adc_iq` -> `clk_tc_safe`)
   //---------------------------------------------------------------------------
+  logic [7:0]        rx_phy_fifo_tdata;
+  logic [0:0]        rx_phy_fifo_tkeep_unused;
+  logic              rx_phy_fifo_tvalid;
+  logic              rx_phy_fifo_tready;
+  logic              rx_phy_fifo_tlast_unused;
+  ccsds_tuser_t      rx_phy_fifo_tuser_unused;
+  logic              rx_phy_fifo_wr_ready_unused;
+  logic [8:0]        rx_phy_fifo_comm_cnt_unused;
+  logic [8:0]        rx_phy_fifo_spec_cnt_unused;
+
+  logic              rx_phy_ser_busy_q;
+  logic [7:0]        rx_phy_ser_byte_q;
+  logic [2:0]        rx_phy_ser_bit_idx_q;
+  logic              phy_tc_sym_valid;
+  logic signed [3:0] phy_tc_sym_llr;
+
+  ccsds_cdc_fifo_ecc #(
+    .DATA_WIDTH    (8),
+    .DEPTH_WORDS   (256),
+    .ROLLBACK_MODE (1'b0),
+    .WATERMARK_MODE(1'b0)
+  ) u_rx_phy_cdc_fifo (
+    .clk_wr                   (clk_adc_iq),
+    .rst_wr_n                 (rst_adc_n),
+    .clk_rd                   (clk_tc_safe),
+    .rst_rd_n                 (rst_tc_n),
+    .cut_through_en           (1'b1),
+    .watermark_words          (9'd0),
+    .frame_commit_pulse       (1'b0),
+    .frame_rollback_pulse     (1'b0),
+    .seu_inject_en            (1'b0),
+    .seu_inject_addr          (8'd0),
+    .seu_inject_bit           (6'd0),
+    .s_axis_tdata             (phy_rx_sym_byte),
+    .s_axis_tkeep             (1'b1),
+    .s_axis_tvalid            (phy_rx_sym_valid && !pn_ranging_en_cfg),
+    .s_axis_tready            (rx_phy_fifo_wr_ready_unused),
+    .s_axis_tlast             (1'b0),
+    .s_axis_tuser             ('0),
+    .m_axis_tdata             (rx_phy_fifo_tdata),
+    .m_axis_tkeep             (rx_phy_fifo_tkeep_unused),
+    .m_axis_tvalid            (rx_phy_fifo_tvalid),
+    .m_axis_tready            (rx_phy_fifo_tready),
+    .m_axis_tlast             (rx_phy_fifo_tlast_unused),
+    .m_axis_tuser             (rx_phy_fifo_tuser_unused),
+    .committed_count          (rx_phy_fifo_comm_cnt_unused),
+    .speculative_count        (rx_phy_fifo_spec_cnt_unused),
+    .ecc_single_err_corrected (rx_phy_fifo_secded_single),
+    .ecc_double_err_uncorr    (rx_phy_fifo_secded_double),
+    .rollback_overflow_err    (rx_phy_fifo_ovf_unused)
+  );
+
   logic signed [3:0] asm_cb_llr;
   logic              asm_cb_hard_bit;
   logic              asm_cb_start_pulse;
@@ -450,15 +700,103 @@ module ccsds_sat_ttc_top
   logic              ldpc_tail_pulse;
   logic              ldpc_converged_pulse;
   logic              ldpc_abort_pulse;
+  logic              ul_ldpc_mode_en;
+  logic [6:0]        ldpc_ser_bit_cnt_q;
+  logic [62:0]       ldpc_ser_hdr63_q;
+  logic              ldpc_ser_wait_q;
+  logic [3:0]        ldpc_ser_emit_cnt_q;
+  logic [7:0]        ldpc_dec_tdata;
+  logic              ldpc_dec_tvalid;
+  logic              ldpc_dec_tready;
+  logic              ldpc_dec_tlast;
+  logic              ldpc_dec_tabort;
+
+  assign ul_ldpc_mode_en    = (ul_fec_override_en == 2'd2) || (ul_fec_override_en == 2'd3);
+  assign rx_phy_fifo_tready = (!rx_phy_ser_busy_q || (rx_phy_ser_bit_idx_q == 3'd0)) &&
+                              !s_axis_ul_sym_tvalid && !ldpc_ser_wait_q;
+
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
+      rx_phy_ser_busy_q    <= 1'b0;
+      rx_phy_ser_byte_q    <= 8'd0;
+      rx_phy_ser_bit_idx_q <= 3'd7;
+      ldpc_ser_bit_cnt_q   <= 7'd0;
+      ldpc_ser_hdr63_q     <= 63'd0;
+      ldpc_ser_wait_q      <= 1'b0;
+      ldpc_ser_emit_cnt_q  <= 4'd0;
+    end else begin
+      if (!ul_ldpc_mode_en || !asm_sync_locked || ldpc_tail_pulse || ldpc_abort_pulse) begin
+        ldpc_ser_bit_cnt_q  <= 7'd0;
+        ldpc_ser_hdr63_q    <= 63'd0;
+        ldpc_ser_wait_q     <= 1'b0;
+        ldpc_ser_emit_cnt_q <= 4'd0;
+      end else if (ldpc_ser_wait_q) begin
+        if (ldpc_ser_emit_cnt_q == 4'd8) begin
+          if (!ldpc_dec_tvalid || ldpc_dec_tready) begin
+            ldpc_ser_wait_q     <= 1'b0;
+            ldpc_ser_emit_cnt_q <= 4'd0;
+          end
+        end else if (ldpc_dec_tvalid && ldpc_dec_tready) begin
+          ldpc_ser_emit_cnt_q <= ldpc_ser_emit_cnt_q + 4'd1;
+        end
+      end else if (asm_cb_valid) begin
+        if (ldpc_ser_bit_cnt_q < 7'd63) begin
+          ldpc_ser_hdr63_q <= {ldpc_ser_hdr63_q[61:0], asm_cb_hard_bit};
+        end
+        if ((ldpc_ser_bit_cnt_q == 7'd63) && ({ldpc_ser_hdr63_q, asm_cb_hard_bit} == CLTU_TAIL_SEQ_LDPC_55)) begin
+          ldpc_ser_bit_cnt_q <= 7'd0;
+        end else if (ldpc_ser_bit_cnt_q == 7'd127) begin
+          ldpc_ser_bit_cnt_q  <= 7'd0;
+          ldpc_ser_wait_q     <= 1'b1;
+          ldpc_ser_emit_cnt_q <= 4'd0;
+        end else begin
+          ldpc_ser_bit_cnt_q <= ldpc_ser_bit_cnt_q + 7'd1;
+        end
+      end
+
+      if (s_axis_ul_sym_tvalid) begin
+        rx_phy_ser_busy_q    <= 1'b0;
+        rx_phy_ser_bit_idx_q <= 3'd7;
+      end else if (!ldpc_ser_wait_q) begin
+        if (!rx_phy_ser_busy_q) begin
+          if (rx_phy_fifo_tvalid) begin
+            rx_phy_ser_busy_q    <= 1'b1;
+            rx_phy_ser_byte_q    <= rx_phy_fifo_tdata;
+            rx_phy_ser_bit_idx_q <= 3'd7;
+          end
+        end else begin
+          if (rx_phy_ser_bit_idx_q == 3'd0) begin
+            if (rx_phy_fifo_tvalid) begin
+              rx_phy_ser_busy_q    <= 1'b1;
+              rx_phy_ser_byte_q    <= rx_phy_fifo_tdata;
+              rx_phy_ser_bit_idx_q <= 3'd7;
+            end else begin
+              rx_phy_ser_busy_q    <= 1'b0;
+              rx_phy_ser_bit_idx_q <= 3'd7;
+            end
+          end else begin
+            rx_phy_ser_bit_idx_q <= rx_phy_ser_bit_idx_q - 3'd1;
+          end
+        end
+      end
+    end
+  end
+
+  assign phy_tc_sym_valid = rx_phy_ser_busy_q && !s_axis_ul_sym_tvalid && !ldpc_ser_wait_q;
+  assign phy_tc_sym_llr   = rx_phy_ser_byte_q[rx_phy_ser_bit_idx_q] ? -4'sd7 : 4'sd7;
+
+  //---------------------------------------------------------------------------
+  // 3. Uplink ASM Correlator, BCH(63,56), Short-LDPC & TC Scrambler (clk_tc_safe)
+  //---------------------------------------------------------------------------
 
   ccsds_asm_correlator u_asm_corr (
     .clk                 (clk_tc_safe),
-    .rst_n               (rst_n),
-    .sync_mode           (ul_fec_override_en),
+    .rst_n               (rst_tc_n),
+    .sync_mode           (ul_ldpc_mode_en ? 2'd1 : 2'd0),
     .hamming_thresh      (3'd2),
-    .tail_or_abort_pulse (bch_cltu_ended_pulse | ldpc_tail_pulse | ldpc_abort_pulse),
-    .sym_llr_in          (s_axis_ul_sym_tdata[3:0]),
-    .sym_valid_in        (s_axis_ul_sym_tvalid),
+    .tail_or_abort_pulse (ul_ldpc_mode_en ? (ldpc_tail_pulse | ldpc_abort_pulse) : bch_cltu_ended_pulse),
+    .sym_llr_in          (s_axis_ul_sym_tvalid ? s_axis_ul_sym_tdata[3:0] : phy_tc_sym_llr),
+    .sym_valid_in        (s_axis_ul_sym_tvalid ? 1'b1 : phy_tc_sym_valid),
     .cb_llr_out          (asm_cb_llr),
     .cb_hard_bit_out     (asm_cb_hard_bit),
     .cb_start_pulse      (asm_cb_start_pulse),
@@ -475,11 +813,11 @@ module ccsds_sat_ttc_top
 
   ccsds_bch6356_dec u_bch_dec (
     .clk                    (clk_tc_safe),
-    .rst_n                  (rst_n),
+    .rst_n                  (rst_tc_n),
     .tc_derand_en           (1'b1),
     .cb_hard_bit_in         (asm_cb_hard_bit),
-    .cb_start_pulse         (asm_cb_start_pulse),
-    .cb_valid_in            (asm_cb_valid),
+    .cb_start_pulse         (asm_cb_start_pulse && !ul_ldpc_mode_en),
+    .cb_valid_in            (asm_cb_valid && !ul_ldpc_mode_en),
     .cltu_ended_pulse       (bch_cltu_ended_pulse),
     .bch_single_err_pulse   (bch_single_err_pulse),
     .bch_double_abort_pulse (bch_double_err_pulse),
@@ -490,23 +828,17 @@ module ccsds_sat_ttc_top
     .m_axis_tabort          (bch_dec_tabort)
   );
 
-  logic [7:0] ldpc_dec_tdata;
-  logic       ldpc_dec_tvalid;
-  logic       ldpc_dec_tready;
-  logic       ldpc_dec_tlast;
-  logic       ldpc_dec_tabort;
-
   generate
     if (ENABLE_UL_LDPC) begin : g_ul_short_ldpc
       ccsds_ul_short_ldpc_dec u_short_ldpc_dec (
         .clk                      (clk_tc_safe),
-        .rst_n                    (rst_n),
+        .rst_n                    (rst_tc_n),
         .ldpc_mode_512_en         (ul_fec_override_en == 2'd2),
         .tc_derand_en             (1'b1),
         .cb_llr_in                (asm_cb_llr),
         .cb_hard_bit_in           (asm_cb_hard_bit),
-        .cb_start_pulse           (asm_cb_start_pulse),
-        .cb_valid_in              (asm_cb_valid),
+        .cb_start_pulse           (asm_cb_start_pulse && ul_ldpc_mode_en),
+        .cb_valid_in              (asm_cb_valid && ul_ldpc_mode_en),
         .ldpc_tail_detected_pulse (ldpc_tail_pulse),
         .ldpc_converged_pulse     (ldpc_converged_pulse),
         .ldpc_uncorr_abort_pulse  (ldpc_abort_pulse),
@@ -538,18 +870,18 @@ module ccsds_sat_ttc_top
     .DATA_WIDTH(8)
   ) u_tc_descram (
     .clk              (clk_tc_safe),
-    .rst_n            (rst_n),
+    .rst_n            (rst_tc_n),
     .bypass_en        (1'b1),
     .mode_tc_not_tm   (1'b1),
     .lfsr_reseed_sync (asm_cb_start_pulse),
-    .s_axis_tdata     ((ul_fec_override_en == 2'd0) ? s_axis_ul_sym_tdata  :
-                       (ul_fec_override_en == 2'd1) ? bch_dec_tdata        : ldpc_dec_tdata),
+    .s_axis_tdata     ((ul_fec_override_en == 2'd2 || ul_fec_override_en == 2'd3) ? ldpc_dec_tdata  :
+                       (s_axis_ul_sym_tvalid && (ul_fec_override_en == 2'd0))     ? s_axis_ul_sym_tdata  : bch_dec_tdata),
     .s_axis_tkeep     (1'b1),
-    .s_axis_tvalid    ((ul_fec_override_en == 2'd0) ? s_axis_ul_sym_tvalid :
-                       (ul_fec_override_en == 2'd1) ? bch_dec_tvalid       : ldpc_dec_tvalid),
+    .s_axis_tvalid    ((ul_fec_override_en == 2'd2 || ul_fec_override_en == 2'd3) ? ldpc_dec_tvalid :
+                       (s_axis_ul_sym_tvalid && (ul_fec_override_en == 2'd0))     ? s_axis_ul_sym_tvalid : bch_dec_tvalid),
     .s_axis_tready    (s_axis_ul_sym_tready),
-    .s_axis_tlast     ((ul_fec_override_en == 2'd0) ? s_axis_ul_sym_tlast  :
-                       (ul_fec_override_en == 2'd1) ? bch_dec_tlast        : ldpc_dec_tlast),
+    .s_axis_tlast     ((ul_fec_override_en == 2'd2 || ul_fec_override_en == 2'd3) ? ldpc_dec_tlast  :
+                       (s_axis_ul_sym_tvalid && (ul_fec_override_en == 2'd0))     ? s_axis_ul_sym_tlast  : bch_dec_tlast),
     .s_axis_tuser     ('0),
     .m_axis_tdata     (tc_descram_tdata),
     .m_axis_tkeep     (tc_descram_tkeep),
@@ -586,7 +918,7 @@ module ccsds_sat_ttc_top
 
   ccsds_tc_uslp_deframer u_ul_deframer (
     .clk                      (clk_tc_safe),
-    .rst_n                    (rst_n),
+    .rst_n                    (rst_tc_n),
     .spacecraft_id_cfg        (scid_10b_tc_sync_q),
     .uslp_scid_cfg            (scid_16b_tc_sync_q),
     .uslp_trunc_frame_len_cfg (16'd16),
@@ -622,8 +954,8 @@ module ccsds_sat_ttc_top
   logic [7:0] cmd_byte0_q, cmd_byte1_q, cmd_byte2_q;
   logic [2:0] cmd_len_q;
 
-  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
       cmd_byte0_q <= 8'd0;
       cmd_byte1_q <= 8'd0;
       cmd_byte2_q <= 8'd0;
@@ -642,7 +974,7 @@ module ccsds_sat_ttc_top
 
   ccsds_prox1_plcw_ctrl u_prox1_plcw (
     .clk               (clk_tc_safe),
-    .rst_n             (rst_n),
+    .rst_n             (rst_tc_n),
     .no_rf_avail       (~carrier_lock_sync_q),
     .no_bit_lock       (~symbol_lock_sync_q),
     .wait_flag_in      (1'b0),
@@ -676,30 +1008,45 @@ module ccsds_sat_ttc_top
   logic        sdls_tx_tvalid;
   logic        sdls_tx_tready;
   logic        sdls_tx_tlast;
+  logic        dl_framer_tfdf_tready;
+  logic [7:0]  egse_ul_sdls_in_tdata;
+  logic        egse_ul_sdls_in_tvalid;
+  logic        egse_ul_sdls_in_tlast;
+  logic        egse_ul_sdls_out_tready;
+  logic [7:0]  egse_dl_sdls_in_tdata;
+  logic        egse_dl_sdls_in_tvalid;
+  logic        egse_dl_sdls_in_tready;
+  logic        egse_dl_sdls_in_tlast;
+  logic        sdls_rx_in_tready;
+  logic        rx_reasm_tready;
+
+  assign ul_deframed_tready     = (ROLE_MODE == 1) ? 1'b1 : sdls_rx_in_tready;
+  assign egse_dl_sdls_in_tready = (ROLE_MODE == 1) ? sdls_rx_in_tready : 1'b1;
+  assign sdls_tx_tready         = (ROLE_MODE == 1) ? egse_ul_sdls_out_tready : dl_framer_tfdf_tready;
 
   generate
     if (ENABLE_SDLS) begin : g_sdls_engine
       ccsds_sdls_engine u_sdls (
-        .clk                        (clk_tc_safe),
-        .rst_n                      (rst_n),
+        .clk                        ((ROLE_MODE == 1) ? clk_sys : clk_tc_safe),
+        .rst_n                      ((ROLE_MODE == 1) ? rst_sys_n : rst_tc_n),
         .clk_tx                     (clk_sys),
-        .rst_tx_n                   (rst_n),
-        .sdls_en_cfg                (sdls_en_tc_sync_q),
-        .sdls_gcm_mode_cfg          (sdls_gcm_tc_sync_q),
-        .bc_require_sdls_cfg        (bc_req_tc_sync_q),
-        .tx_default_spi_cfg         (16'h0001),
-        .master_key_cfg             (256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F),
-        .sa_wr_en                   (1'b0),
-        .sa_wr_addr                 (6'd0),
-        .sa_wr_spi                  (16'd0),
-        .sa_wr_seq_low              (32'd0),
-        .s_axis_rx_tvalid           (ul_deframed_tvalid),
-        .s_axis_rx_tready           (ul_deframed_tready),
-        .s_axis_rx_tdata            (ul_deframed_tdata),
-        .s_axis_rx_tlast            (ul_deframed_tlast),
-        .rx_frame_is_type_bc        (parsed_tc_hdr.bypass_flag & parsed_tc_hdr.ctrl_cmd_flag),
+        .rst_tx_n                   (rst_sys_n),
+        .sdls_en_cfg                ((ROLE_MODE == 1) ? active_sdls_en : sdls_en_tc_sync_q),
+        .sdls_gcm_mode_cfg          ((ROLE_MODE == 1) ? csr_sdls_gcm_mode : sdls_gcm_tc_sync_q),
+        .bc_require_sdls_cfg        ((ROLE_MODE == 1) ? active_bc_req_sdls : bc_req_tc_sync_q),
+        .tx_default_spi_cfg         ((ROLE_MODE == 1) ? csr_tx_default_spi : tc_tx_spi_sync_q),
+        .master_key_cfg             ((ROLE_MODE == 1) ? csr_master_key : tc_mkey_sync_q),
+        .sa_wr_en                   ((ROLE_MODE == 1) ? csr_sa_wr_en : tc_sa_wr_en_pulse),
+        .sa_wr_addr                 ((ROLE_MODE == 1) ? csr_sa_wr_addr : tc_sa_wr_addr_sync_q),
+        .sa_wr_spi                  ((ROLE_MODE == 1) ? csr_sa_wr_spi : tc_sa_wr_spi_sync_q),
+        .sa_wr_seq_low              ((ROLE_MODE == 1) ? csr_sa_wr_seq_low : tc_sa_wr_seq_sync_q),
+        .s_axis_rx_tvalid           ((ROLE_MODE == 1) ? egse_dl_sdls_in_tvalid : ul_deframed_tvalid),
+        .s_axis_rx_tready           (sdls_rx_in_tready),
+        .s_axis_rx_tdata            ((ROLE_MODE == 1) ? egse_dl_sdls_in_tdata : ul_deframed_tdata),
+        .s_axis_rx_tlast            ((ROLE_MODE == 1) ? egse_dl_sdls_in_tlast : ul_deframed_tlast),
+        .rx_frame_is_type_bc        ((ROLE_MODE == 1) ? 1'b0 : (parsed_tc_hdr.bypass_flag & parsed_tc_hdr.ctrl_cmd_flag)),
         .m_axis_rx_tvalid           (sdls_rx_tvalid),
-        .m_axis_rx_tready           (sdls_rx_tready),
+        .m_axis_rx_tready           ((ROLE_MODE == 1) ? rx_reasm_tready : sdls_rx_tready),
         .m_axis_rx_tdata            (sdls_rx_tdata),
         .m_axis_rx_tlast            (sdls_rx_tlast),
         .sdls_auth_done_pulse       (sdls_auth_done_pulse),
@@ -707,29 +1054,29 @@ module ccsds_sat_ttc_top
         .rx_active_spi_out          (rx_active_spi_unused),
         .sa_secded_single_err_pulse (sa_secded_single_pulse),
         .sa_secded_double_err_pulse (sa_secded_double_pulse),
-        .s_axis_tx_tvalid           (vc_tfdf_tvalid),
+        .s_axis_tx_tvalid           ((ROLE_MODE == 1) ? egse_ul_sdls_in_tvalid : vc_tfdf_tvalid),
         .s_axis_tx_tready           (vc_tfdf_tready),
-        .s_axis_tx_tdata            (vc_tfdf_tdata),
-        .s_axis_tx_tlast            (vc_tfdf_tlast),
+        .s_axis_tx_tdata            ((ROLE_MODE == 1) ? egse_ul_sdls_in_tdata : vc_tfdf_tdata),
+        .s_axis_tx_tlast            ((ROLE_MODE == 1) ? egse_ul_sdls_in_tlast : vc_tfdf_tlast),
         .m_axis_tx_tvalid           (sdls_tx_tvalid),
         .m_axis_tx_tready           (sdls_tx_tready),
         .m_axis_tx_tdata            (sdls_tx_tdata),
         .m_axis_tx_tlast            (sdls_tx_tlast)
       );
     end else begin : g_no_sdls_engine
-      assign sdls_rx_tvalid         = ul_deframed_tvalid;
-      assign ul_deframed_tready     = sdls_rx_tready;
-      assign sdls_rx_tdata          = ul_deframed_tdata;
-      assign sdls_rx_tlast          = ul_deframed_tlast;
+      assign sdls_rx_tvalid         = (ROLE_MODE == 1) ? egse_dl_sdls_in_tvalid : ul_deframed_tvalid;
+      assign sdls_rx_in_tready      = (ROLE_MODE == 1) ? rx_reasm_tready : sdls_rx_tready;
+      assign sdls_rx_tdata          = (ROLE_MODE == 1) ? egse_dl_sdls_in_tdata : ul_deframed_tdata;
+      assign sdls_rx_tlast          = (ROLE_MODE == 1) ? egse_dl_sdls_in_tlast : ul_deframed_tlast;
       assign sdls_auth_done_pulse   = ul_frame_done_pulse;
       assign sdls_auth_ok           = 1'b1;
       assign rx_active_spi_unused   = 16'd0;
       assign sa_secded_single_pulse = 1'b0;
       assign sa_secded_double_pulse = 1'b0;
-      assign sdls_tx_tvalid         = vc_tfdf_tvalid;
+      assign sdls_tx_tvalid         = (ROLE_MODE == 1) ? egse_ul_sdls_in_tvalid : vc_tfdf_tvalid;
       assign vc_tfdf_tready         = sdls_tx_tready;
-      assign sdls_tx_tdata          = vc_tfdf_tdata;
-      assign sdls_tx_tlast          = vc_tfdf_tlast;
+      assign sdls_tx_tdata          = (ROLE_MODE == 1) ? egse_ul_sdls_in_tdata : vc_tfdf_tdata;
+      assign sdls_tx_tlast          = (ROLE_MODE == 1) ? egse_ul_sdls_in_tlast : vc_tfdf_tlast;
     end
   endgenerate
 
@@ -738,7 +1085,7 @@ module ccsds_sat_ttc_top
 
   ccsds_farm1_tmr u_farm1 (
     .clk                     (clk_tc_safe),
-    .rst_n                   (rst_n),
+    .rst_n                   (rst_tc_n),
     .sdls_en                 (sdls_en_tc_sync_q),
     .bc_require_sdls         (bc_req_tc_sync_q),
     .window_half_w           (win_half_w_tc_sync_q),
@@ -774,9 +1121,11 @@ module ccsds_sat_ttc_top
   logic        plcw_tog_tc_q;
   (* ASYNC_REG = "TRUE" *) logic plcw_tog_meta_q, plcw_tog_sync_q;
   logic        plcw_tog_prev_q;
+  logic        egse_rx_clcw_valid;
+  ccsds_clcw_t egse_rx_clcw_word;
 
-  always_ff @(posedge clk_tc_safe or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
+    if (!rst_tc_n) begin
       clcw_hold_tc_q <= '0;
       clcw_tog_tc_q  <= 1'b0;
       plcw_hold_tc_q <= '0;
@@ -796,8 +1145,8 @@ module ccsds_sat_ttc_top
     end
   end
 
-  always_ff @(posedge clk_sys or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
       clcw_tog_meta_q      <= 1'b0;
       clcw_tog_sync_q      <= 1'b0;
       clcw_tog_prev_q      <= 1'b0;
@@ -810,7 +1159,9 @@ module ccsds_sat_ttc_top
       clcw_tog_meta_q <= clcw_tog_tc_q;
       clcw_tog_sync_q <= clcw_tog_meta_q;
       clcw_tog_prev_q <= clcw_tog_sync_q;
-      if (clcw_tog_sync_q ^ clcw_tog_prev_q) begin
+      if ((ROLE_MODE == 1) && egse_rx_clcw_valid) begin
+        clcw_scheduled_sys_q <= egse_rx_clcw_word;
+      end else if (clcw_tog_sync_q ^ clcw_tog_prev_q) begin
         clcw_scheduled_sys_q <= clcw_hold_tc_q;
       end
       plcw_tog_meta_q <= plcw_tog_tc_q;
@@ -828,7 +1179,7 @@ module ccsds_sat_ttc_top
 
   ccsds_hcpd_ctrl u_hcpd (
     .clk                          (clk_tc_safe),
-    .rst_n                        (rst_n),
+    .rst_n                        (rst_tc_n),
     .hcpd_en_cfg                  (1'b1),
     .hcpd_vcid_cfg                (EMERGENCY_VCID),
     .hcpd_magic_word_cfg          (MAGIC_OBC_HARD_RESET[63:32]),
@@ -869,9 +1220,9 @@ module ccsds_sat_ttc_top
     .WATERMARK_MODE(1'b0)
   ) u_rx_commit_cdc_fifo (
     .clk_wr                   (clk_tc_safe),
-    .rst_wr_n                 (rst_n),
+    .rst_wr_n                 (rst_tc_n),
     .clk_rd                   (clk_sys),
-    .rst_rd_n                 (rst_n),
+    .rst_rd_n                 (rst_sys_n),
     .cut_through_en           (1'b0),
     .watermark_words          (10'd0),
     .frame_commit_pulse       (farm_accept_pulse),
@@ -881,7 +1232,7 @@ module ccsds_sat_ttc_top
     .seu_inject_bit           (6'd0),
     .s_axis_tdata             (sdls_rx_tdata),
     .s_axis_tkeep             (1'b1),
-    .s_axis_tvalid            (sdls_rx_tvalid),
+    .s_axis_tvalid            ((ROLE_MODE == 1) ? 1'b0 : sdls_rx_tvalid),
     .s_axis_tready            (sdls_rx_tready),
     .s_axis_tlast             (sdls_rx_tlast),
     .s_axis_tuser             ('0),
@@ -902,12 +1253,11 @@ module ccsds_sat_ttc_top
   logic [7:0]           rx_pipe_tdata_q;
   logic                 rx_pipe_tvalid_q;
   logic                 rx_pipe_tlast_q;
-  logic                 rx_reasm_tready;
 
   assign rx_fifo_tready = !rx_pipe_tvalid_q || rx_reasm_tready;
 
-  always_ff @(posedge clk_sys or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
       rx_pipe_tvalid_q <= 1'b0;
       rx_pipe_tdata_q  <= 8'h00;
       rx_pipe_tlast_q  <= 1'b0;
@@ -921,17 +1271,27 @@ module ccsds_sat_ttc_top
   ccsds_space_pkt_hdr_t parsed_pkt_hdr_unused;
   logic                 pkt_completed_unused;
   logic                 idle_pkt_stripped_unused;
+  logic [7:0]           egse_dl_tfdf_tdata;
+  logic                 egse_dl_tfdf_tvalid;
+  logic                 egse_dl_tfdf_tlast;
+  logic                 egse_ul_tx_tvalid;
+  logic                 egse_ul_tx_tready;
+  logic [7:0]           egse_ul_tx_tdata;
+  logic                 egse_ul_tx_tlast;
+  logic                 egse_pkt_in_tready;
+  logic                 vc_arb_pkt_tready;
+  logic                 tx_hwm_in_tready;
 
   ccsds_pkt_reassembler u_reassembler (
     .clk                     (clk_sys),
-    .rst_n                   (rst_n),
+    .rst_n                   (rst_sys_n),
     .fhp_resync_en           (1'b0),
     .frame_fhp_in            (11'd0),
     .frame_start_pulse       (1'b0),
-    .s_axis_tdata            (rx_pipe_tdata_q),
-    .s_axis_tvalid           (rx_pipe_tvalid_q),
+    .s_axis_tdata            (((ROLE_MODE == 1) && egse_dl_tfdf_tvalid) ? egse_dl_tfdf_tdata  : rx_pipe_tdata_q),
+    .s_axis_tvalid           (((ROLE_MODE == 1) && egse_dl_tfdf_tvalid) ? egse_dl_tfdf_tvalid : rx_pipe_tvalid_q),
     .s_axis_tready           (rx_reasm_tready),
-    .s_axis_tlast            (rx_pipe_tlast_q),
+    .s_axis_tlast            (((ROLE_MODE == 1) && egse_dl_tfdf_tvalid) ? egse_dl_tfdf_tlast  : rx_pipe_tlast_q),
     .m_axis_pkt_tdata        (m_axis_rx_pkt_tdata),
     .m_axis_pkt_tvalid       (m_axis_rx_pkt_tvalid),
     .m_axis_pkt_tready       (m_axis_rx_pkt_tready),
@@ -954,23 +1314,25 @@ module ccsds_sat_ttc_top
   // 5. Downlink VC Arbiter, Framer, Outer FEC, Scrambler & High-Watermark FIFO
   //---------------------------------------------------------------------------
   logic tx_pkt_committed_q;
-  always_ff @(posedge clk_sys or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
       tx_pkt_committed_q <= 1'b0;
     end else begin
       tx_pkt_committed_q <= s_axis_tx_pkt_tvalid && s_axis_tx_pkt_tready && s_axis_tx_pkt_tlast;
     end
   end
 
+  assign s_axis_tx_pkt_tready = (ROLE_MODE == 1) ? egse_pkt_in_tready : vc_arb_pkt_tready;
+
   ccsds_vc_arbiter_mux u_vc_arb (
     .clk                 (clk_sys),
-    .rst_n               (rst_n),
+    .rst_n               (rst_sys_n),
     .tfdf_byte_len_cfg   (csr_tfdf_len),
     .request_next_frame  (tx_pkt_committed_q),
     .s_axis_pkt_tdata    (s_axis_tx_pkt_tdata),
     .s_axis_pkt_vcid     (s_axis_tx_pkt_tuser.vcid[2:0]),
-    .s_axis_pkt_tvalid   (s_axis_tx_pkt_tvalid),
-    .s_axis_pkt_tready   (s_axis_tx_pkt_tready),
+    .s_axis_pkt_tvalid   ((ROLE_MODE == 1) ? 1'b0 : s_axis_tx_pkt_tvalid),
+    .s_axis_pkt_tready   (vc_arb_pkt_tready),
     .s_axis_pkt_tlast    (s_axis_tx_pkt_tlast),
     .m_axis_tfdf_tdata   (vc_tfdf_tdata),
     .m_axis_tfdf_tvalid  (vc_tfdf_tvalid),
@@ -989,7 +1351,7 @@ module ccsds_sat_ttc_top
 
   ccsds_tm_aos_uslp_framer u_dl_framer (
     .clk                   (clk_sys),
-    .rst_n                 (rst_n),
+    .rst_n                 (rst_sys_n),
     .spacecraft_id_cfg     (csr_scid_10b),
     .ocf_en_cfg            (csr_ocf_en),
     .fecf_en_cfg           (csr_fecf_en),
@@ -1001,12 +1363,12 @@ module ccsds_sat_ttc_top
     .uslp_vcf_cnt_len_cfg  (3'd1),
     .uslp_upid_cfg         (5'd1),
     .fecf_crc32_cfg        (csr_fecf_crc32),
-    .tfdf_byte_len_cfg     (csr_tfdf_len),
+    .tfdf_byte_len_cfg     (csr_tfdf_len + (active_sdls_en ? (csr_sdls_gcm_mode ? 11'd22 : 11'd7) : 11'd0)),
     .obt_sec_hdr_en_cfg    (csr_obt_sec_hdr_en),
     .obt_cuc_timestamp_48b (csr_obt_cuc_ts),
     .s_axis_tfdf_tdata     (sdls_tx_tdata),
-    .s_axis_tfdf_tvalid    (sdls_tx_tvalid),
-    .s_axis_tfdf_tready    (sdls_tx_tready),
+    .s_axis_tfdf_tvalid    ((ROLE_MODE == 1) ? 1'b0 : sdls_tx_tvalid),
+    .s_axis_tfdf_tready    (dl_framer_tfdf_tready),
     .s_axis_tfdf_tlast     (sdls_tx_tlast),
     .s_axis_tfdf_vcid      (vc_tfdf_vcid),
     .s_axis_tfdf_fhp       (vc_tfdf_fhp),
@@ -1025,9 +1387,9 @@ module ccsds_sat_ttc_top
 
   ccsds_dl_rs255_223_enc u_rs_enc (
     .clk                (clk_sys),
-    .rst_n              (rst_n),
+    .rst_n              (rst_sys_n),
     .interleave_depth_i (csr_rs_interleave),
-    .tm_rand_en         (1'b0),
+    .tm_rand_en         (csr_tm_rand_en),
     .conv_enc_en        (1'b0),
     .s_axis_tdata       (dl_frame_tdata),
     .s_axis_tvalid      ((csr_fec_mode == 4'd0) ? dl_frame_tvalid : 1'b0),
@@ -1048,7 +1410,7 @@ module ccsds_sat_ttc_top
 
   ccsds_dl_turbo_ldpc_enc u_turbo_ldpc_enc (
     .clk           (clk_sys),
-    .rst_n         (rst_n),
+    .rst_n         (rst_sys_n),
     .fec_mode_cfg  (csr_fec_mode),
     .s_axis_tdata  (dl_frame_tdata),
     .s_axis_tvalid ((csr_fec_mode != 4'd0) ? dl_frame_tvalid : 1'b0),
@@ -1074,8 +1436,8 @@ module ccsds_sat_ttc_top
     .DATA_WIDTH(8)
   ) u_tm_scram (
     .clk              (clk_sys),
-    .rst_n            (rst_n),
-    .bypass_en        (1'b1),
+    .rst_n            (rst_sys_n),
+    .bypass_en        ((csr_fec_mode == 4'd0) ? 1'b1 : ~csr_tm_rand_en),
     .mode_tc_not_tm   (1'b0),
     .lfsr_reseed_sync (1'b0),
     .s_axis_tdata     ((csr_fec_mode == 4'd0) ? rs_enc_tdata  : turbo_enc_tdata),
@@ -1098,6 +1460,10 @@ module ccsds_sat_ttc_top
   logic [9:0]   tx_hwm_comm_cnt_unused;
   logic [9:0]   tx_hwm_spec_cnt_unused;
   logic         tx_hwm_ovf_unused;
+  logic         tx_hwm_cad_tvalid;
+  logic         tx_phy_fifo_wr_ready;
+
+  assign m_axis_dl_cad_tvalid = tx_hwm_cad_tvalid && tx_phy_fifo_wr_ready;
 
   ccsds_cdc_fifo_ecc #(
     .DATA_WIDTH    (8),
@@ -1106,9 +1472,9 @@ module ccsds_sat_ttc_top
     .WATERMARK_MODE(1'b1)
   ) u_tx_hwm_cdc_fifo (
     .clk_wr                   (clk_sys),
-    .rst_wr_n                 (rst_n),
+    .rst_wr_n                 (rst_sys_n),
     .clk_rd                   (clk_tx_sym),
-    .rst_rd_n                 (rst_n),
+    .rst_rd_n                 (rst_tx_n),
     .cut_through_en           (1'b1),
     .watermark_words          (10'd4),
     .frame_commit_pulse       (1'b0),
@@ -1116,16 +1482,16 @@ module ccsds_sat_ttc_top
     .seu_inject_en            (1'b0),
     .seu_inject_addr          (9'd0),
     .seu_inject_bit           (6'd0),
-    .s_axis_tdata             (tm_scram_tdata),
+    .s_axis_tdata             ((ROLE_MODE == 1) ? egse_ul_tx_tdata  : tm_scram_tdata),
     .s_axis_tkeep             (1'b1),
-    .s_axis_tvalid            (tm_scram_tvalid),
-    .s_axis_tready            (tm_scram_tready),
-    .s_axis_tlast             (tm_scram_tlast),
+    .s_axis_tvalid            ((ROLE_MODE == 1) ? egse_ul_tx_tvalid : tm_scram_tvalid),
+    .s_axis_tready            (tx_hwm_in_tready),
+    .s_axis_tlast             ((ROLE_MODE == 1) ? egse_ul_tx_tlast  : tm_scram_tlast),
     .s_axis_tuser             ('0),
     .m_axis_tdata             (m_axis_dl_cad_tdata),
     .m_axis_tkeep             (tx_hwm_tkeep_unused),
-    .m_axis_tvalid            (m_axis_dl_cad_tvalid),
-    .m_axis_tready            (m_axis_dl_cad_tready),
+    .m_axis_tvalid            (tx_hwm_cad_tvalid),
+    .m_axis_tready            (m_axis_dl_cad_tready && tx_phy_fifo_wr_ready),
     .m_axis_tlast             (m_axis_dl_cad_tlast),
     .m_axis_tuser             (tx_hwm_tuser_unused),
     .committed_count          (tx_hwm_comm_cnt_unused),
@@ -1135,10 +1501,13 @@ module ccsds_sat_ttc_top
     .rollback_overflow_err    (tx_hwm_ovf_unused)
   );
 
+  assign tm_scram_tready   = (ROLE_MODE == 1) ? 1'b1 : tx_hwm_in_tready;
+  assign egse_ul_tx_tready = (ROLE_MODE == 1) ? tx_hwm_in_tready : 1'b0;
+
   // 2-FF CDC Synchronizer for c2_invert_en from clk_sys into clk_tx_sym
   (* ASYNC_REG = "TRUE" *) logic c2_inv_tx_meta_q, c2_inv_tx_sync_q;
-  always_ff @(posedge clk_tx_sym or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_tx_sym or negedge rst_tx_n) begin
+    if (!rst_tx_n) begin
       c2_inv_tx_meta_q <= 1'b1;
       c2_inv_tx_sync_q <= 1'b1;
     end else begin
@@ -1153,7 +1522,7 @@ module ccsds_sat_ttc_top
 
   ccsds_conv_viterbi_codec u_conv_viterbi (
     .clk                  (clk_tx_sym),
-    .rst_n                (rst_n),
+    .rst_n                (rst_tx_n),
     .c2_invert_en         (c2_inv_tx_sync_q),
     .line_code_mode       (ccsds_line_code_e'(line_code_cfg)),
     .tx_bit_in            (m_axis_dl_cad_tdata[7]),
@@ -1178,10 +1547,8 @@ module ccsds_sat_ttc_top
   logic         tx_phy_fifo_tready;
   logic         tx_phy_fifo_tlast_unused;
   ccsds_tuser_t tx_phy_fifo_tuser_unused;
-  logic         tx_phy_fifo_wr_ready_unused;
   logic [7:0]   tx_phy_fifo_comm_cnt_unused;
   logic [7:0]   tx_phy_fifo_spec_cnt_unused;
-  logic         tx_phy_fifo_ovf_unused;
 
   ccsds_cdc_fifo_ecc #(
     .DATA_WIDTH    (8),
@@ -1190,9 +1557,9 @@ module ccsds_sat_ttc_top
     .WATERMARK_MODE(1'b0)
   ) u_tx_phy_cdc_fifo (
     .clk_wr                   (clk_tx_sym),
-    .rst_wr_n                 (rst_n),
+    .rst_wr_n                 (rst_tx_n),
     .clk_rd                   (clk_adc_iq),
-    .rst_rd_n                 (rst_n),
+    .rst_rd_n                 (rst_adc_n),
     .cut_through_en           (1'b1),
     .watermark_words          (8'd0),
     .frame_commit_pulse       (1'b0),
@@ -1203,7 +1570,7 @@ module ccsds_sat_ttc_top
     .s_axis_tdata             (m_axis_dl_cad_tdata),
     .s_axis_tkeep             (1'b1),
     .s_axis_tvalid            (m_axis_dl_cad_tvalid && m_axis_dl_cad_tready),
-    .s_axis_tready            (tx_phy_fifo_wr_ready_unused),
+    .s_axis_tready            (tx_phy_fifo_wr_ready),
     .s_axis_tlast             (m_axis_dl_cad_tlast),
     .s_axis_tuser             ('0),
     .m_axis_tdata             (tx_phy_fifo_tdata),
@@ -1225,8 +1592,8 @@ module ccsds_sat_ttc_top
 
   assign tx_phy_fifo_tready = !tx_phy_pipe_tvalid_q || tx_phy_tready;
 
-  always_ff @(posedge clk_adc_iq or negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_adc_iq or negedge rst_adc_n) begin
+    if (!rst_adc_n) begin
       tx_phy_pipe_tvalid_q <= 1'b0;
       tx_phy_pipe_tdata_q  <= 8'h00;
     end else if (tx_phy_fifo_tready) begin
@@ -1252,7 +1619,7 @@ module ccsds_sat_ttc_top
 
       logic              egse_tc_tvalid, egse_tc_tready, egse_tc_tlast;
       logic [7:0]        egse_tc_tdata;
-      logic              egse_cltu_tvalid, egse_cltu_tlast;
+      logic              egse_cltu_tvalid, egse_cltu_tready, egse_cltu_tlast;
       logic [7:0]        egse_cltu_tdata;
       logic [15:0]       egse_cb_cnt;
 
@@ -1260,22 +1627,97 @@ module ccsds_sat_ttc_top
       logic [7:0]        egse_rs_dec_tdata;
       logic              egse_rs_done, egse_rs_clean;
       logic [15:0]       egse_rs_corr_cnt;
-      logic              egse_rs_in_ready_unused;
+      logic              egse_rs_in_ready;
 
       logic              egse_tfdf_tvalid, egse_tfdf_tlast;
       logic [7:0]        egse_tfdf_tdata;
       ccsds_tm_prim_hdr_t egse_rx_tm_hdr;
       logic [47:0]       egse_rx_obt;
       logic              egse_crc_ok, egse_crc_err;
-      logic              egse_tc_in_ready_unused;
+      logic              egse_tc_in_ready;
+
+      // Ground EGSE Telecommand Space Packet Store-and-Length Buffer (clk_sys)
+      typedef enum logic [1:0] {
+        EGSE_PKT_COLLECT   = 2'd0,
+        EGSE_PKT_DRAIN     = 2'd1,
+        EGSE_PKT_WAIT_CLTU = 2'd2
+      } egse_pkt_state_e;
+
+      egse_pkt_state_e egse_pkt_state_q;
+      logic [7:0]      egse_pkt_buf_q [0:63];
+      logic [6:0]      egse_pkt_wr_cnt_q;
+      logic [6:0]      egse_pkt_rd_idx_q;
+      logic [5:0]      egse_pkt_vcid_q;
+      logic            egse_frm_in_tvalid;
+      logic [7:0]      egse_frm_in_tdata;
+      logic            egse_frm_in_tlast;
+      logic            egse_type_ad_sent_pulse;
+
+      assign egse_pkt_in_tready       = (egse_pkt_state_q == EGSE_PKT_COLLECT);
+      assign egse_frm_in_tvalid       = (egse_pkt_state_q == EGSE_PKT_DRAIN);
+      assign egse_frm_in_tdata        = egse_pkt_buf_q[egse_pkt_rd_idx_q[5:0]];
+      assign egse_frm_in_tlast        = (egse_pkt_state_q == EGSE_PKT_DRAIN) &&
+                                        ((egse_pkt_rd_idx_q + 7'd1) == egse_pkt_wr_cnt_q);
+      assign egse_ul_sdls_in_tvalid   = egse_frm_in_tvalid;
+      assign egse_ul_sdls_in_tdata    = egse_frm_in_tdata;
+      assign egse_ul_sdls_in_tlast    = egse_frm_in_tlast;
+      assign egse_ul_sdls_out_tready  = egse_tc_in_ready;
+      assign egse_type_ad_sent_pulse  = sdls_tx_tvalid && egse_tc_in_ready && sdls_tx_tlast;
+
+      always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+        if (!rst_sys_n) begin
+          egse_pkt_state_q  <= EGSE_PKT_COLLECT;
+          egse_pkt_wr_cnt_q <= 7'd0;
+          egse_pkt_rd_idx_q <= 7'd0;
+          egse_pkt_vcid_q   <= 6'd1;
+          for (int k = 0; k < 64; k++) begin
+            egse_pkt_buf_q[k] <= 8'd0;
+          end
+        end else begin
+          unique case (egse_pkt_state_q)
+            EGSE_PKT_COLLECT: begin
+              if (s_axis_tx_pkt_tvalid && egse_pkt_in_tready) begin
+                egse_pkt_buf_q[egse_pkt_wr_cnt_q[5:0]] <= s_axis_tx_pkt_tdata;
+                if (egse_pkt_wr_cnt_q == 7'd0) begin
+                  egse_pkt_vcid_q <= (s_axis_tx_pkt_tuser.vcid != 6'd0) ? s_axis_tx_pkt_tuser.vcid : 6'd1;
+                end
+                egse_pkt_wr_cnt_q <= egse_pkt_wr_cnt_q + 7'd1;
+                if (s_axis_tx_pkt_tlast) begin
+                  egse_pkt_rd_idx_q <= 7'd0;
+                  egse_pkt_state_q  <= EGSE_PKT_DRAIN;
+                end
+              end
+            end
+
+            EGSE_PKT_DRAIN: begin
+              if (vc_tfdf_tready) begin
+                if (egse_frm_in_tlast) begin
+                  egse_pkt_state_q <= EGSE_PKT_WAIT_CLTU;
+                end else begin
+                  egse_pkt_rd_idx_q <= egse_pkt_rd_idx_q + 7'd1;
+                end
+              end
+            end
+
+            EGSE_PKT_WAIT_CLTU: begin
+              if (egse_cltu_tvalid && egse_cltu_tready && egse_cltu_tlast) begin
+                egse_pkt_wr_cnt_q <= 7'd0;
+                egse_pkt_state_q  <= EGSE_PKT_COLLECT;
+              end
+            end
+
+            default: egse_pkt_state_q <= EGSE_PKT_COLLECT;
+          endcase
+        end
+      end
 
       ccsds_fop1_engine u_egse_fop1 (
         .clk                       (clk_sys),
-        .rst_n                     (rst_n),
+        .rst_n                     (rst_sys_n),
         .target_vcid_cfg           (6'd1),
         .sliding_win_k_cfg         (8'd16),
         .t1_timeout_cycles_cfg     (16'd2000),
-        .tx_type_ad_req_pulse      (1'b0),
+        .tx_type_ad_req_pulse      (egse_type_ad_sent_pulse),
         .tx_window_open_out        (egse_win_open),
         .fop1_vs_out               (egse_vs),
         .fop1_nnr_out              (egse_nnr),
@@ -1290,50 +1732,476 @@ module ccsds_sat_ttc_top
 
       ccsds_tc_cltu_framer u_egse_tc_framer (
         .clk                 (clk_sys),
-        .rst_n               (rst_n),
+        .rst_n               (rst_sys_n),
         .scid_10b_cfg        (csr_scid_10b),
-        .vcid_cfg            (6'd1),
+        .vcid_cfg            (egse_pkt_vcid_q),
         .bypass_flag_cfg     (1'b0),
         .ctrl_cmd_flag_cfg   (1'b0),
-        .seg_hdr_en_cfg      (1'b1),
+        .seg_hdr_en_cfg      (csr_tc_seg_hdr_en),
         .seq_flags_cfg       (2'b11),
         .map_id_cfg          (6'd0),
         .fop1_ns_in          (egse_vs),
-        .payload_byte_len_in (10'd8),
-        .s_axis_tvalid       (1'b0),
-        .s_axis_tready       (egse_tc_in_ready_unused),
-        .s_axis_tdata        (8'd0),
-        .s_axis_tlast        (1'b0),
+        .payload_byte_len_in ({3'd0, egse_pkt_wr_cnt_q} + (active_sdls_en ? (csr_sdls_gcm_mode ? 10'd22 : 10'd7) : 10'd0)),
+        .s_axis_tvalid       (sdls_tx_tvalid),
+        .s_axis_tready       (egse_tc_in_ready),
+        .s_axis_tdata        (sdls_tx_tdata),
+        .s_axis_tlast        (sdls_tx_tlast),
         .m_axis_tvalid       (egse_tc_tvalid),
         .m_axis_tready       (egse_tc_tready),
         .m_axis_tdata        (egse_tc_tdata),
         .m_axis_tlast        (egse_tc_tlast)
       );
 
+      logic        egse_bch_tc_tready;
+      logic        egse_bch_cltu_tvalid;
+      logic [7:0]  egse_bch_cltu_tdata;
+      logic        egse_bch_cltu_tlast;
+
       ccsds_bch6356_enc u_egse_bch_enc (
         .clk                    (clk_sys),
-        .rst_n                  (rst_n),
+        .rst_n                  (rst_sys_n),
         .tc_randomize_en_cfg    (1'b1),
-        .s_axis_tvalid          (egse_tc_tvalid),
-        .s_axis_tready          (egse_tc_tready),
+        .s_axis_tvalid          (egse_tc_tvalid && !ul_ldpc_mode_en),
+        .s_axis_tready          (egse_bch_tc_tready),
         .s_axis_tdata           (egse_tc_tdata),
         .s_axis_tlast           (egse_tc_tlast),
-        .m_axis_tvalid          (egse_cltu_tvalid),
-        .m_axis_tready          (1'b1),
-        .m_axis_tdata           (egse_cltu_tdata),
-        .m_axis_tlast           (egse_cltu_tlast),
+        .m_axis_tvalid          (egse_bch_cltu_tvalid),
+        .m_axis_tready          (egse_cltu_tready),
+        .m_axis_tdata           (egse_bch_cltu_tdata),
+        .m_axis_tlast           (egse_bch_cltu_tlast),
         .cltu_codeblock_cnt_out (egse_cb_cnt)
       );
 
+      // Official CCSDS 231.1-O-1 Table 2-1 Uplink Short-Block LDPC(128,64) CLTU Encoder (when ul_ldpc_mode_en == 1'b1)
+      localparam logic [63:0] EGSE_LDPC128_W_ROW [0:63] = '{
+        64'h0E69166BEF4C0BC2, 64'h87348B3577A605E1, 64'h439AC59A3BD382F0, 64'h21CD62CD9DE94178,
+        64'h90E6B166CEF420BC, 64'h487358B3677A105E, 64'hA439AC5933BD082F, 64'hD21CD62C99DE8417,
+        64'h690E6B164CEFC20B, 64'h3487358BA677E105, 64'h9A439AC5D33BF082, 64'hCD21CD62E99D7841,
+        64'hE69066B1F4CEBC20, 64'h7348B3587A675E10, 64'h39A459ACBD332F08, 64'h1CD22CD6DE991784,
+        64'h7766137EBB248418, 64'h3BB309BF5D92420C, 64'h9DD984DF2EC92106, 64'hCEECC26F97641083,
+        64'h6776E1374BB28841, 64'h33BBF09B25D9C420, 64'h99DDF84D92EC6210, 64'hCCEEFC2649763108,
+        64'h66777E1324BB1884, 64'hB33BBF09925D0C42, 64'hD99DDF84C92E0621, 64'hECCE6FC264978310,
+        64'h766737E1B24B4188, 64'hBB339BF0D92520C4, 64'hDD994DF8EC921062, 64'hEECC26FC76490831,
+        64'hC480FEB9CD53A713, 64'h6240FF5CE6A9D389, 64'h31207FAEF354E9C4, 64'h18903FD779AA74E2,
+        64'h0C489FEB3CD53A71, 64'h0624CFF59E6A9D38, 64'h0312E7FA4F354E9C, 64'h018973FDA79A274E,
+        64'h80C4B9FE53CD13A7, 64'h40625CFFA9E689D3, 64'h2031AE7F54F3C4E9, 64'h9018D73FAA79E274,
+        64'h480CEB9FD53C713A, 64'h2406F5CF6A9E389D, 64'h1203FAE7354F9C4E, 64'h8901FD739AA74E27,
+        64'h4EAA22FA465EEA11, 64'h2755117D232FF508, 64'h93AA88BE91977A84, 64'h49D5445FC8CB3D42,
+        64'hA4EAA22FE4651EA1, 64'h5275D117F2328F50, 64'hA93AE88B791947A8, 64'h549DF445BC8C23D4,
+        64'hAA4EFA225E4611EA, 64'h55277D112F2308F5, 64'hAA93BE889791847A, 64'hD5495F44CBC8423D,
+        64'hEAA42FA265E4A11E, 64'h755217D132F2508F, 64'h3AA98BE81979A847, 64'h9D5445F48CBCD423
+      };
+
+      typedef enum logic [2:0] {
+        EGSE_LDPC_IDLE    = 3'd0,
+        EGSE_LDPC_START   = 3'd1,
+        EGSE_LDPC_COLLECT = 3'd2,
+        EGSE_LDPC_PAD     = 3'd3,
+        EGSE_LDPC_PAR     = 3'd4,
+        EGSE_LDPC_TAIL    = 3'd5
+      } egse_ldpc_state_e;
+
+      egse_ldpc_state_e egse_ldpc_state_q;
+      logic [2:0]       egse_ldpc_idx_q;
+      logic [63:0]      egse_ldpc_par64_q;
+      logic [7:0]       egse_ldpc_lfsr_q;
+      logic             egse_ldpc_done_pend_q;
+      logic [7:0]       egse_ldpc_first_b_q;
+      logic             egse_ldpc_first_last_q;
+      logic             egse_ldpc_first_pend_q;
+      logic             egse_ldpc_tc_tready;
+      logic             egse_ldpc_cltu_tvalid;
+      logic [7:0]       egse_ldpc_cltu_tdata;
+      logic             egse_ldpc_cltu_tlast;
+
+      assign egse_ldpc_tc_tready = (egse_ldpc_state_q == EGSE_LDPC_IDLE ||
+                                   (egse_ldpc_state_q == EGSE_LDPC_COLLECT && !egse_ldpc_first_pend_q)) &&
+                                   egse_cltu_tready;
+      assign egse_tc_tready      = ul_ldpc_mode_en ? egse_ldpc_tc_tready   : egse_bch_tc_tready;
+      assign egse_cltu_tvalid    = ul_ldpc_mode_en ? egse_ldpc_cltu_tvalid : egse_bch_cltu_tvalid;
+      assign egse_cltu_tdata     = ul_ldpc_mode_en ? egse_ldpc_cltu_tdata  : egse_bch_cltu_tdata;
+      assign egse_cltu_tlast     = ul_ldpc_mode_en ? egse_ldpc_cltu_tlast  : egse_bch_cltu_tlast;
+
+      always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+        if (!rst_sys_n) begin
+          egse_ldpc_state_q      <= EGSE_LDPC_IDLE;
+          egse_ldpc_idx_q        <= 3'd0;
+          egse_ldpc_par64_q      <= 64'd0;
+          egse_ldpc_lfsr_q       <= 8'hFF;
+          egse_ldpc_done_pend_q  <= 1'b0;
+          egse_ldpc_first_b_q    <= 8'h00;
+          egse_ldpc_first_last_q <= 1'b0;
+          egse_ldpc_first_pend_q <= 1'b0;
+          egse_ldpc_cltu_tvalid  <= 1'b0;
+          egse_ldpc_cltu_tdata   <= 8'h00;
+          egse_ldpc_cltu_tlast   <= 1'b0;
+        end else begin
+          if (egse_cltu_tready) begin
+            egse_ldpc_cltu_tvalid <= 1'b0;
+            egse_ldpc_cltu_tlast  <= 1'b0;
+          end
+
+          unique case (egse_ldpc_state_q)
+            EGSE_LDPC_IDLE: begin
+              if (egse_tc_tvalid && ul_ldpc_mode_en && egse_cltu_tready) begin
+                egse_ldpc_first_b_q    <= egse_tc_tdata;
+                egse_ldpc_first_last_q <= egse_tc_tlast;
+                egse_ldpc_first_pend_q <= 1'b1;
+                egse_ldpc_lfsr_q       <= 8'hFF;
+                egse_ldpc_par64_q      <= 64'd0;
+                egse_ldpc_done_pend_q  <= 1'b0;
+                egse_ldpc_idx_q        <= 3'd1;
+                egse_ldpc_cltu_tvalid  <= 1'b1;
+                egse_ldpc_cltu_tdata   <= UL_LDPC_START_SEQ_64B[63:56];
+                egse_ldpc_cltu_tlast   <= 1'b0;
+                egse_ldpc_state_q      <= EGSE_LDPC_START;
+              end
+            end
+
+            EGSE_LDPC_START: begin
+              if (egse_cltu_tready) begin
+                egse_ldpc_cltu_tvalid <= 1'b1;
+                egse_ldpc_cltu_tdata  <= UL_LDPC_START_SEQ_64B[(7 - egse_ldpc_idx_q)*8 +: 8];
+                egse_ldpc_cltu_tlast  <= 1'b0;
+                if (egse_ldpc_idx_q == 3'd7) begin
+                  egse_ldpc_idx_q   <= 3'd0;
+                  egse_ldpc_state_q <= EGSE_LDPC_COLLECT;
+                end else begin
+                  egse_ldpc_idx_q <= egse_ldpc_idx_q + 3'd1;
+                end
+              end
+            end
+
+            EGSE_LDPC_COLLECT: begin
+              if (egse_cltu_tready && (egse_ldpc_first_pend_q || (egse_tc_tvalid && ul_ldpc_mode_en))) begin
+                logic [7:0]  in_b, cur_l, pn_b, scr_b;
+                logic        in_last, fb_b;
+                logic [63:0] nxt_p;
+                in_b    = egse_ldpc_first_pend_q ? egse_ldpc_first_b_q    : egse_tc_tdata;
+                in_last = egse_ldpc_first_pend_q ? egse_ldpc_first_last_q : egse_tc_tlast;
+                cur_l   = egse_ldpc_lfsr_q;
+                pn_b    = 8'h00;
+                for (int i = 0; i < 8; i++) begin
+                  pn_b = {pn_b[6:0], cur_l[0]};
+                  fb_b = ^(cur_l & 8'h5F);
+                  cur_l = {fb_b, cur_l[7:1]};
+                end
+                scr_b = in_b ^ pn_b;
+                nxt_p = egse_ldpc_par64_q;
+                for (int b = 0; b < 8; b++) begin
+                  if (scr_b[7 - b]) begin
+                    nxt_p = nxt_p ^ EGSE_LDPC128_W_ROW[{egse_ldpc_idx_q, 3'(b)}];
+                  end
+                end
+                egse_ldpc_first_pend_q <= 1'b0;
+                egse_ldpc_lfsr_q       <= cur_l;
+                egse_ldpc_par64_q      <= nxt_p;
+                egse_ldpc_cltu_tvalid  <= 1'b1;
+                egse_ldpc_cltu_tdata   <= scr_b;
+                egse_ldpc_cltu_tlast   <= 1'b0;
+                if (egse_ldpc_idx_q == 3'd7) begin
+                  egse_ldpc_idx_q       <= 3'd0;
+                  egse_ldpc_done_pend_q <= in_last;
+                  egse_ldpc_state_q     <= EGSE_LDPC_PAR;
+                end else begin
+                  egse_ldpc_idx_q <= egse_ldpc_idx_q + 3'd1;
+                  if (in_last) begin
+                    egse_ldpc_done_pend_q <= 1'b1;
+                    egse_ldpc_state_q     <= EGSE_LDPC_PAD;
+                  end
+                end
+              end
+            end
+
+            EGSE_LDPC_PAD: begin
+              if (egse_cltu_tready) begin
+                logic [7:0]  cur_l, pn_b, scr_b;
+                logic        fb_b;
+                logic [63:0] nxt_p;
+                cur_l = egse_ldpc_lfsr_q;
+                pn_b  = 8'h00;
+                for (int i = 0; i < 8; i++) begin
+                  pn_b = {pn_b[6:0], cur_l[0]};
+                  fb_b = ^(cur_l & 8'h5F);
+                  cur_l = {fb_b, cur_l[7:1]};
+                end
+                scr_b = 8'h55 ^ pn_b;
+                nxt_p = egse_ldpc_par64_q;
+                for (int b = 0; b < 8; b++) begin
+                  if (scr_b[7 - b]) begin
+                    nxt_p = nxt_p ^ EGSE_LDPC128_W_ROW[{egse_ldpc_idx_q, 3'(b)}];
+                  end
+                end
+                egse_ldpc_lfsr_q      <= cur_l;
+                egse_ldpc_par64_q     <= nxt_p;
+                egse_ldpc_cltu_tvalid <= 1'b1;
+                egse_ldpc_cltu_tdata  <= scr_b;
+                egse_ldpc_cltu_tlast  <= 1'b0;
+                if (egse_ldpc_idx_q == 3'd7) begin
+                  egse_ldpc_idx_q   <= 3'd0;
+                  egse_ldpc_state_q <= EGSE_LDPC_PAR;
+                end else begin
+                  egse_ldpc_idx_q <= egse_ldpc_idx_q + 3'd1;
+                end
+              end
+            end
+
+            EGSE_LDPC_PAR: begin
+              if (egse_cltu_tready) begin
+                egse_ldpc_cltu_tvalid <= 1'b1;
+                egse_ldpc_cltu_tdata  <= egse_ldpc_par64_q[(7 - egse_ldpc_idx_q)*8 +: 8];
+                egse_ldpc_cltu_tlast  <= 1'b0;
+                if (egse_ldpc_idx_q == 3'd7) begin
+                  egse_ldpc_idx_q   <= 3'd0;
+                  egse_ldpc_par64_q <= 64'd0;
+                  if (egse_ldpc_done_pend_q) begin
+                    egse_ldpc_state_q <= EGSE_LDPC_TAIL;
+                  end else begin
+                    egse_ldpc_state_q <= EGSE_LDPC_COLLECT;
+                  end
+                end else begin
+                  egse_ldpc_idx_q <= egse_ldpc_idx_q + 3'd1;
+                end
+              end
+            end
+
+            EGSE_LDPC_TAIL: begin
+              if (egse_cltu_tready) begin
+                egse_ldpc_cltu_tvalid <= 1'b1;
+                egse_ldpc_cltu_tdata  <= CLTU_TAIL_SEQ_LDPC_55[(7 - egse_ldpc_idx_q)*8 +: 8];
+                egse_ldpc_cltu_tlast  <= (egse_ldpc_idx_q == 3'd7);
+                if (egse_ldpc_idx_q == 3'd7) begin
+                  egse_ldpc_idx_q   <= 3'd0;
+                  egse_ldpc_state_q <= EGSE_LDPC_IDLE;
+                end else begin
+                  egse_ldpc_idx_q <= egse_ldpc_idx_q + 3'd1;
+                end
+              end
+            end
+
+            default: egse_ldpc_state_q <= EGSE_LDPC_IDLE;
+          endcase
+        end
+      end
+
+      // Ground EGSE Uplink RF Acquisition Preamble (0x00, 0x55, 0xAA, 0x00) + CLTU + Postamble (0x55, 0x55) Wrapper
+      typedef enum logic [1:0] {
+        EGSE_TX_IDLE      = 2'd0,
+        EGSE_TX_PREAMBLE  = 2'd1,
+        EGSE_TX_CLTU      = 2'd2,
+        EGSE_TX_POSTAMBLE = 2'd3
+      } egse_tx_state_e;
+
+      egse_tx_state_e egse_tx_state_q;
+      logic [1:0]     egse_tx_cnt_q;
+
+      always_comb begin
+        egse_ul_tx_tvalid = 1'b0;
+        egse_ul_tx_tdata  = 8'h55;
+        egse_ul_tx_tlast  = 1'b0;
+        egse_cltu_tready  = 1'b0;
+
+        unique case (egse_tx_state_q)
+          EGSE_TX_PREAMBLE: begin
+            egse_ul_tx_tvalid = 1'b1;
+            unique case (egse_tx_cnt_q)
+              2'd0: egse_ul_tx_tdata = 8'h00;
+              2'd1: egse_ul_tx_tdata = 8'h55;
+              2'd2: egse_ul_tx_tdata = 8'hAA;
+              default: egse_ul_tx_tdata = 8'h00;
+            endcase
+          end
+
+          EGSE_TX_CLTU: begin
+            egse_ul_tx_tvalid = egse_cltu_tvalid;
+            egse_ul_tx_tdata  = egse_cltu_tdata;
+            egse_cltu_tready  = egse_ul_tx_tready;
+          end
+
+          EGSE_TX_POSTAMBLE: begin
+            egse_ul_tx_tvalid = 1'b1;
+            egse_ul_tx_tdata  = 8'h55;
+            egse_ul_tx_tlast  = (egse_tx_cnt_q == 2'd1);
+          end
+
+          default: begin
+            egse_ul_tx_tvalid = 1'b0;
+          end
+        endcase
+      end
+
+      always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+        if (!rst_sys_n) begin
+          egse_tx_state_q <= EGSE_TX_IDLE;
+          egse_tx_cnt_q   <= 2'd0;
+        end else begin
+          unique case (egse_tx_state_q)
+            EGSE_TX_IDLE: begin
+              if (egse_pkt_state_q == EGSE_PKT_DRAIN) begin
+                egse_tx_cnt_q   <= 2'd0;
+                egse_tx_state_q <= EGSE_TX_PREAMBLE;
+              end
+            end
+
+            EGSE_TX_PREAMBLE: begin
+              if (egse_ul_tx_tready) begin
+                if (egse_tx_cnt_q == 2'd3) begin
+                  egse_tx_cnt_q   <= 2'd0;
+                  egse_tx_state_q <= EGSE_TX_CLTU;
+                end else begin
+                  egse_tx_cnt_q <= egse_tx_cnt_q + 2'd1;
+                end
+              end
+            end
+
+            EGSE_TX_CLTU: begin
+              if (egse_cltu_tvalid && egse_ul_tx_tready && egse_cltu_tlast) begin
+                egse_tx_cnt_q   <= 2'd0;
+                egse_tx_state_q <= EGSE_TX_POSTAMBLE;
+              end
+            end
+
+            EGSE_TX_POSTAMBLE: begin
+              if (egse_ul_tx_tready) begin
+                if (egse_tx_cnt_q == 2'd1) begin
+                  egse_tx_cnt_q   <= 2'd0;
+                  egse_tx_state_q <= EGSE_TX_IDLE;
+                end else begin
+                  egse_tx_cnt_q <= egse_tx_cnt_q + 2'd1;
+                end
+              end
+            end
+
+            default: egse_tx_state_q <= EGSE_TX_IDLE;
+          endcase
+        end
+      end
+
+      // Ground EGSE Downlink RF Demodulator CDC FIFO (clk_adc_iq -> clk_sys) & 32-bit ASM (0x1ACFFC1D) Synchronizer
+      logic [7:0]   egse_dl_fifo_tdata;
+      logic [0:0]   egse_dl_fifo_tkeep_unused;
+      logic         egse_dl_fifo_tvalid;
+      logic         egse_dl_fifo_tready;
+      logic         egse_dl_fifo_tlast_unused;
+      ccsds_tuser_t egse_dl_fifo_tuser_unused;
+      logic         egse_dl_fifo_wr_ready_unused;
+      logic [7:0]   egse_dl_fifo_comm_cnt_unused;
+      logic [7:0]   egse_dl_fifo_spec_cnt_unused;
+      logic         egse_dl_fifo_single_unused;
+      logic         egse_dl_fifo_double_unused;
+      logic         egse_dl_fifo_ovf_unused;
+
+      ccsds_cdc_fifo_ecc #(
+        .DATA_WIDTH    (8),
+        .DEPTH_WORDS   (128),
+        .ROLLBACK_MODE (1'b0),
+        .WATERMARK_MODE(1'b0)
+      ) u_egse_dl_cdc_fifo (
+        .clk_wr                   (clk_adc_iq),
+        .rst_wr_n                 (rst_adc_n),
+        .clk_rd                   (clk_sys),
+        .rst_rd_n                 (rst_sys_n),
+        .cut_through_en           (1'b1),
+        .watermark_words          (8'd0),
+        .frame_commit_pulse       (1'b0),
+        .frame_rollback_pulse     (1'b0),
+        .seu_inject_en            (1'b0),
+        .seu_inject_addr          (7'd0),
+        .seu_inject_bit           (6'd0),
+        .s_axis_tdata             (phy_rx_sym_byte),
+        .s_axis_tkeep             (1'b1),
+        .s_axis_tvalid            (phy_rx_sym_valid && !pn_ranging_en_cfg),
+        .s_axis_tready            (egse_dl_fifo_wr_ready_unused),
+        .s_axis_tlast             (1'b0),
+        .s_axis_tuser             ('0),
+        .m_axis_tdata             (egse_dl_fifo_tdata),
+        .m_axis_tkeep             (egse_dl_fifo_tkeep_unused),
+        .m_axis_tvalid            (egse_dl_fifo_tvalid),
+        .m_axis_tready            (egse_dl_fifo_tready),
+        .m_axis_tlast             (egse_dl_fifo_tlast_unused),
+        .m_axis_tuser             (egse_dl_fifo_tuser_unused),
+        .committed_count          (egse_dl_fifo_comm_cnt_unused),
+        .speculative_count        (egse_dl_fifo_spec_cnt_unused),
+        .ecc_single_err_corrected (egse_dl_fifo_single_unused),
+        .ecc_double_err_uncorr    (egse_dl_fifo_double_unused),
+        .rollback_overflow_err    (egse_dl_fifo_ovf_unused)
+      );
+
+      logic [31:0] egse_dl_asm_sr_q;
+      logic        egse_dl_sync_q;
+      logic [15:0] egse_dl_rem_cnt_q;
+      logic [7:0]  egse_dl_tm_lfsr_q;
+      logic [7:0]  egse_dl_tm_nxt_sr;
+      logic [7:0]  egse_dl_tm_pn_b;
+      logic        egse_rs_in_tvalid;
+      logic [7:0]  egse_rs_in_tdata;
+      logic        egse_rs_in_tlast;
+
+      assign egse_dl_fifo_tready = egse_rs_in_ready;
+
+      always_comb begin
+        logic [7:0] sr;
+        logic [7:0] b_val;
+        logic       fb;
+        sr    = egse_dl_tm_lfsr_q;
+        b_val = 8'h00;
+        for (int b = 0; b < 8; b++) begin
+          b_val = {b_val[6:0], sr[0]};
+          fb    = ^(sr & LFSR_TM_TAP_MASK);
+          sr    = {fb, sr[7:1]};
+        end
+        egse_dl_tm_nxt_sr = sr;
+        egse_dl_tm_pn_b   = b_val;
+
+        if (ROLE_MODE == 1) begin
+          egse_rs_in_tvalid = egse_dl_sync_q && egse_dl_fifo_tvalid && egse_rs_in_ready;
+          egse_rs_in_tdata  = csr_tm_rand_en ? (egse_dl_fifo_tdata ^ egse_dl_tm_pn_b) : egse_dl_fifo_tdata;
+          egse_rs_in_tlast  = (egse_dl_rem_cnt_q == 16'd1);
+        end else begin
+          egse_rs_in_tvalid = tm_scram_tvalid && tm_scram_tready;
+          egse_rs_in_tdata  = tm_scram_tdata;
+          egse_rs_in_tlast  = tm_scram_tlast;
+        end
+      end
+
+      always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+        if (!rst_sys_n) begin
+          egse_dl_asm_sr_q  <= 32'd0;
+          egse_dl_sync_q    <= 1'b0;
+          egse_dl_rem_cnt_q <= 16'd0;
+          egse_dl_tm_lfsr_q <= LFSR_INIT_ALL_ONES;
+        end else if (egse_dl_fifo_tvalid && egse_rs_in_ready) begin
+          if (!egse_dl_sync_q) begin
+            logic [31:0] nxt_asm;
+            nxt_asm          = {egse_dl_asm_sr_q[23:0], egse_dl_fifo_tdata};
+            egse_dl_asm_sr_q <= nxt_asm;
+            if (nxt_asm == DL_ASM_TM_RS_CONV_32B) begin
+              egse_dl_sync_q    <= 1'b1;
+              egse_dl_rem_cnt_q <= (16'd255 - {8'd0, csr_rs_q_fill}) * {12'd0, csr_rs_interleave};
+              egse_dl_tm_lfsr_q <= LFSR_INIT_ALL_ONES;
+            end
+          end else begin
+            egse_dl_tm_lfsr_q <= csr_tm_rand_en ? egse_dl_tm_nxt_sr : egse_dl_tm_lfsr_q;
+            if (egse_dl_rem_cnt_q == 16'd1) begin
+              egse_dl_sync_q    <= 1'b0;
+              egse_dl_asm_sr_q  <= 32'd0;
+              egse_dl_rem_cnt_q <= 16'd0;
+            end else begin
+              egse_dl_rem_cnt_q <= egse_dl_rem_cnt_q - 16'd1;
+            end
+          end
+        end
+      end
+
       ccsds_dl_rs255_223_dec u_egse_rs_dec (
         .clk                      (clk_sys),
-        .rst_n                    (rst_n),
+        .rst_n                    (rst_sys_n),
         .interleave_depth_i_cfg   (csr_rs_interleave),
         .virtual_fill_q_cfg       (csr_rs_q_fill),
-        .s_axis_tvalid            (tm_scram_tvalid && tm_scram_tready),
-        .s_axis_tready            (egse_rs_in_ready_unused),
-        .s_axis_tdata             (tm_scram_tdata),
-        .s_axis_tlast             (tm_scram_tlast),
+        .s_axis_tvalid            (egse_rs_in_tvalid),
+        .s_axis_tready            (egse_rs_in_ready),
+        .s_axis_tdata             (egse_rs_in_tdata),
+        .s_axis_tlast             (egse_rs_in_tlast),
         .m_axis_tvalid            (egse_rs_dec_tvalid),
         .m_axis_tready            (egse_rs_dec_tready),
         .m_axis_tdata             (egse_rs_dec_tdata),
@@ -1343,21 +2211,29 @@ module ccsds_sat_ttc_top
         .rs_corrected_sym_cnt_out (egse_rs_corr_cnt)
       );
 
+      logic [15:0] egse_proto_extra_hdr;
+      logic [15:0] egse_sdls_ovh_bytes;
+      logic [3:0]  egse_hdr_strip_cnt_q;
+
+      assign egse_proto_extra_hdr = (active_proto_mode == PROTO_AOS) ? 16'd2 :
+                                    ((active_proto_mode == PROTO_USLP) ? 16'd5 : 16'd0);
+      assign egse_sdls_ovh_bytes  = active_sdls_en ? (csr_sdls_gcm_mode ? 16'd22 : 16'd7) : 16'd0;
+
       ccsds_tm_aos_deframer u_egse_tm_deframer (
         .clk                      (clk_sys),
-        .rst_n                    (rst_n),
-        .aos_mode_cfg             (active_proto_mode == 3'd1),
+        .rst_n                    (rst_sys_n),
+        .aos_mode_cfg             (active_proto_mode == PROTO_AOS),
         .aos_fhec_en_cfg          (csr_aos_fhec_en),
-        .tm_sec_hdr_en_cfg        (csr_obt_sec_hdr_en),
+        .tm_sec_hdr_en_cfg        ((active_proto_mode == PROTO_TM) && csr_obt_sec_hdr_en),
         .ocf_en_cfg               (csr_ocf_en),
         .fecf_en_cfg              (csr_fecf_en),
-        .tfdf_byte_len_cfg        ({5'd0, csr_tfdf_len}),
+        .tfdf_byte_len_cfg        ({5'd0, csr_tfdf_len} + egse_sdls_ovh_bytes + egse_proto_extra_hdr),
         .s_axis_tvalid            (egse_rs_dec_tvalid),
         .s_axis_tready            (egse_rs_dec_tready),
         .s_axis_tdata             (egse_rs_dec_tdata),
         .s_axis_tlast             (egse_rs_dec_tlast),
         .m_axis_tfdf_tvalid       (egse_tfdf_tvalid),
-        .m_axis_tfdf_tready       (1'b1),
+        .m_axis_tfdf_tready       (egse_dl_sdls_in_tready),
         .m_axis_tfdf_tdata        (egse_tfdf_tdata),
         .m_axis_tfdf_tlast        (egse_tfdf_tlast),
         .rx_tm_hdr_out            (egse_rx_tm_hdr),
@@ -1367,6 +2243,44 @@ module ccsds_sat_ttc_top
         .frame_crc_ok_pulse       (egse_crc_ok),
         .frame_crc_err_pulse      (egse_crc_err)
       );
+
+      always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+        if (!rst_sys_n) begin
+          egse_hdr_strip_cnt_q <= 4'd0;
+        end else if (egse_tfdf_tvalid && egse_dl_sdls_in_tready) begin
+          if (egse_tfdf_tlast) begin
+            egse_hdr_strip_cnt_q <= 4'd0;
+          end else if (egse_hdr_strip_cnt_q < egse_proto_extra_hdr[3:0]) begin
+            egse_hdr_strip_cnt_q <= egse_hdr_strip_cnt_q + 4'd1;
+          end
+        end
+      end
+
+      assign egse_dl_sdls_in_tvalid = egse_tfdf_tvalid && (egse_hdr_strip_cnt_q >= egse_proto_extra_hdr[3:0]);
+      assign egse_dl_sdls_in_tdata  = egse_tfdf_tdata;
+      assign egse_dl_sdls_in_tlast  = egse_tfdf_tlast;
+      assign egse_dl_tfdf_tdata     = sdls_rx_tdata;
+      assign egse_dl_tfdf_tvalid    = sdls_rx_tvalid;
+      assign egse_dl_tfdf_tlast     = sdls_rx_tlast;
+      assign egse_rx_clcw_valid     = egse_clcw_valid;
+      assign egse_rx_clcw_word      = egse_rx_clcw;
+    end else begin : g_no_ground_egse_endpoints
+      assign egse_ul_sdls_in_tvalid  = 1'b0;
+      assign egse_ul_sdls_in_tdata   = 8'd0;
+      assign egse_ul_sdls_in_tlast   = 1'b0;
+      assign egse_ul_sdls_out_tready = 1'b0;
+      assign egse_dl_sdls_in_tvalid  = 1'b0;
+      assign egse_dl_sdls_in_tdata   = 8'd0;
+      assign egse_dl_sdls_in_tlast   = 1'b0;
+      assign egse_dl_tfdf_tdata      = 8'd0;
+      assign egse_dl_tfdf_tvalid     = 1'b0;
+      assign egse_dl_tfdf_tlast      = 1'b0;
+      assign egse_ul_tx_tvalid       = 1'b0;
+      assign egse_ul_tx_tdata        = 8'd0;
+      assign egse_ul_tx_tlast        = 1'b0;
+      assign egse_pkt_in_tready      = 1'b0;
+      assign egse_rx_clcw_valid      = 1'b0;
+      assign egse_rx_clcw_word       = '0;
     end
   endgenerate
 

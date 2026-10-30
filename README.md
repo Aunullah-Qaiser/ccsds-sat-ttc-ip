@@ -1,4 +1,4 @@
-# CCSDS-SAT-TTC-IP (`v2.33.1`): Quick-Start Simulation, Lint, Synthesis & Verification Guide
+# CCSDS-SAT-TTC-IP (`v2.39.0`): Quick-Start Simulation, Lint, Synthesis & Verification Guide
 
 This repository contains the complete **SystemVerilog (IEEE 1800-2017) Spacecraft Flight (`ROLE_MODE=0`), Hardware Ground EGSE (`ROLE_MODE=1`), and Universal Crosslink/BIST (`ROLE_MODE=2`) TT&C IP Core (`41` `.sv` files total: `28` synthesizable RTL files + `2` RF/Space flight channel models in `rtl/*.sv` + `11` self-checking SystemVerilog testbenches in `tb/tb_stage2_*.sv`..`tb/tb_stage12_*.sv`)**, the **Bare-Metal C11 Flight/EGSE HAL SDK (`sw/ccsds_ttc_hal.h`, `sw/ccsds_ttc_hal.c`, `sw/test_ccsds_ttc_hal.c`)**, the **Bit-Exact Python Ground EGSE Golden Model (`egse_model/ccsds_ground_egse_model.py`)**, and turnkey multi-simulator runners for **Windows PowerShell / CMD (`scripts\run_eda_sim.bat`, `scripts\run_eda_sim.ps1`)**, **WSL**, and **Linux (`Makefile`, `scripts/run_eda_sim.sh`)**.
 
@@ -68,7 +68,7 @@ python3 scripts/run_channel_ber_sweep.py
 .\scripts\run_vivado_sta.bat 0
 ```
 
-## 5. Stage 9: External Third-Party Library Interoperability & Zero-Placeholder Sign-Off (`v2.33.1`)
+## 5. Stage 9: External Third-Party Library Interoperability & Zero-Placeholder Sign-Off (`v2.39.0`)
 
 Run the complete **7-Subtest External Reference Interoperability Suite** (verified against University of Stuttgart IRS [`spacepackets-py`](https://github.com/us-irs/spacepackets-py) and PyCA [`cryptography`](https://cryptography.io/) NIST FIPS-197 `AES-128-CTR` & NIST SP 800-38D `AES-128-GCM` with **no self-loopback**):
 
@@ -87,7 +87,7 @@ pip install spacepackets cryptography
 | **EXT-REF-6** | Two Noisy 128b CCSDS 231.1-O-1 Table 2-1/2-4 `(128,64)` LDPC CBs (`4` bit flips) | `ccsds_ul_short_ldpc_dec` & `ccsds_dl_turbo_ldpc_enc` (Table 2-1 $W_{64 \times 64}$ + Turbo 8-Prime) | **PASS (`4` bit errors healed)** |
 | **EXT-REF-7** | `cryptography` NIST SP 800-38D `AES-128-GCM` (`GHASH` 128-bit Tag + Tamper Check) | `ccsds_sdls_engine` (`sdls_gcm_mode_cfg=1`, 4-bit/clk $GF(2^{128})$ `GHASH` + 16B Tag Stripper) | **PASS (`0` errors + tamper rejected)** |
 
-## 6. Measured Xilinx Vivado 2022.2 (`xc7z010iclg225-1L`) Synthesis, Utilization & Two-Pass True-$F_{\max}$ STA (`v2.33.1`)
+## 6. Measured Xilinx Vivado 2022.2 (`xc7z010iclg225-1L`) Synthesis, Utilization & Two-Pass True-$F_{\max}$ STA (`v2.39.0`)
 
 - **Synthesized Target Device (`reports/vivado_*_role0.rpt` & `reports/kintex_ultrascale_sta_and_utilization.json`):** **`xc7z010iclg225-1L`** (AMD/Xilinx Zynq-7000 28nm FPGA in the slowest `-1L` low-power speed grade; `17,600` available Slice LUTs, `35,200` available Slice Registers/FFs, `60` RAMB36, `80` DSP48E1).
 - **Top-Level Utilization (`ROLE_MODE = 0` Spacecraft Flight Core):** **`17,064 / 17,600 Total Slice LUTs (`96.95%`)`** (`15,864 Logic LUTs` + `1,200 Distributed LUTRAMs`, `0 SRLs`), **`12,499 / 35,200 Slice Flip-Flops (`35.51%`)`**, **`0` RAMB36/RAMB18**, **`0` DSP Blocks**.
@@ -103,7 +103,7 @@ pip install spacepackets cryptography
 | **`clk_tx_sym`** | `50.0 MHz` (`20.000 ns`) | **`+14.594 ns` (`PASS`)** | `300.0 MHz` (`3.333 ns`) | `-2.073 ns` | `5.406 ns` | **`184.98 MHz` (`+269.96%`)** | `5` levels (`u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[1]/C -> u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[0]/CE`) |
 | **`clk_tc_safe`** | `16.0 MHz` (`62.500 ns`) | **`+52.901 ns` (`PASS`)** | `250.0 MHz` (`4.000 ns`) | `-5.599 ns` | `9.599 ns` | **`104.18 MHz` (`+551.13%`)** | `11` levels (`u_farm1/v_r_tmr_reg[1][7][1]/C -> u_farm1/clcw_scheduled_out_reg[lockout]/D`) |
 
-## 7. Stage 10: Full-Matrix Configuration & Impaired-Channel Link-Closure Stress Suite (`v2.33.1`)
+## 7. Stage 10: Full-Matrix Configuration & Impaired-Channel Link-Closure Stress Suite (`v2.39.0`)
 
 Run the **5-Matrix End-to-End Configuration & Impaired-Channel Link-Closure Stress Testbench (`tb_stage10_full_matrix_link_stress.sv`)**:
 
@@ -117,7 +117,7 @@ Run the **5-Matrix End-to-End Configuration & Impaired-Channel Link-Closure Stre
 - **`MATRIX-4A & 4B`:** Proves encrypted **NIST FIPS-197 `AES-128-CTR`** (`MATRIX-4A`) and **NIST SP 800-38D `AES-128-GCM` (`GHASH` 128-bit Tag + Tamper Rejection, `MATRIX-4B`)** over noisy `BCH(63,56)` ($180^\circ$ phase inversion + 1-bit SEC + 2-bit burst drop recovery via `CLCW.Retransmit=1` & `FOP-1` Go-Back-$N$).
 - **`MATRIX-5`:** Injects a simultaneous **Radiation SEU Storm** across `FARM-1` TMR, `HCPD` TMR, and `Hsiao SECDED FIFO` during an authenticated `EMERGENCY_VCID=63` command (`0xC0DE_CAFE_05FA_0010`).
 
-## 8. Stage 11: Full Chip-to-Chip Top-Level RF Link-Closure Testbench & C11 HAL SDK (`v2.33.1`)
+## 8. Stage 11: Full Chip-to-Chip Top-Level RF Link-Closure Testbench & C11 HAL SDK (`v2.39.0`)
 
 Run the **Top-to-Top RF Link-Closure Testbench (`tb_stage11_top_to_top_rf_link.sv`)** and **Bare-Metal C11 Flight/EGSE HAL Unit Test (`sw/test_ccsds_ttc_hal.c`)**:
 
@@ -126,11 +126,11 @@ Run the **Top-to-Top RF Link-Closure Testbench (`tb_stage11_top_to_top_rf_link.s
 gcc -std=c11 -Wall -Wextra -Werror -Isw sw/ccsds_ttc_hal.c sw/test_ccsds_ttc_hal.c -o test_ccsds_ttc_hal && ./test_ccsds_ttc_hal
 ```
 
-- **`SUBTEST-11.1`:** Verifies `AXI4-Lite` CSR programming and readback on `ccsds_sat_ttc_top (ROLE_MODE=0)` (`REG_CTRL=0x04`, `REG_ASM_PAT=0x2C314255`, `REG_USLP_RS_CFG=0x01001010`).
-- **`SUBTEST-11.2`:** Runs Wideband **T4B PN Ranging** acquisition (`pn_epoch_locked_out == 1`) + Uplink Telecommand CLTU (`APID=0x245, Seq=7, "TOP_CMD1"`) across `u_ul_rf_channel` into Spacecraft Top OBC `m_axis_rx_pkt`, verifying `CLCW V(R) == 1`.
-- **`SUBTEST-11.3`:** Streams a 16-byte Telemetry Space Packet (`APID=0x109, Seq=33, "SAT_TLM_OK"`) into Spacecraft Top `s_axis_tx_pkt`, verifying the emitted 64-byte Dual-Basis $\text{RS}(255,223)$ Downlink CADU (`ASM=0x1ACFFC1D`, embedded `CLCW V(R)=1`) and 64 baseband IQ samples across `u_dl_rf_channel`.
+- **`SUBTEST-11.1`:** Verifies `AXI4-Lite` CSR programming and readback on both Spacecraft Top (`ROLE_MODE=0`) and Ground EGSE Top (`ROLE_MODE=1`) (`REG_CTRL=0x04`, `REG_ASM_PAT=0x2C314255`, `REG_USLP_RS_CFG=0x01001010`).
+- **`SUBTEST-11.2`:** Runs Wideband **T4B PN Ranging** acquisition (`sc_pn_locked == 1 && gnd_pn_locked == 1`) + True Top-to-Top 16-bit AD9361 RF Uplink CLTU Loopback (`sc_ul_sym_tvalid == 0`, `384` Uplink RF IQ samples across `u_ul_rf_channel`, `u_rx_phy_cdc_fifo -> u_asm_corr -> u_bch_dec`, `"TOP_CMD1"` delivered to Spacecraft OBC, `CLCW V(R) == 1`).
+- **`SUBTEST-11.3`:** Streams a 16-byte Telemetry Space Packet (`APID=0x109, Seq=33, "SAT_TLM_OK"`) into Spacecraft Top `s_axis_tx_pkt`, modulating a 64-byte Dual-Basis $\text{RS}(255,223)$ Downlink CADU (`512` Downlink RF IQ samples across `u_dl_rf_channel`), which Ground EGSE Top demodulates, derandomizes, RS-decodes, deframes, captures live `CLCW V(R)=1` at CSR `0x20`, and reassembles into `"SAT_TLM_OK"` (`38,626 ns`, `0` errors in Vivado 2022.2 `xsim`).
 
-## 9. Stage 12: Multi-Configuration Space Flight Channel Loopback & Modular Synthesis (`v2.33.1`)
+## 9. Stage 12: Multi-Configuration Space Flight Channel Loopback & Modular Synthesis (`v2.39.0`)
 
 Run the **Multi-Configuration Space Flight Channel Loopback Testbench (`tb_stage12_space_channel_loopback.sv`)** across `rtl/ccsds_space_flight_channel_model.sv`:
 
@@ -146,14 +146,48 @@ Run the **Multi-Configuration Space Flight Channel Loopback Testbench (`tb_stage
 - **Modular Synthesis Parameters (`ENABLE_SDLS`, `ENABLE_UL_LDPC`):** Full transceiver (`ENABLE_SDLS=1, ENABLE_UL_LDPC=1`) synthesizes into `28,861` Slice LUTs (**`54.25%` of `xc7z020clg484-1`**, `0` BRAMs, `0` DSPs) with **0 critical CDC violations** (`u_tx_phy_cdc_fifo` bridging `clk_tx_sym -> clk_adc_iq`), while compact builds (`ENABLE_SDLS=0, ENABLE_UL_LDPC=0`) fit in `xc7z010` (`~8,332` LUTs, `47.3%`).
 
 
-### Product Guide & User Manual (`PG-CCSDS-TTC-v2.33.1`)
+### Product Guide & User Manual (`PG-CCSDS-TTC-v2.39.0`)
 - **Markdown Product & User Guide:** [`docs/CCSDS_SAT_TTC_IP_PRODUCT_USER_GUIDE.md`](docs/CCSDS_SAT_TTC_IP_PRODUCT_USER_GUIDE.md)
 - **Publication-Grade LaTeX & PDF Product Guide:** [`docs/CCSDS_SAT_TTC_IP_Product_User_Guide.tex`](docs/CCSDS_SAT_TTC_IP_Product_User_Guide.tex) / [`docs/CCSDS_SAT_TTC_IP_Product_User_Guide.pdf`](docs/CCSDS_SAT_TTC_IP_Product_User_Guide.pdf)
 - **Engineering Architecture Book:** [`docs/ccsds_ttc_ip_engineering_book.tex`](docs/ccsds_ttc_ip_engineering_book.tex)
 
 
-### Latest Vivado 2022.2 Measured True-Fmax Sign-Off (`v2.33.1`, Post-Stage-12 Full-Featured `ROLE_MODE = 0`)
+### Latest Vivado 2022.2 Measured True-Fmax Sign-Off (`v2.39.0`, Post-Stage-12 Full-Featured `ROLE_MODE = 0`)
 - **`clk_sys` (Nominal 100.0 MHz)**: Push Target `300.0 MHz` (`3.333 ns`), Push Slack `-1.268 ns`, Min Period `4.601 ns` -> **True Fmax = `217.34 MHz` (`+117.34%` margin)**, 13 Logic Levels (`u_vc_arb/cur_pkt_byte_cnt_q_reg[5]/C -> u_vc_arb/wr_spec_ptr_q_reg[3]/D`)
 - **`clk_adc_iq` (Nominal 120.0 MHz)**: Push Target `333.3 MHz` (`3.000 ns`), Push Slack `-0.680 ns`, Min Period `3.680 ns` -> **True Fmax = `271.74 MHz` (`+126.45%` margin)**, 7 Logic Levels (`u_phy_modem/rx_phase_q16_reg[10]/C -> u_phy_modem/q_derot_q_reg[13]/D`)
 - **`clk_tx_sym` (Nominal 50.0 MHz)**: Push Target `300.0 MHz` (`3.333 ns`), Push Slack `-0.968 ns`, Min Period `4.301 ns` -> **True Fmax = `232.50 MHz` (`+365.00%` margin)**, 6 Logic Levels (`u_tx_hwm_cdc_fifo/rd_ptr_q_reg[0]/C -> u_tx_phy_cdc_fifo/mem_ecc_reg_0_63_6_6/DP/I`)
 - **`clk_tc_safe` (Nominal 16.0 MHz)**: Push Target `250.0 MHz` (`4.000 ns`), Push Slack `-0.917 ns`, Min Period `4.917 ns` -> **True Fmax = `203.38 MHz` (`+1171.13%` margin)**, 11 Logic Levels (`u_ul_deframer/cur_tc_hdr_q_reg[vcid][4]/C -> u_farm1/clcw_scheduled_out_reg[wait_flag]/D`)
+
+
+## 10. Pre-Hardware Deployment Audit Upgrades (`v2.39.0`)
+
+1. **Internal 4-Bit AD9361 I/Q Bus Adaptation (`IQ_BUS_WIDTH = 16` default in `rtl/ccsds_sat_ttc_top.sv`):** Directly interfaces with 16-bit Analog Devices `axi_ad9361` I/Q ports (`adc_data_i0[15:0]` / `dac_data_i0[15:0]`) by slicing the lower 12 two's-complement ADC bits (`rx_i_adc_in[11:0]`) on receive and zero-padding 4 LSBs (`{phy_tx_i_12b, 4'b0000}`) on transmit, while preserving `IQ_BUS_WIDTH = 12` for legacy 12-bit channel models.
+2. **Uplink Rx Asynchronous CDC FIFO (`u_rx_phy_cdc_fifo`) & Bit-to-LLR Serializer:** Bridges demodulated uplink symbol bytes (`phy_rx_sym_byte`, `phy_rx_sym_valid`) from `clk_adc_iq` (`120 MHz`) into `clk_tc_safe` (`16 MHz`) via a dual-clock Gray-code Hsiao SECDED FIFO (`ccsds_cdc_fifo_ecc`) and MSB-first 8-bit serializer feeding `u_asm_corr`.
+3. **Per-Domain 2-Flip-Flop Reset Synchronizer Bridges:** Asynchronous-assert, synchronous-deassert `(* ASYNC_REG = "TRUE" *)` 2-FF reset bridges (`rst_sys_n`, `rst_tc_n`, `rst_tx_n`, `rst_adc_n`) across all 4 independent clock domains.
+4. **Runtime SDLS 256-Bit Key & Security Association (`SA`) Provisioning (`0x28..0x50`):** Adds AXI4-Lite registers `CCSDS_REG_SDLS_KEY_0..7` (`0x28..0x44`), `CCSDS_REG_SDLS_SA_CTRL` (`0x48`), `CCSDS_REG_SDLS_SA_SPI` (`0x4C`), and `CCSDS_REG_SDLS_SA_SEQ` (`0x50`) with `clk_sys -> clk_tc_safe` CDC synchronization and C11 HAL APIs (`ccsds_ttc_hal_set_sdls_key256`, `ccsds_ttc_hal_provision_sdls_sa`).
+5. **Top-Level `pps_1hz_in` Pin & Active OBT Timebase:** Exposes `pps_1hz_in` on `ccsds_sat_ttc_top` with a 2-FF `ASYNC_REG` synchronizer, rising-edge detector, and internal `100,000,000`-cycle (`1.000 s @ 100 MHz`) free-running fallback divider driving `u_csr.pps_1hz_pulse`.
+6. **Downlink CADU Pseudo-Randomizer (`tm_rand_en_cfg`) & Complete Board XDC Constraints:** Exposes `tm_rand_en_cfg` at `CTRL_USLP_RS_CFG[30]` (`0x08`) wired to `u_rs_enc` and `u_tm_scram`, and adds asynchronous reset/strap false-paths, AD9361 source-synchronous I/O delays, and reference board `PACKAGE_PIN`/`IOSTANDARD` constraints to `constraints/ccsds_kintex_ultrascale.xdc`.
+
+## 11. Firmware Configuration Gating & 12-Thread Parallel 5,760-Configuration Stage 11 RF Matrix Sign-Off (`v2.39.0`)
+
+- **Firmware Configuration Gating (`sw/ccsds_ttc_hal.c` — `ccsds_ttc_hal_validate_config`)**:
+  Automatically validates all configuration structures before writing hardware CSRs (`0x04..0x0C`), rejecting illegal non-CCSDS combinations with explicit status codes (`CCSDS_HAL_ERR_MOD_LINE_INCOMPAT = -10` through `CCSDS_HAL_ERR_FRAME_LEN_RANGE = -17`), verified by `sw/test_ccsds_ttc_hal.c`.
+- **12-Thread Parallel 480-Configuration Valid RF Matrix (`scripts/run_stage11_matrix_parallel.py` & `scripts\run_stage11_matrix_parallel.bat`)**:
+  Compiles the 41-file SystemVerilog hierarchy once (`xvlog` + `xelab`) and launches **12 isolated parallel `xsim` worker threads** (`CHUNK_ID=0..11`, `40` configurations/thread) to sweep **100% (`480/480`) of the valid chip-to-chip RF configuration matrix** (`10` Valid Waveforms $\times$ `4` Turnaround Bands $\times$ `3` Variable Uplink Packet/Frame Sizes `{8B, 14B, 28B}` $\times$ `4` Variable Downlink Frame/OBT/Randomizer Modes `{10B, 16B+Rand, 16B+OBT+Rand, 32B+Rand}` = `960` true 16-bit RF packet transfers):
+  ```powershell
+  .\scripts\sync_from_gdrive.bat
+  gcc -std=c11 -Wall -Wextra -Werror -Isw sw/ccsds_ttc_hal.c sw/test_ccsds_ttc_hal.c -o test_ccsds_ttc_hal.exe && .\test_ccsds_ttc_hal.exe
+  .\scripts\run_stage11_matrix_parallel.bat 12
+  ```
+
+- **Measured 5,760-Configuration Combined Mission Envelope Sign-Off (`reports/stage11_rf_matrix_coverage.json`, Vivado 2022.2 `xsim`, 12 Threads):**
+  - **Command Executed:** `.\scripts\run_stage11_matrix_parallel.bat 12 1 combined`
+  - **Configuration Coverage:** **`5,760 / 5,760` (`100.0%` PASS, `0` FAIL)** across all `10` PHY waveforms $\times$ `4` coherent turnaround bands $\times$ `3` uplink packet sizes (`8B`, `14B`, `28B`) $\times$ `4` downlink frame/OBT/randomizer modes (`10B`, `16B`, `16B+OBT`, `32B`) $\times$ `2` uplink FECs (`BCH(63,56)`, `Short-LDPC(128,64)`) $\times$ `3` downlink framing protocols (`TM`, `AOS`, `USLP`) $\times$ `2` security modes (`Clear`, `SDLS AES-128-CTR+MAC`).
+  - **Total RF Traffic & IQ Samples:** **`11,520` bidirectional RF packet transfers** (`5,760` UL packets / `96,000` B Space Packet payload + `5,760` DL packets / `106,560` B Space Packet payload) across **`6,551,040` 16-bit AD9361 RF I/Q samples** (`3,179,520` Uplink IQ samples + `3,371,520` Downlink IQ samples).
+  - **Active FEC & Channel Impairment Performance (`P5_COMBINED_MC`):** **`11,520` pre-FEC injected channel errors corrected $\rightarrow$ `0` post-FEC bit errors** (`empirical_post_fec_ber = 0.0`, `empirical_post_fec_fer = 0.0`) in **`343.81s` (`5.73 min`) wall-clock time** (`197.85s..327.43s` per 480-config worker thread).
+
+- **Measured 5,760-Configuration $\times$ 6-Profile Progressive Monte Carlo Sign-Off (`reports/stage11_rf_matrix_coverage.json`, Vivado 2022.2 `xsim`, 12 Threads):**
+  - **Command Executed:** `.\scripts\run_stage11_matrix_parallel.bat 12 6 progressive`
+  - **Configuration & Profile Coverage:** **`5,760 / 5,760` configurations (`100.0%` PASS, `0` FAIL)** and **`34,560 / 34,560` bidirectional Monte Carlo trials (`100.0%` PASS, `0` FAIL)** across all **6 Progressive OAT + Combined Mission Envelope profiles** (`P0_CLEAN_REF = 5,760/5,760`, `P1_OAT_AWGN_FEC = 5,760/5,760`, `P2_OAT_DOPPLER_PN = 5,760/5,760`, `P3_OAT_DELAY_MP = 5,760/5,760`, `P4_OAT_RF_ANALOG = 5,760/5,760`, `P5_COMBINED_MC = 5,760/5,760`).
+  - **Total RF Traffic & 16-Bit IQ Samples:** **`69,120` RF packet transfers** (`34,560` UL packets / `576,000` B Space Packet payload + `34,560` DL packets / `639,360` B Space Packet payload = `1,215,360` B total payload) across **`39,306,240` 16-bit AD9361 RF I/Q samples** (`19,077,120` Uplink IQ samples + `20,229,120` Downlink IQ samples).
+  - **Active Hardware FEC Error Correction:** **`23,040` pre-FEC injected channel errors (`1,920`/worker) corrected $\rightarrow$ `0` post-FEC bit errors** (`empirical_post_fec_ber = 0.0`, `empirical_post_fec_fer = 0.0`) in **`1,984.46s` (`33.07 min`) wall-clock time** (`1,252.11s..1,972.55s` per 2,880-trial worker thread).

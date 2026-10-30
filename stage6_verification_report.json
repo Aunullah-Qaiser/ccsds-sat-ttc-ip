@@ -184,5 +184,16 @@
       "cpp20_stage6_ref_crosscheck_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
       "elapsed_sec": 4.093
     }
-  }
+  },
+  "version": "v2.35.2",
+  "vivado_xsim_verified": true,
+  "simulation_time_ps": 2718750,
+  "pre_hardware_deployment_upgrades_verified": [
+    "16-bit AD9361 I/Q Bus internal 4-bit slice & pad (IQ_BUS_WIDTH=16)",
+    "Uplink Rx CDC FIFO (clk_adc_iq -> clk_tc_safe) + bit-to-LLR serializer -> u_asm_corr (0xEB90 lock)",
+    "Per-domain 2-FF asynchronous-assert / synchronous-deassert reset synchronizer bridges",
+    "Runtime SDLS 256-bit Master Key & Security Association provisioning via AXI4-Lite CSR (0x28..0x50)",
+    "External pps_1hz_in rising-edge OBT synchronization + 100 MHz fallback divider",
+    "Downlink CADU Pseudo-Randomizer (tm_rand_en_cfg)"
+  ]
 }

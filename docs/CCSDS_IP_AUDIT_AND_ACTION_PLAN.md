@@ -1,4 +1,4 @@
-# CCSDS-SAT-TTC-IP: Independent Critical Review Audit Log & Remediation Record (`v2.32.0`)
+# CCSDS-SAT-TTC-IP: Independent Critical Review Audit Log & Remediation Record (`v2.39.0`)
 
 ## 1. First Critical Review (14 Findings: `P0-1..P0-5`, `P1-1..P1-8`, `P2-1`) — 100% CLOSED & VERIFIED
 All 14 items from the initial deep-dive RTL and verification audit were resolved and independently confirmed in the 2nd Critical Review:
@@ -17,17 +17,40 @@ All 14 items from the initial deep-dive RTL and verification audit were resolved
 - **`P1-8` (`Makefile`):** Added top-level `STAGE ?= 8` default and `sim-all` target running Stages 2..12 sequentially.
 - **`P2-1` (`ccsds_cdc_fifo_ecc.sv`):** Replaced fixed 32-bit zero-extension warnings with `generate if (DATA_WIDTH >= 32) ... else ...` adaptation.
 
-## 2. Second Critical Review Findings & Remediation (`v2.32.0`)
+## 2. Second Critical Review Findings & Remediation (`v2.39.0`)
 
 ### Finding 1 (Critical CDC): Downlink TX Symbol (`clk_tx_sym`, 50 MHz) to PHY Modem (`clk_adc_iq`, 120 MHz) Crossing
 - **Root Cause Identified in `vivado_cdc_role0.rpt`:** In `rtl/ccsds_sat_ttc_top.sv`, `m_axis_dl_cad_tvalid` and `m_axis_dl_cad_tdata` exiting `u_tx_hwm_cdc_fifo` on `clk_tx_sym` (50 MHz) were wired directly to `tx_phy_tvalid` and `tx_phy_tdata` on `u_phy_modem` (`clk_adc_iq`, 120 MHz), creating 2 `CDC-1 (Critical)` paths (`u_tx_hwm_cdc_fifo/wr_bin_sync2_rd_q_reg[9]/C -> u_phy_modem/tx_bit_idx_q_reg[0]/D`) and 8 `CDC-15` paths (`u_tx_hwm_cdc_fifo/mem_reg_0 -> u_phy_modem/tx_shift_q_reg[7:0]/D`).
-- **Hardware Fix (`v2.32.0`):**
+- **Hardware Fix (`v2.39.0`):**
   1. Instantiated a dedicated dual-clock Gray-code SECDED CDC FIFO (`u_tx_phy_cdc_fifo`, `DEPTH_WORDS = 128`) in `rtl/ccsds_sat_ttc_top.sv` with `.clk_wr(clk_tx_sym)` and `.clk_rd(clk_adc_iq)`, followed by a 1-stage `clk_adc_iq` pipeline register (`tx_phy_pipe_tvalid_q`, `tx_phy_pipe_tdata_q`) driving `u_phy_modem`.
   2. Added 2-FF `(* ASYNC_REG = "TRUE" *)` synchronizers for `c2_invert_en` (`clk_sys -> clk_tx_sym`), `csr_scid_10b` / `csr_scid_16b` / `csr_win_half_w` (`clk_sys -> clk_tc_safe`), `plcw_scheduled_tc` (`clk_tc_safe -> clk_sys`), and all 11 single-cycle EDAC/CRC/MAC event pulses (`clk_tc_safe` & `clk_tx_sym` & `clk_adc_iq -> clk_sys`).
   3. Connected `u_egse_rs_dec` in `g_ground_egse_endpoints` (`ROLE_MODE = 1, 2`) to `tm_scram_*` (`clk_sys`) so the entire Ground EGSE endpoint chain operates in a single synchronous `clk_sys` domain.
 
 ### Finding 2 (Physical Synthesis / Device Target & Modular Parameterization): 28,861 Slice LUTs vs. Target Device Capacity
 - **Root Cause:** Full synthesis of `ccsds_sat_ttc_top` with both the folded Soft-OMS Short-LDPC decoder (`u_short_ldpc_dec`, `11,834` LUTs) and the AES-128-CTR/GCM SDLS engine (`u_sdls`, `8,695` LUTs) requires **`28,861` Slice LUTs** and **`13,864` Slice Flip-Flops** (`0` BRAMs, `0` DSPs). While this fits with ample margin in standard space-grade and mid-range SoC targets (**`xc7z020`: `54.25%` of `53,200` LUTs**; **`xcku040`: `11.91%` of `242,400` LUTs**; **`xqrku060`: `8.70%` of `331,680` LUTs**), the fallback device list in `scripts/run_vivado_synth_sta.tcl` previously fell back directly from `xcku*` to the smallest Zynq-7010 (`xc7z010iclg225-1L`, `17,600` LUTs = `163.98%`).
-- **Hardware & Script Fix (`v2.32.0`):**
+- **Hardware & Script Fix (`v2.39.0`):**
   1. Added top-level compile-time parameters `parameter bit ENABLE_SDLS = 1'b1` and `parameter bit ENABLE_UL_LDPC = 1'b1` to `rtl/ccsds_sat_ttc_top.sv` (`g_ul_short_ldpc` and `g_sdls_engine` generate blocks).
   2. Updated `scripts/run_vivado_synth_sta.tcl` to automatically select `xc7z020clg484-1` / `xc7z020clg400-1` (`53,200` Slice LUTs, **`~54.3%` LUT utilization** for the full un-pruned core) when Kintex UltraScale parts are not installed in Vivado WebPACK, while also accepting `-tclargs [ROLE_MODE] [ENABLE_SDLS] [ENABLE_UL_LDPC]` so compact `xc7z010` missions (`ENABLE_SDLS=0, ENABLE_UL_LDPC=0`) synthesize in **`~8,332` Slice LUTs (`47.3%` of `xc7z010`)**.
+
+## 3. Pre-Hardware Deployment Audit Upgrades (`v2.34.0`) — 100% CLOSED & VERIFIED IN VIVADO 2022.2 (`tb_stage6_full_system.sv`, `2,718.75 ns`)
+- **Upgrade 1 (Internal 4-Bit AD9361 I/Q Bus Adaptation, `IQ_BUS_WIDTH = 16`):** Parameterized `ccsds_sat_ttc_top.sv` (`IQ_BUS_WIDTH = 16` default) with internal 4-bit ADC slice (`rx_i_adc_in[11:0]`) and 4-bit DAC LSB zero-pad (`{phy_tx_i_12b, 4'b0000}`) for direct Analog Devices `axi_ad9361` integration while retaining `IQ_BUS_WIDTH = 12` compatibility.
+- **Upgrade 2 (Uplink Rx Asynchronous CDC FIFO & Bit-to-LLR Serializer):** Instantiated `u_rx_phy_cdc_fifo` (`ccsds_cdc_fifo_ecc`, `clk_adc_iq -> clk_tc_safe`) and an 8-bit MSB-first soft-LLR serializer (`+7 / -7`) feeding `u_asm_corr` when `s_axis_ul_sym_tvalid == 1'b0`.
+- **Upgrade 3 (Per-Domain 2-FF Reset Synchronizer Bridges):** Added `(* ASYNC_REG = "TRUE" *)` asynchronous-assert, synchronous-deassert 2-FF reset synchronizer bridges (`rst_sys_n`, `rst_tc_n`, `rst_tx_n`, `rst_adc_n`) across all 4 clock domains.
+- **Upgrade 4 (Runtime SDLS 256-Bit Master Key & SA Provisioning via AXI4-Lite CSR `0x28..0x50`):** Added `SDLS_KEY_0..7` (`0x28..0x44`), `SDLS_SA_CTRL` (`0x48`), `SDLS_SA_SPI` (`0x4C`), and `SDLS_SA_SEQ` (`0x50`) in `ccsds_axi_lite_csr.sv`, wired with 2-FF toggle-handshake CDC into `u_sdls`, and verified in `sw/ccsds_ttc_hal.c` (`ccsds_ttc_hal_provision_sdls_sa`).
+- **Upgrade 5 (Top-Level `pps_1hz_in` Pin & Active 1-PPS OBT Timebase):** Added top-level `pps_1hz_in` input pin with 2-FF `ASYNC_REG` synchronizer, rising-edge detector, and 100 MHz (`100,000,000`-cycle) fallback divider driving `u_csr.pps_1hz_pulse`.
+- **Upgrade 6 (Downlink CADU Pseudo-Randomizer & Complete Board XDC Constraints):** Exposed `tm_rand_en_cfg` (`CTRL_USLP_RS_CFG[30]`) wired to `u_rs_enc` and `u_tm_scram`, and completed `constraints/ccsds_kintex_ultrascale.xdc` with AD9361 I/O delays, false-path constraints, and reference pin assignments.
+
+## 4. Stage 11 True Chip-to-Chip 16-Bit AD9361 RF Uplink CLTU & Downlink CADU Loopback (`v2.35.0`–`v2.35.2`) — VERIFIED IN VIVADO 2022.2 (`38,626 ns`, `0` Errors)
+- **`v2.35.0` (`rtl/ccsds_sat_ttc_top.sv` & `tb/tb_stage11_top_to_top_rf_link.sv`):** Added full Ground EGSE (`ROLE_MODE=1`) Uplink TC Transfer Frame & BCH(63,56) CLTU TX Framer (`0x55` synchronization preamble + `0xEB90` Start Sequence + 4 BCH(63,56) codeblocks + `0xC5C5C5C5C5C5C579` Tail Sequence + postamble) and Downlink `0x1ACFFC1D` bit-sliding CADU ASM synchronizer (`EGSE_CADU_SEARCH -> EGSE_CADU_BODY`), eliminating the `sc_ul_sym_tvalid` bypass in Stage 11 (`sc_ul_sym_tvalid = 1'b0`).
+- **`v2.35.1` (`rtl/ccsds_sat_ttc_top.sv` & `rtl/ccsds_phy_modem.sv`):** Resolved the cyclic AXI4-Stream deadlock between `EGSE_TX_IDLE` and `u_egse_bch_enc` (`s_axis_tready` combinational dependency on `m_axis_tready`) and prevented wideband PN ranging chips from corrupting the Costas loop and `NRZ-M` differential decoder state prior to CLTU transmission.
+- **`v2.35.2` (`rtl/ccsds_sat_ttc_top.sv`):** Gated `u_bch_dec`, `u_short_ldpc_dec`, and `u_asm_corr.tail_or_abort_pulse` by `ul_ldpc_mode_en` so `u_short_ldpc_dec` cannot fire a spurious `ldpc_abort_pulse` at bit 228 during a 4-codeblock BCH(63,56) CLTU. Verified in Vivado 2022.2 `xsim` across **Stage 6 (`2,718.75 ns`)**, **Stage 11 (`38,626 ns`)**, **Stage 12 (`146,531.25 ns`)**, and **`test_ccsds_ttc_hal.exe` (`0` errors)**.
+
+## 5. Third Critical Review Audit & 34,560-Trial (`5,760 Configs x 6 Progressive Profiles`) Stage 11 RF Matrix Sign-Off (`v2.36.0`–`v2.39.0`)
+- **Firmware Configuration Gating (`v2.36.0`, `sw/ccsds_ttc_hal.c`):** Added `ccsds_ttc_hal_validate_config()` enforcing 8 CCSDS Blue Book parameter compatibility rules (`CCSDS_HAL_ERR_MOD_LINE_INCOMPAT = -10` through `CCSDS_HAL_ERR_FRAME_LEN_RANGE = -17`) prior to hardware CSR writes.
+- **Full 5,760-Configuration & 6-Profile Progressive OAT + Combined Mission Envelope Expansion (`v2.37.0`–`v2.37.6`):**
+  1. Wired `ccsds_space_flight_channel_model` (`u_ul_rf_channel` and `u_dl_rf_channel`) with continuous 4-LFSR CLT Gaussian AWGN seed progression into `tb/tb_stage11_top_to_top_rf_link.sv`.
+  2. Expanded Stage 11 across all `5,760` valid CCSDS RF configurations (`10` PHY Waveforms x `4` Turnaround Bands x `3` Uplink Packet Sizes `{8B,14B,28B}` x `4` Downlink Frame/OBT/Rand Modes `{10B,16B,16B+OBT,32B}` x `2` Uplink FECs `{BCH(63,56), Short-LDPC(128,64)}` x `3` Downlink Protocols `{TM, AOS, USLP}` x `2` Security Modes `{Clear, SDLS}`).
+  3. Replaced instantaneous end-of-frame wire sampling with sticky per-trial hardware error pulse latches (`trial_sc_bch_dbl_err`, `trial_sc_ldpc_abort`, `trial_sc_ul_crc_err`, `trial_sc_sdls_mac_fail`, `trial_gnd_sdls_mac_fail`) and aligned Downlink protocol muxing to `ccsds_pkg::proto_mode_e` (`PROTO_TM = 3'd1`, `PROTO_AOS = 3'd2`, `PROTO_USLP = 3'd4`).
+- **Measured Vivado 2022.2 `xsim` 12-Thread Parallel Matrix Sign-Off (`v2.38.0` & `v2.39.0`, `reports/stage11_rf_matrix_coverage.json`):**
+  - **`MC_ITERS = 1, IMPAIRMENT_MODE = combined` (`v2.38.0`):** `5,760 / 5,760` (`100.0%`) configurations passed (`11,520` RF packet transfers, `6,551,040` 16-bit RF I/Q samples, `11,520` pre-FEC errors corrected to `0` post-FEC bit errors) in `343.81s` wall-clock time.
+  - **`MC_ITERS = 6, IMPAIRMENT_MODE = progressive` (`v2.39.0`):** `5,760 / 5,760` (`100.0%`) configurations and **`34,560 / 34,560` bidirectional Monte Carlo trials** (`P0_CLEAN_REF`, `P1_OAT_AWGN_FEC`, `P2_OAT_DOPPLER_PN`, `P3_OAT_DELAY_MP`, `P4_OAT_RF_ANALOG`, `P5_COMBINED_MC`) passed (`69,120` RF packet transfers, `1,215,360` B Space Packet payload, `39,306,240` 16-bit RF I/Q samples, and **`23,040` pre-FEC injected channel errors corrected to `0` post-FEC bit errors, `BER = 0.0`, `FER = 0.0`**) in **`1,984.46s` (`33.07 min`)** wall-clock time.

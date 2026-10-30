@@ -26,14 +26,14 @@
     colorlinks=true,
     linkcolor=slate,
     urlcolor=teal,
-    pdftitle={CCSDS-SAT-TTC-IP (v2.33.0): Product Guide and User Manual},
+    pdftitle={CCSDS-SAT-TTC-IP (v2.39.0): Product Guide and User Manual},
     pdfauthor={CCSDS-SAT-TTC-IP Engineering Team}
 }
 
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\sffamily\textbf{\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.33.0}) Product Guide \& User Manual}}}
-\fancyhead[R]{\small\sffamily\textcolor{slate}{Doc ID: \texttt{PG-CCSDS-TTC-v2.33.0}}}
+\fancyhead[L]{\small\sffamily\textbf{\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.39.0}) Product Guide \& User Manual}}}
+\fancyhead[R]{\small\sffamily\textcolor{slate}{Doc ID: \texttt{PG-CCSDS-TTC-v2.39.0}}}
 \fancyfoot[L]{\small\sffamily\textcolor{slate}{Spacecraft Flight (\texttt{ROLE\_MODE=0}) \& Ground EGSE (\texttt{ROLE\_MODE=1/2})}}
 \fancyfoot[R]{\small\sffamily\textbf{\thepage}}
 \renewcommand{\headrulewidth}{0.5pt}
@@ -63,7 +63,7 @@
     \vspace*{0.6in}
     {\scshape\Large\textcolor{teal}{Spacecraft \& Ground Station TT\&C IP Core Documentation}\par}
     \vspace{0.25in}
-    {\Huge\bfseries\sffamily\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.33.0}):\\Product Guide \& User Manual}\par}
+    {\Huge\bfseries\sffamily\textcolor{navy}{CCSDS-SAT-TTC-IP (\texttt{v2.39.0}):\\Product Guide \& User Manual}\par}
     \vspace{0.20in}
     {\large\sffamily\textcolor{slate}{Synthesizable IEEE 1800-2017 SystemVerilog Transceiver IP Core\\for Spacecraft Flight (\texttt{ROLE\_MODE=0}), Ground EGSE (\texttt{ROLE\_MODE=1}),\\and Universal Crosslink / On-Orbit BIST (\texttt{ROLE\_MODE=2})}\par}
     \vspace{0.35in}
@@ -71,7 +71,7 @@
         \toprule
         \textbf{Document Attribute} & \textbf{Specification Value} \\
         \midrule
-        \textbf{Document ID} & \texttt{PG-CCSDS-TTC-v2.33.0} \\
+        \textbf{Document ID} & \texttt{PG-CCSDS-TTC-v2.39.0} \\
         \textbf{Top-Level RTL Module} & \texttt{ccsds\_sat\_ttc\_top} (\texttt{rtl/ccsds\_sat\_ttc\_top.sv}) \\
         \textbf{Core Version ID Register} & \texttt{32'hCC5D\_0230} (\texttt{CORE\_ID\_VER} at offset \texttt{0x00}) \\
         \textbf{Supported CCSDS Standards} & 17 Blue/Orange Books (TM, TC, AOS, Proximity-1, USLP, COP-1/P, SDLS, PN, RF) \\
@@ -82,7 +82,7 @@
         \bottomrule
     \end{tabular}
     \vfill
-    {\small\sffamily October 27, 2026 $\cdot$ Production Release \texttt{v2.33.0}\par}
+    {\small\sffamily October 30, 2026 $\cdot$ Production Release \texttt{v2.39.0}\par}
 \end{titlepage}
 
 \tableofcontents
@@ -305,6 +305,41 @@ int main(void) {
     return 0;
 }
 \end{lstlisting}
+
+
+\subsection{Firmware Configuration Gating \& 12-Thread 5,760-Config RF Matrix (\texttt{v2.39.0})}
+
+Before writing hardware CSRs (\texttt{0x04..0x0C}), \texttt{ccsds\_ttc\_hal\_configure()} invokes \texttt{ccsds\_ttc\_hal\_validate\_config()} to enforce \textbf{8 CCSDS Blue Book configuration gating rules}:
+\begin{itemize}
+    \item \textbf{Rule 1 (\texttt{CCSDS\_HAL\_ERR\_MOD\_LINE\_INCOMPAT = -10}):} Rejects \texttt{QPSK}/\texttt{OQPSK} paired with Manchester \texttt{Bi-$\phi$-L} (\texttt{CCSDS 401.0-B-32}; only 10 of 12 waveform pairs are valid).
+    \item \textbf{Rule 2 (\texttt{CCSDS\_HAL\_ERR\_SRRC\_BIPHI\_INCOMPAT = -11}):} Rejects 4-SPS SRRC filtering (\texttt{srrc\_4sps\_en=1}) with \texttt{Bi-$\phi$-L}.
+    \item \textbf{Rule 3 (\texttt{CCSDS\_HAL\_ERR\_GARDNER\_REQUIRES\_4SPS = -12}):} Rejects \texttt{gardner\_ted\_en=1} when \texttt{srrc\_4sps\_en=0}.
+    \item \textbf{Rule 4 (\texttt{CCSDS\_HAL\_ERR\_PROTO\_FEC\_INCOMPAT = -13}):} Rejects Uplink \texttt{PROTO\_TC} paired with Downlink-only \texttt{RS(255,223)}/\texttt{Turbo}, Downlink \texttt{PROTO\_TM}/\texttt{AOS} paired with Uplink-only \texttt{BCH(63,56)}/\texttt{LDPC\_UL}, and \texttt{PROTO\_PROX1} paired with \texttt{RS}/\texttt{Turbo}.
+    \item \textbf{Rule 5 (\texttt{CCSDS\_HAL\_ERR\_CRC32\_PROTO\_INCOMPAT = -14}):} Rejects 32-bit FECF (\texttt{fecf\_crc32=1}) on \texttt{TM}/\texttt{AOS}/\texttt{TC} and requires it on \texttt{PROX1}.
+    \item \textbf{Rule 6 (\texttt{CCSDS\_HAL\_ERR\_AOS\_FHEC\_INCOMPAT = -15}):} Rejects \texttt{aos\_fhec\_en=1} unless protocol is \texttt{AOS} or \texttt{USLP}.
+    \item \textbf{Rules 7 \& 8 (\texttt{-16, -17}):} Enforces $I \in \{1,2,3,4,5,8\}$, $Q \le 215$, $\text{TFDF\_LEN} \in [1..1024]$, and $W \in [1..128]$.
+\end{itemize}
+All \textbf{5,760 valid end-to-end system configurations} ($10\text{ Waveforms} \times 4\text{ Turnaround Bands} \times 3\text{ Uplink Packet Sizes } \{8,14,28\text{ B}\} \times 4\text{ Downlink Frame/OBT/Rand Modes } \{10,16,16+\text{OBT},32\text{ B}\} \times 2\text{ Uplink FECs } \{\text{BCH}(63,56), \text{Short-LDPC}(128,64)\} \times 3\text{ Downlink Protocols } \{\text{TM}, \text{AOS}, \text{USLP}\} \times 2\text{ Security Modes } \{\text{Clear}, \text{SDLS}\}$) are verified across 12 parallel \texttt{xsim} threads via \texttt{.\textbackslash scripts\textbackslash run\_stage11\_matrix\_parallel.bat 12 [MC\_ITERS] [IMPAIRMENT\_MODE]}.
+
+Per \textbf{ECSS-E-ST-50-05C} and \textbf{CCSDS 401.0-B}, Stage 11 wires \texttt{ccsds\_space\_flight\_channel\_model} into both Uplink and Downlink 16-bit AD9361 I/Q buses (with 4 continuously advancing CLT Gaussian AWGN LFSRs that never reset across trials) and steps each configuration through \textbf{6 progressive channel profiles}:
+\begin{itemize}
+    \item \textbf{\texttt{P0\_CLEAN\_REF}:} Baseline thermal AWGN (\texttt{sigma=4}) reference.
+    \item \textbf{\texttt{P1\_OAT\_AWGN\_FEC}:} Isolated low-SNR Gaussian AWGN (\texttt{sigma=24..32}) + deterministic Baseband I/Q symbol error injection (\texttt{mask=0xA5}), verifying active \texttt{BCH(63,56)} SEC, \texttt{Short-LDPC(128,64)} Soft-OMS, and \texttt{RS(255,223)} ($t=16$) error correction.
+    \item \textbf{\texttt{P2\_OAT\_DOPPLER\_PN}:} Isolated dynamic S-curve Doppler (\texttt{+-20..24} step), Doppler acceleration (\texttt{rate=+-2}), and Wiener oscillator phase noise.
+    \item \textbf{\texttt{P3\_OAT\_DELAY\_MP}:} Isolated slant-range propagation delay (\texttt{1..7} samples) and Rician specular multipath echo (\texttt{-18..-30 dB}).
+    \item \textbf{\texttt{P4\_OAT\_RF\_ANALOG}:} Isolated SSPA soft-compression, I/Q gain/quadrature skew, and Zero-IF ADC DC offset (\texttt{+-5..6}).
+    \item \textbf{\texttt{P5\_COMBINED\_MC}:} All 6 impairments active simultaneously with randomized per-trial signs, delays, payloads, and continuous AWGN seeds.
+\end{itemize}
+Each trial is judged against \textbf{7 hardware pass/fail criteria}: (1) 16-bit RF path enforcement (\texttt{ul\_sym\_tvalid==0}), (2) Costas/timing lock \& ASM correlation, (3) FEC error correction without abort, (4) hardware \texttt{CRC-16-CCITT} pass, (5) \texttt{SDLS} MAC \& anti-replay verification, (6) bit-exact Space Packet payload reassembly (\texttt{BER=0, FER=0}), and (7) closed-loop \texttt{CLCW V(R)=1} turnaround at Ground EGSE CSR \texttt{0x20}.
+
+
+\vspace{4pt}
+\vspace{4pt}
+\noindent\textbf{Measured 12-Thread 34,560-Trial (\texttt{5,760 Configs $\times$ 6 Progressive Profiles}) Full Monte Carlo Sign-Off (\texttt{v2.39.0}):}
+Executing \texttt{.\textbackslash scripts\textbackslash run\_stage11\_matrix\_parallel.bat 12 6 progressive} in Xilinx Vivado 2022.2 \texttt{xsim} verified \textbf{all 5,760 / 5,760 valid CCSDS RF configurations across all 6 progressive channel impairment profiles (\texttt{P0\_CLEAN\_REF}, \texttt{P1\_OAT\_AWGN\_FEC}, \texttt{P2\_OAT\_DOPPLER\_PN}, \texttt{P3\_OAT\_DELAY\_MP}, \texttt{P4\_OAT\_RF\_ANALOG}, \texttt{P5\_COMBINED\_MC} = 34,560 / 34,560 bidirectional trials, 100.0\% pass, 0 failures)} in \textbf{1,984.46\,s (33.07\,min) wall-clock time}, transferring \textbf{69,120 RF packets} (\texttt{576,000\,B} Uplink + \texttt{639,360\,B} Downlink Space Packet payload = \texttt{1,215,360\,B} across \textbf{39,306,240 16-bit AD9361 RF I/Q samples}: \texttt{19,077,120} UL + \texttt{20,229,120} DL) and correcting \textbf{all 23,040 pre-FEC injected channel bit errors to 0 post-FEC bit errors ($\text{BER}=0.0$, $\text{FER}=0.0$)}.
+
+\noindent\textbf{Measured 12-Thread 5,760-Configuration Combined Impairment Sign-Off (\texttt{reports/stage11\_rf\_matrix\_coverage.json}):}
+Executing \texttt{.\textbackslash scripts\textbackslash run\_stage11\_matrix\_parallel.bat 12 1 combined} in Xilinx Vivado 2022.2 \texttt{xsim} verified \textbf{all 5,760 / 5,760 valid CCSDS RF configurations (100.0\% coverage, 0 failures)} under simultaneous \texttt{P5\_COMBINED\_MC} impairments in \textbf{343.81\,s (5.73\,min) wall-clock time}, transferring \textbf{11,520 RF packets} (\texttt{96,000\,B} Uplink + \texttt{106,560\,B} Downlink Space Packet payload across \textbf{6,551,040 16-bit RF I/Q samples}: \texttt{3,179,520} UL + \texttt{3,371,520} DL) and correcting \textbf{all 11,520 pre-FEC injected channel bit errors to 0 post-FEC bit errors ($\text{BER}=0.0$, $\text{FER}=0.0$)}.
 
 \newpage
 \section{Orbital Space Flight Channel Loopback Validation (Stage 12 Sign-Off)}

@@ -137,7 +137,14 @@ def main() -> None:
         (k, v, False) for k, v in sorted(plain_files_map.items()) if k not in files_map
     ]
     for rel_path, content_val, is_zb64 in all_items:
-        raw_bytes = zlib.decompress(base64.b64decode(content_val)) if is_zb64 else content_val.encode("utf-8")
+        if is_zb64:
+            raw_bytes = zlib.decompress(base64.b64decode(content_val))
+        elif isinstance(content_val, dict):
+            enc = content_val.get("encoding", "utf-8")
+            c_str = content_val.get("content", "")
+            raw_bytes = base64.b64decode(c_str) if enc == "base64" else c_str.encode("utf-8")
+        else:
+            raw_bytes = content_val.encode("utf-8")
         target_path = repo_root / rel_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
 

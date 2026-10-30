@@ -509,7 +509,8 @@ module ccsds_phy_modem
 
       // Pipeline Stage B1 (<= 6 logic levels): One's-Complement Wire-Mux Q3 CSD Complex NCO Derotator
       active_strobe_ph = gardner_ted_en_cfg ? gardner_phase_q : 2'd0;
-      b1_strobe_now    = srrc_4sps_en_cfg ? (mf_valid_q && (mf_phase_q == active_strobe_ph)) : rx_iq_valid_in;
+      b1_strobe_now    = (srrc_4sps_en_cfg ? (mf_valid_q && (mf_phase_q == active_strobe_ph)) : rx_iq_valid_in) &&
+                         !pn_ranging_en_cfg;
       if (b1_strobe_now) begin
         logic signed [13:0] raw_i, raw_q;
         logic signed [10:0] in_i11, in_q11;
@@ -542,9 +543,9 @@ module ccsds_phy_modem
         cross_i = prev_i_sign_q ? ~q_derot_q : q_derot_q;
         cross_q = prev_q_sign_q ? ~i_derot_q : i_derot_q;
 
-        if ((mod_mode_cfg == 2'd0) && !pn_ranging_en_cfg) begin
+        if ((mod_mode_cfg == 2'd0) || pn_ranging_en_cfg) begin
           phase_err = term_i;
-          fll_err   = cross_i;
+          fll_err   = pn_ranging_en_cfg ? 15'sd0 : cross_i;
         end else if (mod_mode_cfg == 2'd2) begin
           phase_err = (term_i - term_q) >>> 1;
           fll_err   = 15'sd0;
@@ -576,18 +577,36 @@ module ccsds_phy_modem
           2'd2:    decoded_bit = ~sliced_bit;                 // Bi-Phi-L Manchester decode
           default: decoded_bit = sliced_bit;                  // NRZ-L decode
         endcase
-        rx_nrzm_prev_q  <= sliced_bit;
-        rx_shift_byte_q <= {rx_shift_byte_q[6:0], decoded_bit};
-
-        if (rx_bit_cnt_q == 3'd7) begin
-          rx_bit_cnt_q     <= 3'd0;
-          rx_sym_valid_out <= 1'b1;
-          rx_sym_byte_out  <= {rx_shift_byte_q[6:0], decoded_bit};
+        if (pn_ranging_en_cfg) begin
+          rx_nrzm_prev_q  <= 1'b0;
+          rx_shift_byte_q <= 8'd0;
+          rx_bit_cnt_q    <= 3'd0;
         end else begin
-          rx_bit_cnt_q <= rx_bit_cnt_q + 3'd1;
+          rx_nrzm_prev_q  <= sliced_bit;
+          rx_shift_byte_q <= {rx_shift_byte_q[6:0], decoded_bit};
+
+          if (rx_bit_cnt_q == 3'd7) begin
+            rx_bit_cnt_q     <= 3'd0;
+            rx_sym_valid_out <= 1'b1;
+            rx_sym_byte_out  <= {rx_shift_byte_q[6:0], decoded_bit};
+          end else begin
+            rx_bit_cnt_q <= rx_bit_cnt_q + 3'd1;
+          end
         end
       end else if (b1_strobe_now) begin
         rx_phase_q16 <= base_phase_q16;
+      end
+
+      if (pn_ranging_en_cfg) begin
+        b1_valid_q      <= 1'b0;
+        prev_i_sign_q   <= 1'b0;
+        prev_q_sign_q   <= 1'b0;
+        fll_disc_q      <= 16'sd0;
+        rx_phase_q16    <= 16'd0;
+        rx_freq_q16     <= 16'sd0;
+        rx_nrzm_prev_q  <= 1'b0;
+        rx_shift_byte_q <= 8'd0;
+        rx_bit_cnt_q    <= 3'd0;
       end
     end
   end

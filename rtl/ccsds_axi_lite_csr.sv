@@ -3,14 +3,16 @@
 // Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
 // Standard    : IEEE 1800-2017 SystemVerilog (Synthesizable)
 // Description : Memory-Mapped AXI4-Lite Configuration, Status, On-Board Time
-//               (OBT CCSDS 301.0-B-4 48-bit CUC Timestamp), and Radiation EDAC
-//               Fault Aggregation Register File (Addresses Review Concerns #1-#5):
-//                 - 32-bit AXI4-Lite slave interface (0x00..0x7C register map).
+//               (OBT CCSDS 301.0-B-4 48-bit CUC Timestamp), Runtime SDLS Key/SA
+//               Provisioning, and Radiation EDAC Fault Aggregation Register File:
+//                 - 32-bit AXI4-Lite slave interface (0x00..0x50 register map).
 //                 - Triple-Modular Redundant (TMR) storage with continuous
 //                   auto-scrubbing for mission-critical configuration registers
 //                   (SCID, Role/Protocol/FEC modes, SDLS enable, AES-GCM mode,
 //                   COP-1 window, 4-SPS SRRC, Closed-Loop Gardner TED, Ka-Band
-//                   Turnaround, and FLL-Assisted Costas Loop).
+//                   Turnaround, FLL-Assisted Costas Loop, and CADU Randomizer).
+//                 - Runtime SDLS 256-bit Master Key (0x28..0x44) and Security
+//                   Association (SA) Table Provisioning (0x48..0x50).
 //                 - 48-bit CCSDS Unsegmented Time Code (CUC: 32b Coarse Seconds
 //                   + 16b Fine Sub-seconds) synchronized to 1 PPS input for
 //                   downlink TM/AOS/USLP Secondary Header OBT stamping.
@@ -79,10 +81,19 @@ module ccsds_axi_lite_csr
   output logic [1:0]  turnaround_kaband_cfg,
   output logic        sdls_gcm_mode_cfg,
   output logic        fll_assist_en_cfg,
+  output logic        tm_rand_en_cfg,
   output logic [7:0]  window_half_w_cfg,
   output logic [3:0]  rs_interleave_i_cfg,
   output logic [7:0]  rs_virt_fill_q_cfg,
   output logic [10:0] tfdf_byte_len_cfg,
+
+  // Runtime SDLS 256-Bit Master Key & Security Association (SA) Provisioning Outputs
+  output logic [15:0]  tx_default_spi_cfg,
+  output logic [255:0] master_key_cfg,
+  output logic         sa_wr_en,
+  output logic [5:0]   sa_wr_addr,
+  output logic [15:0]  sa_wr_spi,
+  output logic [31:0]  sa_wr_seq_low,
 
   // 48-bit CCSDS 301.0-B-4 CUC On-Board Time (OBT) Output
   output logic [47:0] obt_cuc_timestamp_48b,
@@ -100,7 +111,8 @@ module ccsds_axi_lite_csr
   //                                     [26]=SDLS_EN, [27]=BC_REQ_SDLS, [28]=SRRC_4SPS_EN,
   //                                     [29]=GARDNER_TED_EN, [31:30]=TURNAROUND_KABAND_CFG
   // 0x08 : CTRL_USLP_RS_CFG   (RW, TMR) [15:0]=USLP_SCID, [19:16]=RS_I, [27:20]=RS_Q,
-  //                                     [28]=SDLS_GCM_MODE_CFG, [29]=FLL_ASSIST_EN_CFG
+  //                                     [28]=SDLS_GCM_MODE_CFG, [29]=FLL_ASSIST_EN_CFG,
+  //                                     [30]=TM_RAND_EN_CFG
   // 0x0C : CTRL_COP1_TFDF_CFG (RW, TMR) [7:0]=WIN_W, [18:8]=TFDF_LEN, [24]=IRQ_EN
   // 0x10 : OBT_COARSE_SEC     (RW) 32-bit CUC Coarse Seconds
   // 0x14 : OBT_FINE_SUBSEC    (RW) [15:0] 16-bit CUC Fine Sub-seconds
@@ -108,6 +120,10 @@ module ccsds_axi_lite_csr
   // 0x1C : FAULT_ERR_CNTS     (RO/W1C) [15:0]=Uncorr FEC/CRC/Pkt Err Cnt, [31:16]=SDLS MAC Err Cnt
   // 0x20 : LATEST_CLCW_MON    (RO) Latest 32-bit COP-1 CLCW word
   // 0x24 : LATEST_PLCW_MON    (RO) Latest 32-bit Proximity-1 PLCW word
+  // 0x28..0x44 : REG_SDLS_KEY_0..7 (RW) 256-bit SDLS Master Key (LSW at 0x28 .. MSW at 0x44)
+  // 0x48 : REG_SDLS_SA_CTRL   (RW) [15:0]=TX_DEFAULT_SPI, [21:16]=SA_WR_ADDR, [31]=SA_WR_EN
+  // 0x4C : REG_SDLS_SA_SPI    (RW) [15:0]=SA_WR_SPI
+  // 0x50 : REG_SDLS_SA_SEQ    (RW) [31:0]=SA_WR_SEQ_LOW
 
   logic [31:0] reg_scid_proto_a_q, reg_scid_proto_b_q, reg_scid_proto_c_q;
   logic [31:0] reg_uslp_rs_a_q,    reg_uslp_rs_b_q,    reg_uslp_rs_c_q;
@@ -119,6 +135,16 @@ module ccsds_axi_lite_csr
   logic [15:0] cnt_tmr_seu_corr_q;
   logic [15:0] cnt_uncorr_err_q;
   logic [15:0] cnt_sdls_mac_err_q;
+
+  localparam logic [255:0] RESET_SDLS_MASTER_KEY =
+    256'h00010203_04050607_08090A0B_0C0D0E0F_10111213_14151617_18191A1B_1C1D1E1F;
+
+  logic [31:0] sdls_key_reg_q [0:7];
+  logic [15:0] tx_default_spi_q;
+  logic [5:0]  sa_wr_addr_q;
+  logic        sa_wr_en_q;
+  logic [15:0] sa_wr_spi_q;
+  logic [31:0] sa_wr_seq_low_q;
 
   function automatic logic [31:0] vote32(
     input logic [31:0] a,
@@ -157,16 +183,27 @@ module ccsds_axi_lite_csr
     rs_virt_fill_q_cfg     = voted_uslp_rs[27:20];
     sdls_gcm_mode_cfg      = voted_uslp_rs[28];
     fll_assist_en_cfg      = voted_uslp_rs[29];
+    tm_rand_en_cfg         = voted_uslp_rs[30];
 
     window_half_w_cfg      = voted_cop1_tfdf[7:0];
     tfdf_byte_len_cfg      = voted_cop1_tfdf[18:8];
+
+    tx_default_spi_cfg     = tx_default_spi_q;
+    master_key_cfg         = {
+      sdls_key_reg_q[7], sdls_key_reg_q[6], sdls_key_reg_q[5], sdls_key_reg_q[4],
+      sdls_key_reg_q[3], sdls_key_reg_q[2], sdls_key_reg_q[1], sdls_key_reg_q[0]
+    };
+    sa_wr_en               = sa_wr_en_q;
+    sa_wr_addr             = sa_wr_addr_q;
+    sa_wr_spi              = sa_wr_spi_q;
+    sa_wr_seq_low          = sa_wr_seq_low_q;
 
     obt_cuc_timestamp_48b  = {obt_coarse_sec_q, obt_fine_subsec_q};
     fault_irq_out          = voted_cop1_tfdf[24] && ((cnt_uncorr_err_q != 16'd0) || (cnt_sdls_mac_err_q != 16'd0));
   end
 
   localparam logic [31:0] RESET_SCID_PROTO = 32'h0131_5155; // SCID=0x155,FEC=RS,OCF=1,FECF=1,TC_SEG=1
-  localparam logic [31:0] RESET_USLP_RS    = 32'h0001_4255; // USLP_SCID=0x4255, RS_I=1, RS_Q=0
+  localparam logic [31:0] RESET_USLP_RS    = 32'h0001_4255; // USLP_SCID=0x4255, RS_I=1, RS_Q=0, TM_RAND=0
   localparam logic [31:0] RESET_COP1_TFDF  = 32'h010D_F010; // WIN_W=16, TFDF_LEN=223, IRQ_EN=1
 
   always_ff @(posedge clk or negedge rst_n) begin
@@ -180,6 +217,14 @@ module ccsds_axi_lite_csr
       reg_cop1_tfdf_a_q           <= RESET_COP1_TFDF;
       reg_cop1_tfdf_b_q           <= RESET_COP1_TFDF;
       reg_cop1_tfdf_c_q           <= RESET_COP1_TFDF;
+      for (int k = 0; k < 8; k++) begin
+        sdls_key_reg_q[k]         <= RESET_SDLS_MASTER_KEY[k*32 +: 32];
+      end
+      tx_default_spi_q            <= 16'h0001;
+      sa_wr_addr_q                <= 6'd1;
+      sa_wr_en_q                  <= 1'b0;
+      sa_wr_spi_q                 <= 16'h0001;
+      sa_wr_seq_low_q             <= 32'd0;
       obt_coarse_sec_q            <= 32'h6530_0000;
       obt_fine_subsec_q           <= 16'h0000;
       cnt_secded_corr_q           <= 16'd0;
@@ -201,6 +246,7 @@ module ccsds_axi_lite_csr
       s_axi_awready               <= 1'b0;
       s_axi_wready                <= 1'b0;
       s_axi_arready               <= 1'b0;
+      sa_wr_en_q                  <= 1'b0;
       csr_tmr_seu_corrected_pulse <= 1'b0;
       edac_scrub_req_out          <= 1'b0;
 
@@ -297,6 +343,21 @@ module ccsds_axi_lite_csr
             if (s_axi_wdata[0])  cnt_uncorr_err_q   <= 16'd0;
             if (s_axi_wdata[16]) cnt_sdls_mac_err_q <= 16'd0;
           end
+          6'h0A: sdls_key_reg_q[0] <= s_axi_wdata;
+          6'h0B: sdls_key_reg_q[1] <= s_axi_wdata;
+          6'h0C: sdls_key_reg_q[2] <= s_axi_wdata;
+          6'h0D: sdls_key_reg_q[3] <= s_axi_wdata;
+          6'h0E: sdls_key_reg_q[4] <= s_axi_wdata;
+          6'h0F: sdls_key_reg_q[5] <= s_axi_wdata;
+          6'h10: sdls_key_reg_q[6] <= s_axi_wdata;
+          6'h11: sdls_key_reg_q[7] <= s_axi_wdata;
+          6'h12: begin // 0x48 REG_SDLS_SA_CTRL
+            tx_default_spi_q <= s_axi_wdata[15:0];
+            sa_wr_addr_q     <= s_axi_wdata[21:16];
+            sa_wr_en_q       <= s_axi_wdata[31];
+          end
+          6'h13: sa_wr_spi_q     <= s_axi_wdata[15:0]; // 0x4C REG_SDLS_SA_SPI
+          6'h14: sa_wr_seq_low_q <= s_axi_wdata;       // 0x50 REG_SDLS_SA_SEQ
           default: ;
         endcase
       end else if (s_axi_bvalid && s_axi_bready) begin
@@ -319,6 +380,17 @@ module ccsds_axi_lite_csr
           6'h07: s_axi_rdata <= {cnt_sdls_mac_err_q, cnt_uncorr_err_q};
           6'h08: s_axi_rdata <= 32'(latest_clcw_in);
           6'h09: s_axi_rdata <= 32'(latest_plcw_in);
+          6'h0A: s_axi_rdata <= sdls_key_reg_q[0];
+          6'h0B: s_axi_rdata <= sdls_key_reg_q[1];
+          6'h0C: s_axi_rdata <= sdls_key_reg_q[2];
+          6'h0D: s_axi_rdata <= sdls_key_reg_q[3];
+          6'h0E: s_axi_rdata <= sdls_key_reg_q[4];
+          6'h0F: s_axi_rdata <= sdls_key_reg_q[5];
+          6'h10: s_axi_rdata <= sdls_key_reg_q[6];
+          6'h11: s_axi_rdata <= sdls_key_reg_q[7];
+          6'h12: s_axi_rdata <= {10'd0, sa_wr_addr_q, tx_default_spi_q};
+          6'h13: s_axi_rdata <= {16'd0, sa_wr_spi_q};
+          6'h14: s_axi_rdata <= sa_wr_seq_low_q;
           default: s_axi_rdata <= 32'd0;
         endcase
       end else if (s_axi_rvalid && s_axi_rready) begin

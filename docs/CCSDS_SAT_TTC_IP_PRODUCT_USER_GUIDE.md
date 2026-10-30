@@ -1,10 +1,10 @@
-# CCSDS-SAT-TTC-IP (`v2.33.0`): Spacecraft & Ground EGSE TT&C Product Guide and User Manual
+# CCSDS-SAT-TTC-IP (`v2.39.0`): Spacecraft & Ground EGSE TT&C Product Guide and User Manual
 
 | Document Control | Details |
 | :--- | :--- |
-| **Document ID** | `PG-CCSDS-TTC-v2.33.0` |
+| **Document ID** | `PG-CCSDS-TTC-v2.39.0` |
 | **IP Core Name** | `ccsds_sat_ttc_top` (`CCSDS-SAT-TTC-IP`) |
-| **Version & Release Date** | `v2.33.0` — October 27, 2026 (All Stages 0–12 Verified in Vivado 2022.2 `xsim` & STA) |
+| **Version & Release Date** | `v2.39.0` — October 30, 2026 (All Stages 0–12 & 34,560-Trial Stage 11 Progressive RF Matrix Verified in Vivado 2022.2 `xsim` & STA) |
 | **RTL Standard** | IEEE 1800-2017 SystemVerilog (`30` Synthesizable/Model RTL Modules + `11` Self-Checking Testbenches) |
 | **Flight Software SDK** | ANSI/ISO C11 Bare-Metal Hardware Abstraction Layer (`sw/ccsds_ttc_hal.h`, `sw/ccsds_ttc_hal.c`, `sw/test_ccsds_ttc_hal.c`) |
 | **License** | Apache License 2.0 ([`LICENSE`](../LICENSE)) |
@@ -185,6 +185,125 @@ void obc_ttc_1hz_health_check(const ccsds_ttc_dev_t *ttc_dev) {
     }
 }
 ```
+
+
+---
+
+## 6.3 Firmware Configuration Gating & Valid vs. Invalid CCSDS Combinations (`v2.36.0`)
+
+Before committing any AXI4-Lite register writes to `0x04..0x0C`, `ccsds_ttc_hal_configure()` automatically invokes `ccsds_ttc_hal_validate_config(const ccsds_ttc_config_t *cfg)` in `sw/ccsds_ttc_hal.c` to enforce **8 CCSDS Blue Book configuration gating rules**. Any illegal or non-standard parameter cross-combination is rejected immediately with a negative status code without modifying hardware state:
+
+| Rule # | HAL Status Code | Gated Parameter Combination | Governing CCSDS Standard & Rationale |
+| :---: | :--- | :--- | :--- |
+| **1** | `CCSDS_HAL_ERR_MOD_LINE_INCOMPAT` (`-10`) | `MOD_QPSK` or `MOD_OQPSK` paired with `LINE_BIPHI_L` | [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf): Manchester (`Bi-Phi-L`) split-phase coding is valid only for 1-bit/symbol BPSK or residual-carrier PCM/PSK/PM. Only **10 of the 12** `(Modulation x Line-Code)` combinations are flight-valid. |
+| **2** | `CCSDS_HAL_ERR_SRRC_BIPHI_INCOMPAT` (`-11`) | `srrc_4sps_en = true` paired with `LINE_BIPHI_L` | [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf): 4-SPS Square-Root Raised-Cosine ($lpha=0.35$) baseband pulse shaping applies only to `NRZ-L` and `NRZ-M` waveforms. |
+| **3** | `CCSDS_HAL_ERR_GARDNER_REQUIRES_4SPS` (`-12`) | `gardner_ted_en = true` when `srrc_4sps_en = false` | Closed-loop 4-SPS Gardner / Nyquist Zero-ISI symbol timing recovery requires 4-SPS SRRC matched filter samples (`mf_i_q`/`mf_q_q`). |
+| **4** | `CCSDS_HAL_ERR_PROTO_FEC_INCOMPAT` (`-13`) | • `PROTO_TC` with `RS(255,223)` / `Turbo` / `AR4JA`<br>• `PROTO_TM` or `PROTO_AOS` with `BCH(63,56)` / `LDPC_UL`<br>• `PROTO_PROX1` with `BCH` / `RS` / `Turbo` | [CCSDS 231.0-B-4](https://ccsds.org/Pubs/231x0b4.pdf) & [131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf): Uplink telecommand uses `BCH(63,56)` or `Short-LDPC(128,64)/(512,256)`; Downlink TM/AOS uses `RS(255,223)`, `Conv(K=7)`, or `Turbo`; `USLP` (`732.1-B-3`) is unified bidirectional. |
+| **5** | `CCSDS_HAL_ERR_CRC32_PROTO_INCOMPAT` (`-14`) | • `fecf_crc32 = true` on `PROTO_TM`, `PROTO_AOS`, or `PROTO_TC`<br>• `fecf_crc32 = false` on `PROTO_PROX1` (`fecf_en=1`) | [CCSDS 211.0-B-6](https://ccsds.org/Pubs/211x0b6.pdf): 32-bit FECF (`0x00A00805`) is mandatory on Proximity-1 and optional on USLP; TM, AOS, and TC strictly mandate 16-bit CRC-16-CCITT (`0x1021`). |
+| **6** | `CCSDS_HAL_ERR_AOS_FHEC_INCOMPAT` (`-15`) | `aos_fhec_en = true` when `proto_mode` is not `PROTO_AOS` or `PROTO_USLP` | [CCSDS 732.0-B-4](https://ccsds.org/Pubs/732x0b4.pdf): 16-bit $GF(2^4)$ RS(10,6) Frame Header Error Control (FHEC) exists only in the AOS header. |
+| **7** | `CCSDS_HAL_ERR_RS_PARAM_RANGE` (`-16`) | `rs_interleave_i` $
+otin \{1,2,3,4,5,8\}$ or `rs_virt_fill_q > 215` | [CCSDS 131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf): Dual-basis RS(255,223) supports interleaving depths $I \in \{1,2,3,4,5,8\}$ and requires at least 8 information octets ($223 - Q \ge 8$). |
+| **8** | `CCSDS_HAL_ERR_FRAME_LEN_RANGE` (`-17`) | `tfdf_byte_len` $
+otin [1..1024]$ or `window_half_w` $
+otin [1..128]$ | Hardware buffer & COP-1 sliding-window bounds check. |
+
+### 6.4 Stage 11 12-Thread Parallel 480-Configuration Valid RF Matrix (`scripts/run_stage11_matrix_parallel.py`)
+
+All **480 valid end-to-end chip-to-chip RF configurations** across `u_ground_egse_top (ROLE_MODE=1, IQ_BUS_WIDTH=16)` and `u_spacecraft_top (ROLE_MODE=0, IQ_BUS_WIDTH=16)` (`sc_ul_sym_tvalid == 1'b0`) are swept automatically across **12 parallel `xsim` worker threads** (`40` configurations per thread = `960` true 16-bit RF packet transfers):
+
+* **10 Valid `(Modulation x Line-Code)` Waveforms**: `BPSK+{NRZ-L, NRZ-M, Bi-Phi-L}`, `QPSK+{NRZ-L, NRZ-M}`, `OQPSK+{NRZ-L, NRZ-M}`, and `PCM/PM+{NRZ-L, NRZ-M, Bi-Phi-L}` (`QPSK/OQPSK + Bi-Phi-L` excluded & firmware-gated).
+* **4 Coherent Turnaround Bands**: **S-Band ($240/221$)**, **X-Band ($880/749$)**, **Ka-Band Deep-Space Cat-B ($3344/749$)**, and **Ka-Band Near-Earth Cat-A ($3360/749$)**.
+* **3 Variable Uplink Telecommand Packet/Frame Sizes**: **Short (`8B` Space Packet $
+ightarrow$ `3` BCH codeblocks, `320` RF I/Q samples)**, **Medium (`14B` Space Packet $
+ightarrow$ `4` BCH codeblocks, `384` RF I/Q samples)**, and **Long (`28B` Space Packet $
+ightarrow$ `6` BCH codeblocks, `512` RF I/Q samples)**.
+* **4 Variable Downlink Telemetry Frame/OBT/Randomizer Modes**: **Short (`10B` Packet, `58B` CADU, `Q=201`, Rand OFF)**, **Medium (`16B` Packet, `64B` CADU, `Q=195`, Rand ON)**, **Medium + 48-Bit CUC OBT Secondary Header (`16B` Packet + `8B` OBT, `72B` CADU, `Q=187`, Rand ON)**, and **Long (`32B` Packet, `80B` CADU, `Q=179`, Rand ON)**.
+
+```powershell
+# 1. Run all 5,760 valid chip-to-chip RF configurations across 12 parallel Vivado xsim threads (1 trial/config = 11,520 RF packets):
+.\scripts\run_stage11_matrix_parallel.bat 12 1 auto
+
+# 2. Run all 5,760 valid configurations x 6 Progressive OAT + Combined Mission Envelope Monte Carlo trials/config (34,560 trials = 69,120 RF packets):
+.\scripts\run_stage11_matrix_parallel.bat 12 6 progressive
+```
+
+#### 6.4.1 Full 5,760 Valid System Configuration Space (`480 PHY/Frame Slice x 12 Protocol/FEC/SDLS Combinations`)
+
+| Dimension | Valid Options | Count |
+| :--- | :--- | :--- |
+| **1. PHY Modulation x Line Code** | `BPSK`/`PCM-PM` x `{NRZ-L, NRZ-M, Bi-Phi-L}` + `QPSK`/`OQPSK` x `{NRZ-L, NRZ-M}` | **10** |
+| **2. Coherent Turnaround Band** | `S-Band (240/221)`, `X-Band (880/749)`, `Ka Cat-B (3344/749)`, `Ka Cat-A (3360/749)` | **4** |
+| **3. Uplink Variable Packet/CLTU Length** | `8 B`, `14 B`, `28 B` Space Packets (`3..7` BCH/LDPC codeblocks) | **3** |
+| **4. Downlink Variable Frame/OBT/Rand** | `10 B (Unrand)`, `16 B (+Rand)`, `16 B (+OBT/FHEC+Rand)`, `32 B (+Rand)` | **4** |
+| **5. Uplink Channel Coding (CCSDS 231.0-B-4)** | `Expurgated BCH(63,56) SEC` (`ul_fec=0`), `Short-Block QC-LDPC(128,64) Soft-OMS` (`ul_fec=1`) | **2** |
+| **6. Downlink Framing Protocol** | `TM` (`CCSDS 132.0-B-3`), `AOS` (`CCSDS 732.0-B-4`), `USLP` (`CCSDS 732.1-B-2`) | **3** |
+| **7. Link Security (CCSDS 355.0-B-2)** | `Clear Bypass` (`sdls_en=0`), `SDLS AES-128-CTR + MAC Authenticated` (`sdls_en=1`) | **2** |
+| **Total Valid System Configurations** | $10 \times 4 \times 3 \times 4 \times 2 \times 3 \times 2$ | **5,760 (`100%`)** |
+
+#### 6.4.2 Progressive One-At-a-Time (OAT) Isolation + Combined Mission Envelope Methodology (ECSS-E-ST-50-05C / CCSDS 401.0-B)
+
+To provide both **subsystem fault isolation** (identifying which receiver loop caused any degradation) and **cross-coupled worst-case margin verification**, Stage 11 (`tb/tb_stage11_top_to_top_rf_link.sv`) wires `ccsds_space_flight_channel_model` into both the Uplink and Downlink 16-bit AD9361 Baseband I/Q paths (with 4 continuously advancing CLT Gaussian AWGN LFSRs that never reset across trials) and maps each trial (`trial_idx = 0 .. MC_ITERS-1`) through 6 channel profiles:
+
+| Profile ID | Profile Name | Active RF Channel Impairments (`u_ul_rf_channel` & `u_dl_rf_channel`) | Receiver Loop / Subsystem Isolated |
+| :--- | :--- | :--- | :--- |
+| **`P0`** | `P0_CLEAN_REF` | Minimal thermal AWGN (`sigma=4`), `0` CFO, `0` delay, ideal RF front-end | Baseline framing (`TC`/`TM`/`AOS`/`USLP`), FEC (`BCH`/`LDPC`/`RS`), `SDLS`, & `CLCW` |
+| **`P1`** | `P1_OAT_AWGN_FEC` | Elevated CLT Gaussian AWGN (`sigma=24..32`) + deterministic Baseband I/Q symbol error injection (`mask=0xA5`) | Active hardware FEC error correction (`BCH(63,56)` SEC, `LDPC(128,64)` Soft-OMS, `RS(255,223)` $t=16$) |
+| **`P2`** | `P2_OAT_DOPPLER_PN` | High initial CFO (`+-20..24` step) + dynamic S-curve Doppler ramp (`rate=+-2`) + Wiener oscillator phase noise | Costas PLL frequency pull-in, dynamic ramp tracking, and phase-jitter tolerance |
+| **`P3`** | `P3_OAT_DELAY_MP` | Fractional slant-range delay (`prop_delay=1..7` samples) + Rician specular multipath echo (`-18..-30 dB`) | Symbol timing recovery & multipath ISI resilience |
+| **`P4`** | `P4_OAT_RF_ANALOG` | SSPA soft-compression (`pa_nonlin_en=1`) + I/Q gain/quadrature skew (`iq_imbalance_en=1`) + Zero-IF ADC DC offset (`+-5..6`) | Constellation slicer symmetry, compression & DC-offset tolerance |
+| **`P5`** | `P5_COMBINED_MC` | **All 6 impairments active simultaneously**: Noisy AWGN (`sigma=18..28`) + active IQ symbol error injection + S-curve Doppler ramp + Phase Noise + Fractional Delay + Rician Multipath + SSPA + I/Q Imbalance + DC Offset | Coupled end-to-end receiver margin under worst-case LEO/Deep-Space pass conditions |
+
+#### 6.4.3 Seven Hardware Pass/Fail Criteria per Trial
+
+Every bidirectional Monte Carlo trial is evaluated across **7 hardware checks**:
+1. **True 16-Bit RF Path Enforcement:** `sc_ul_sym_tvalid == 0`, `gnd_ul_sym_tvalid == 0`, and `ul_iq_cnt >= exp_ul_iq` / `dl_iq_cnt >= exp_dl_iq`.
+2. **PHY Lock & ASM Acquisition:** Receiver Costas/timing loops lock and correlate Uplink Start Sequence (`0xEB90` or `64b LDPC Start`) and Downlink CADU ASM (`0x1ACFFC1D`).
+3. **FEC Decoding & Error Correction:** Zero uncorrectable codeblock aborts (`bch_double_err_pulse == 0`, `ldpc_abort_pulse == 0`, `egse_rs_done == 1`).
+4. **Protocol Deframing & CRC-16 Verification:** Hardware `CRC-16-CCITT` (`0x1021`) passes on both Uplink (`ul_frame_crc_ok == 1`) and Downlink (`egse_crc_ok == 1`).
+5. **SDLS Security (`sdls_en = 1`):** Both Spacecraft and Ground EGSE `ccsds_sdls_engine` instances authenticate the MAC tag and anti-replay sequence number (`sdls_auth_ok == 1`).
+6. **Bit-Exact Payload Integrity:** Reassembled Space Packet byte count and every payload bit match the transmitted PRNG packet (`post_fec_bit_errs == 0`, `BER = 0.0`, `FER = 0.0`).
+7. **Closed-Loop COP-1 `CLCW V(R)` Turnaround:** Spacecraft `FARM-1` increments `V(R)=1`, embeds the 32-bit CLCW in the Downlink frame OCF, and Ground EGSE latches `V(R)=1` at CSR `0x20` (`LATEST_CLCW_MON`).
+
+
+#### 6.4.4 Measured 5,760-Configuration Combined Mission Envelope Sign-Off (`Vivado 2022.2 xsim`, 12 Worker Threads)
+
+Executing `.\scripts\run_stage11_matrix_parallel.bat 12 1 combined` on `v2.38.0` verified **all `5,760 / 5,760` (`100.0%`) valid CCSDS RF configurations** under simultaneous `P5_COMBINED_MC` channel impairments (`AWGN + I/Q Symbol Error Injection + Dynamic S-Curve Doppler + Phase Noise + Slant-Range Delay + Rician Multipath + SSPA Compression + I/Q Imbalance + DC Offset`) in **`343.81s` (`5.73 min`) wall-clock time** (`reports/stage11_rf_matrix_coverage.json`):
+
+| Worker ID | Assigned Slice (`cfg_idx`) | Downlink Protocol & Security Slice | Configs Passed | Pre-FEC Errors $\rightarrow$ Post-FEC Errors | Uplink IQ Samples | Downlink IQ Samples | Elapsed Time |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`Worker 00`** | `0 .. 479` | `TM` (`132.0-B-3`), `BCH(63,56)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `194,560` | `263,040` | `225.26s` |
+| **`Worker 01`** | `480 .. 959` | `TM` (`132.0-B-3`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `289,280` | `263,040` | `274.77s` |
+| **`Worker 02`** | `960 .. 1439` | `AOS` (`732.0-B-4`), `BCH(63,56)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `194,560` | `264,960` | `206.20s` |
+| **`Worker 03`** | `1440 .. 1919` | `AOS` (`732.0-B-4`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `289,280` | `264,960` | `269.28s` |
+| **`Worker 04`** | `1920 .. 2399` | `USLP` (`732.1-B-2`), `BCH(63,56)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `194,560` | `274,560` | `197.85s` |
+| **`Worker 05`** | `2400 .. 2879` | `USLP` (`732.1-B-2`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `289,280` | `274,560` | `288.92s` |
+| **`Worker 06`** | `2880 .. 3359` | `TM` (`132.0-B-3`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `225,280` | `289,920` | `228.47s` |
+| **`Worker 07`** | `3360 .. 3839` | `TM` (`132.0-B-3`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `350,720` | `289,920` | `327.43s` |
+| **`Worker 08`** | `3840 .. 4319` | `AOS` (`732.0-B-4`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `225,280` | `291,840` | `240.38s` |
+| **`Worker 09`** | `4320 .. 4799` | `AOS` (`732.0-B-4`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `350,720` | `291,840` | `319.01s` |
+| **`Worker 10`** | `4800 .. 5279` | `USLP` (`732.1-B-2`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `225,280` | `301,440` | `233.63s` |
+| **`Worker 11`** | `5280 .. 5759` | `USLP` (`732.1-B-2`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | `960` $\rightarrow$ **`0`** | `350,720` | `301,440` | `315.20s` |
+| **Total (`12 Threads`)** | **`0 .. 5759`** | **All 12 `(Protocol x UL_FEC x SDLS)` Slices** | **`5,760 / 5,760` (`100%`)** | **`11,520` $\rightarrow$ `0` (`BER=0`)** | **`3,179,520`** | **`3,371,520`** | **`343.81s` Wall** |
+
+#### 6.4.5 Measured 34,560-Trial (`5,760 Configs x 6 Progressive Profiles`) Full Monte Carlo Sign-Off (`Vivado 2022.2 xsim`, 12 Worker Threads)
+
+Executing `.\scripts\run_stage11_matrix_parallel.bat 12 6 progressive` (`v2.39.0`, `reports/stage11_rf_matrix_coverage.json`) verified **all `5,760 / 5,760` (`100.0%`) valid CCSDS RF configurations across all 6 progressive channel impairment profiles (`P0_CLEAN_REF`, `P1_OAT_AWGN_FEC`, `P2_OAT_DOPPLER_PN`, `P3_OAT_DELAY_MP`, `P4_OAT_RF_ANALOG`, `P5_COMBINED_MC`)** — totaling **`34,560` bidirectional trials (`69,120` RF packet transfers, `1,215,360` B Space Packet payload, `39,306,240` 16-bit RF I/Q samples)** and correcting **`23,040` pre-FEC injected channel errors to `0` post-FEC bit errors (`BER = 0.0`, `FER = 0.0`)** in **`1,984.46s` (`33.07 min`) wall-clock time**:
+
+| Worker ID | Assigned Slice (`cfg_idx`) | Downlink Protocol, Uplink FEC & Security Slice | Configs Passed | Trials Passed (`P0..P5`) | Pre-FEC $\rightarrow$ Post-FEC Errors | Uplink IQ Samples | Downlink IQ Samples | Elapsed Time |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`Worker 00`** | `0 .. 479` | `TM` (`132.0-B-3`), `BCH(63,56)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,167,360` | `1,578,240` | `1,252.11s` |
+| **`Worker 01`** | `480 .. 959` | `TM` (`132.0-B-3`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,735,680` | `1,578,240` | `1,654.02s` |
+| **`Worker 02`** | `960 .. 1439` | `AOS` (`732.0-B-4`), `BCH(63,56)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,167,360` | `1,589,760` | `1,252.46s` |
+| **`Worker 03`** | `1440 .. 1919` | `AOS` (`732.0-B-4`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,735,680` | `1,589,760` | `1,643.22s` |
+| **`Worker 04`** | `1920 .. 2399` | `USLP` (`732.1-B-2`), `BCH(63,56)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,167,360` | `1,647,360` | `1,270.29s` |
+| **`Worker 05`** | `2400 .. 2879` | `USLP` (`732.1-B-2`), `LDPC(128,64)`, `Clear` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,735,680` | `1,647,360` | `1,669.80s` |
+| **`Worker 06`** | `2880 .. 3359` | `TM` (`132.0-B-3`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,351,680` | `1,739,520` | `1,427.20s` |
+| **`Worker 07`** | `3360 .. 3839` | `TM` (`132.0-B-3`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `2,104,320` | `1,739,520` | `1,897.74s` |
+| **`Worker 08`** | `3840 .. 4319` | `AOS` (`732.0-B-4`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,351,680` | `1,751,040` | `1,425.45s` |
+| **`Worker 09`** | `4320 .. 4799` | `AOS` (`732.0-B-4`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `2,104,320` | `1,751,040` | `1,908.14s` |
+| **`Worker 10`** | `4800 .. 5279` | `USLP` (`732.1-B-2`), `BCH(63,56)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `1,351,680` | `1,808,640` | `1,427.03s` |
+| **`Worker 11`** | `5280 .. 5759` | `USLP` (`732.1-B-2`), `LDPC(128,64)`, `SDLS` | **`480 / 480`** | **`2,880 / 2,880`** | `1,920` $\rightarrow$ **`0`** | `2,104,320` | `1,808,640` | `1,972.55s` |
+| **Total (`12 Threads`)** | **`0 .. 5759`** | **All 12 `(Protocol x UL_FEC x SDLS)` Slices** | **`5,760 / 5,760` (`100%`)** | **`34,560 / 34,560` (`100%`)** | **`23,040` $\rightarrow$ `0` (`BER=0`)** | **`19,077,120`** | **`20,229,120`** | **`1,984.46s` Wall** |
 
 ---
 

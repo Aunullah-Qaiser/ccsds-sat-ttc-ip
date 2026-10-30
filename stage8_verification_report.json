@@ -28,7 +28,7 @@
       "cop1_two_phase_and_r3_1_type_bc_verified": true,
       "rs255_223_interleaved_codewords_verified": 69,
       "sdls_aes_128_gcm_verified": true,
-      "elapsed_sec": 4.292
+      "elapsed_sec": 6.671
     },
     "stage2": {
       "rtl_files_audited": [
@@ -95,7 +95,7 @@
       "secded_2bit_detection_trials": 500,
       "aos_fhec_gf16_headers_verified": 1000,
       "rollback_fifo_multiframe_isolation_verified": true,
-      "elapsed_sec": 7.457
+      "elapsed_sec": 11.864
     },
     "stage3": {
       "rtl_files_audited_count": 41,
@@ -159,7 +159,7 @@
       "cpp20_ref_crosscheck_stdout": "[CPP20-REF-CHECK-S3] Verified 500 0/180-deg CLTU soft-LLR locks, 500 TMR FARM-1 SEU scrubs (500 healed), and generated Stage 3 VCD",
       "closed_loop_fop1_farm1_clcw_rs_cadu_pass": true,
       "telecommands_delivered_in_order": 16,
-      "elapsed_sec": 6.071
+      "elapsed_sec": 8.244
     },
     "stage4": {
       "rtl_files_audited": 41,
@@ -170,7 +170,7 @@
       "prox1_crc32_frames_verified": 50,
       "uslp_truncated_frames_verified": 50,
       "uslp_extended_variable_frames_verified": 50,
-      "elapsed_sec": 7.525
+      "elapsed_sec": 9.489
     },
     "stage5": {
       "rtl_files_audited": 41,
@@ -181,21 +181,21 @@
       "viterbi_noisy_bits_corrected": 64000,
       "short_ldpc_noisy_blocks_converged": 500,
       "hcpd_tmr_seu_verified": true,
-      "elapsed_sec": 6.853
+      "elapsed_sec": 9.895
     },
     "stage6": {
       "rtl_files_audited": 41,
       "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage6_ref_crosscheck_stdout": "[CPP20-STAGE6-COSIM] Verified Inline SDLS Encrypt/Decrypt/Anti-Replay (52 frames), T2B/T4B 6-Component PN Ranging Lock (4,000 chips), S/X-Band Coherent Turnaround Ratios (240/221 & 880/749) & VCD waveform",
-      "elapsed_sec": 6.619
+      "elapsed_sec": 7.611
     },
     "stage7": {
       "rtl_files_audited": 41,
       "tb_files_audited": 11,
       "sv_static_audit_pass_1_and_2": true,
       "cpp20_stage7_ref_crosscheck_stdout": "[CPP20-STAGE7-COSIM] Verified Hardware EGSE (ROLE_MODE=1) <-> Spacecraft (ROLE_MODE=0) Loopback: 30/30 FOP-1<->FARM-1 Go-Back-N ARQ Frames, 1,000 BCH(63,56) CLTU Blocks, TM/AOS CUC OBT & CLCW Extraction, RS(255,223) Syndrome Decode & VCD",
-      "elapsed_sec": 6.532
+      "elapsed_sec": 8.619
     },
     "stage8": {
       "rtl_and_tb_files_audited": 41,
@@ -267,7 +267,7 @@
           "clk_tc_safe": -5.073
         }
       },
-      "elapsed_sec": 10.134
+      "elapsed_sec": 11.315
     }
   }
 }

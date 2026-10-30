@@ -1,4 +1,4 @@
-name: CCSDS-SAT-TTC-IP Full RTL Simulation, Lint & Verification CI (v2.31.0)
+name: CCSDS-SAT-TTC-IP Full RTL Simulation, Lint & Verification CI (v2.39.0)
 
 on:
   push:

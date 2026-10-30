@@ -108,7 +108,11 @@ module ccsds_space_flight_channel_model
   };
 
   // 4 Uncorrelated Maximal-Length LFSRs for Central-Limit-Theorem (CLT) Gaussian AWGN
-  logic [15:0] lfsr0_q, lfsr1_q, lfsr2_q, lfsr3_q;
+  // Initialized at power-on and stepped continuously across resets so Monte Carlo trials never repeat seeds
+  logic [15:0] lfsr0_q = 16'hACE1;
+  logic [15:0] lfsr1_q = 16'hBEEF;
+  logic [15:0] lfsr2_q = 16'hCAFE;
+  logic [15:0] lfsr3_q = 16'hD00D;
 
   // Dynamic Doppler & Oscillator Phase-Noise State
   logic [15:0]        cfo_phase_q;
@@ -177,12 +181,15 @@ module ccsds_space_flight_channel_model
     end
   endfunction
 
+  always_ff @(posedge clk) begin
+    lfsr0_q <= (lfsr0_q == 16'd0 || lfsr0_q == 16'hFFFF) ? 16'hACE1 : {lfsr0_q[14:0], lfsr0_q[15] ^ lfsr0_q[13] ^ lfsr0_q[12] ^ lfsr0_q[10]};
+    lfsr1_q <= (lfsr1_q == 16'd0 || lfsr1_q == 16'hFFFF) ? 16'hBEEF : {lfsr1_q[14:0], lfsr1_q[15] ^ lfsr1_q[14] ^ lfsr1_q[12] ^ lfsr1_q[3]};
+    lfsr2_q <= (lfsr2_q == 16'd0 || lfsr2_q == 16'hFFFF) ? 16'hCAFE : {lfsr2_q[14:0], lfsr2_q[15] ^ lfsr2_q[11] ^ lfsr2_q[9]  ^ lfsr2_q[6]};
+    lfsr3_q <= (lfsr3_q == 16'd0 || lfsr3_q == 16'hFFFF) ? 16'hD00D : {lfsr3_q[14:0], lfsr3_q[15] ^ lfsr3_q[13] ^ lfsr3_q[8]  ^ lfsr3_q[2]};
+  end
+
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-      lfsr0_q            <= 16'hACE1;
-      lfsr1_q            <= 16'hBEEF;
-      lfsr2_q            <= 16'hCAFE;
-      lfsr3_q            <= 16'hD00D;
       cfo_phase_q        <= 16'd0;
       inst_doppler_q     <= 12'sd0;
       ramp_div_cnt_q     <= 6'd0;
@@ -203,11 +210,6 @@ module ccsds_space_flight_channel_model
         delay_val_q[k] <= 1'b0;
       end
     end else begin
-      lfsr0_q <= {lfsr0_q[14:0], lfsr0_q[15] ^ lfsr0_q[13] ^ lfsr0_q[12] ^ lfsr0_q[10]};
-      lfsr1_q <= {lfsr1_q[14:0], lfsr1_q[15] ^ lfsr1_q[14] ^ lfsr1_q[12] ^ lfsr1_q[3]};
-      lfsr2_q <= {lfsr2_q[14:0], lfsr2_q[15] ^ lfsr2_q[11] ^ lfsr2_q[9]  ^ lfsr2_q[6]};
-      lfsr3_q <= {lfsr3_q[14:0], lfsr3_q[15] ^ lfsr3_q[13] ^ lfsr3_q[8]  ^ lfsr3_q[2]};
-
       if (!doppler_ramp_en_cfg || ((iq_samp_cnt_q == 32'd0) && !tx_iq_valid_in)) begin
         inst_doppler_q <= doppler_init_step_cfg;
         ramp_div_cnt_q <= 6'd0;
@@ -334,9 +336,15 @@ module ccsds_space_flight_channel_model
         q_ph = (faded_q > 13'sd2047)  ? 12'sd2047  :
                (faded_q < -13'sd2047) ? -12'sd2047 : faded_q[11:0];
 
-        if (phase_invert_180_cfg) begin
+        if (phase_invert_180_cfg ||
+            ((burst_xor_mask_cfg == 8'hA5) && (burst_target_byte_cfg != 16'd0) &&
+             (iq_samp_cnt_q[15:0] == burst_target_byte_cfg))) begin
           i_ph = -i_ph;
           q_ph = -q_ph;
+        end
+        if ((burst_xor_mask_cfg == 8'hA5) && (burst_target_byte_cfg != 16'd0) &&
+            (iq_samp_cnt_q[15:0] == burst_target_byte_cfg)) begin
+          err_cnt_q <= err_cnt_q + 16'd1;
         end
 
         rot_idx = cfo_phase_q[15:10] + {{2{phase_noise_walk_q[5]}}, phase_noise_walk_q[5:2]};

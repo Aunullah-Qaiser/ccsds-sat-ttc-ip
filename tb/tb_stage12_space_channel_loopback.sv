@@ -269,13 +269,15 @@ module tb_stage12_space_channel_loopback;
 
   // Ground Station Hardware EGSE Top (`ROLE_MODE = 1`)
   ccsds_sat_ttc_top #(
-    .ROLE_MODE(1)
+    .ROLE_MODE(1),
+    .IQ_BUS_WIDTH(12)
   ) u_ground_egse_top (
     .clk_sys                (clk_sys),
     .clk_tc_safe            (clk_tc_safe),
     .clk_tx_sym             (clk_tx_sym),
     .clk_adc_iq             (clk_adc_iq),
     .rst_n                  (rst_n),
+    .pps_1hz_in             (1'b0),
     .s_axi_awvalid          (gnd_awvalid),
     .s_axi_awready          (gnd_awready),
     .s_axi_awaddr           (gnd_awaddr),
@@ -336,13 +338,15 @@ module tb_stage12_space_channel_loopback;
 
   // Spacecraft Flight Transceiver Top (`ROLE_MODE = 0`)
   ccsds_sat_ttc_top #(
-    .ROLE_MODE(0)
+    .ROLE_MODE(0),
+    .IQ_BUS_WIDTH(12)
   ) u_spacecraft_top (
     .clk_sys                (clk_sys),
     .clk_tc_safe            (clk_tc_safe),
     .clk_tx_sym             (clk_tx_sym),
     .clk_adc_iq             (clk_adc_iq),
     .rst_n                  (rst_n),
+    .pps_1hz_in             (1'b0),
     .s_axi_awvalid          (sc_awvalid),
     .s_axi_awready          (sc_awready),
     .s_axi_awaddr           (sc_awaddr),

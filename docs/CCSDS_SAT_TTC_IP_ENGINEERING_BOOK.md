@@ -1,13 +1,13 @@
-# Architecting a Universal CCSDS Spacecraft TT&C and Ground EGSE Transceiver IP Core in SystemVerilog (`CCSDS-SAT-TTC-IP v2.29.0`)
+# Architecting a Universal CCSDS Spacecraft TT&C and Ground EGSE Transceiver IP Core in SystemVerilog (`CCSDS-SAT-TTC-IP v2.39.0`)
 
 > **Companion files in `docs/`:**
 > - Typeset PDF Monograph: `docs/ccsds_ttc_ip_engineering_book.pdf`
 > - LaTeX Source: `docs/ccsds_ttc_ip_engineering_book.tex`
 > - Master Target Specification: `docs/ccsds_ttc_rtl_spec_and_live_plan.md`
 
-## Executive Summary: Complete Architectural & Verification Sign-Off (Stages 0–11, `v2.29.0`)
+## Executive Summary: Complete Architectural & Verification Sign-Off (Stages 0–12, `v2.39.0`)
 
-| Subsystem / Layer | Current Status | What Is Built & Verified in Vivado 2022.2 (`v2.29.0`, Stages 0–11) | Remaining Optional Foundry / Mission Customizations |
+| Subsystem / Layer | Current Status | What Is Built & Verified in Vivado 2022.2 (`v2.39.0`, Stages 0–12) | Remaining Optional Foundry / Mission Customizations |
 | :--- | :--- | :--- | :--- |
 | **1. Multi-Protocol Framing (`TM`, `TC`, `AOS`, `Proximity-1`, `USLP`)** | **100% Built & Verified** | All 5 protocols, Cycle-0 closed-form `FHP`, 8B CUC `OBT` Secondary Header, $GF(2^4)$ `FHEC`, `0x55` fill stripping, CRC-16/32; verified against external [`spacepackets-py`](https://github.com/us-irs/spacepackets-py) (`Stage 9`) | Mission-specific SLE ground station TCP/IP socket daemon |
 | **2. Closed-Loop ARQ (`FARM-1`, `FOP-1`, `PLCW`)** | **100% Built & Verified** | 3x TMR `FARM-1`, Two-Phase SDLS commit/rollback, Type-BC unlock exemption, Ground `FOP-1` Go-Back-$N$ replay (`Stage 10 MATRIX-4A/4B` & `Stage 11`) | Unbounded formal property proof via SymbiYosys / JasperGold |
@@ -16,4 +16,4 @@
 | **5. Inline Space Security (`SDLS` CCSDS 355.0-B-2)** | **100% Built & Verified** | Synthesizable NIST FIPS-197 `AES-128-CTR` + NIST SP 800-38D `AES-128-GCM` (4-bit/clk $GF(2^{128})$ `GHASH` 128-bit tag + 16B lookahead stripper), Hsiao $(39,32)$ SECDED 64-SA RAM, anti-replay window (`Stage 9 EXT-REF-4/7`, `Stage 10 MATRIX-4A/4B`) | Optional `AES-256-GCM` 14-round key schedule & `HMAC-SHA-256` |
 | **6. Baseband RF PHY & T2B/T4B PN Ranging** | **100% Built & Verified** | 17-tap 4-SPS SRRC Tx/Rx FIR, Closed-Loop 4-SPS Gardner STR across all 48 `(mod x tau x CFO)` cases, FLL-Assisted 2nd-order PI Costas loop ($\pm 640$ CFO pull-in), all 4 turnaround ratios ($240/221, 880/749, 3344/749, 3360/749$), T2B/T4B PN ranging (`Stage 10 MATRIX-1A..1E`, `Stage 11`) | High-order `8PSK`/`16APSK` payload modulator ([CCSDS 131.2-B-1](https://ccsds.org/Pubs/131x2b1.pdf)) |
 | **7. SoC Bus, Top-to-Top RF Link & Flight Software HAL** | **100% Built & Verified** | 3x TMR `AXI4-Lite` CSR, 48-bit CUC `OBT`, `AXI4-Stream` packet ports, Stage 11 Top-to-Top RF Link Testbench (`tb_stage11_top_to_top_rf_link.sv`), and zero-dependency C11 HAL SDK (`sw/ccsds_ttc_hal.h/.c`) | Autonomous `AXI4`/`AHB` Scatter-Gather DMA master |
-| **8. Kintex UltraScale (`xcku040-ffva1156-2-e`) STA & Area Sign-Off** | **100% Verified (`v2.29.0`)** | **`17,064 LUTs` (`7.04%` of `XCKU040`), `12,499 FFs` (`2.58%`), `0 BRAM`, `0 DSP48E2`**; True $F_{\max}$: **`clk_sys = 115.93 MHz` (`+15.93%`, 8 levels)**, **`clk_adc_iq = 141.48 MHz` (`+17.90%`, 8 levels)**, **`clk_tx_sym = 184.98 MHz` (`+269.96%`, 5 levels)**, **`clk_tc_safe = 104.18 MHz` (`+551.13%`, 11 levels)** | Foundry-specific rad-hard `techmap` cell wrappers (RTG4 / DARE / RadSafe) |
+| **8. Kintex UltraScale (`xcku040-ffva1156-2-e`) STA & Area Sign-Off** | **100% Verified (`v2.39.0`)** | **`17,064 LUTs` (`7.04%` of `XCKU040`), `12,499 FFs` (`2.58%`), `0 BRAM`, `0 DSP48E2`**; True $F_{\max}$: **`clk_sys = 115.93 MHz` (`+15.93%`, 8 levels)**, **`clk_adc_iq = 141.48 MHz` (`+17.90%`, 8 levels)**, **`clk_tx_sym = 184.98 MHz` (`+269.96%`, 5 levels)**, **`clk_tc_safe = 104.18 MHz` (`+551.13%`, 11 levels)** | Foundry-specific rad-hard `techmap` cell wrappers (RTG4 / DARE / RadSafe) |

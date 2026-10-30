@@ -9,7 +9,7 @@ fi
 
 git add .
 if [ -n "$(git status --porcelain)" ]; then
-  git commit -m "feat(ccsds-ttc-ip): Stage 8 v2.14 4-Pillar CCSDS Flight & EGSE RTL IP Core"
+  git commit -m "Release v2.39.0: Full 5,760-Config / 34,560-Trial Stage 11 Progressive RF Matrix & Stages 0-12 Verified CCSDS Flight/EGSE TT&C IP Core"
 fi
 
 if [ -n "$REMOTE_URL" ]; then
