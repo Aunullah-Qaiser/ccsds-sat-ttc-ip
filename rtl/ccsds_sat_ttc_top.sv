@@ -280,8 +280,8 @@ module ccsds_sat_ttc_top
   logic        tx_fifo_secded_double;
   logic        tx_phy_fifo_secded_single;
   logic        tx_phy_fifo_secded_double;
-  logic        rx_phy_fifo_ovf_unused;
-  logic        tx_phy_fifo_ovf_unused;
+  logic        rx_phy_fifo_ovf_pulse;
+  logic        tx_phy_fifo_ovf_pulse;
   logic        ul_fecf_crc_err_pulse;
   logic        farm_tmr_seu_pulse;
   logic        hcpd_tmr_seu_pulse;
@@ -417,8 +417,8 @@ module ccsds_sat_ttc_top
     bch_double_err_pulse,
     bch_single_err_pulse
   };
-  assign evt_tx_pulse_vec  = {tx_fifo_secded_double | tx_phy_fifo_ovf_unused, tx_fifo_secded_single};
-  assign evt_adc_pulse_vec = {tx_phy_fifo_secded_double | rx_phy_fifo_ovf_unused, tx_phy_fifo_secded_single};
+  assign evt_tx_pulse_vec  = {tx_fifo_secded_double | tx_phy_fifo_ovf_pulse, tx_fifo_secded_single};
+  assign evt_adc_pulse_vec = {tx_phy_fifo_secded_double | rx_phy_fifo_ovf_pulse, tx_phy_fifo_secded_single};
 
   always_ff @(posedge clk_tc_safe or negedge rst_tc_n) begin
     if (!rst_tc_n) begin
@@ -687,7 +687,7 @@ module ccsds_sat_ttc_top
     .speculative_count        (rx_phy_fifo_spec_cnt_unused),
     .ecc_single_err_corrected (rx_phy_fifo_secded_single),
     .ecc_double_err_uncorr    (rx_phy_fifo_secded_double),
-    .rollback_overflow_err    (rx_phy_fifo_ovf_unused)
+    .rollback_overflow_err    (rx_phy_fifo_ovf_pulse)
   );
 
   logic signed [3:0] asm_cb_llr;
@@ -1462,8 +1462,12 @@ module ccsds_sat_ttc_top
   logic         tx_hwm_ovf_unused;
   logic         tx_hwm_cad_tvalid;
   logic         tx_phy_fifo_wr_ready;
+  logic         tx_hwm_rd_ready;
 
-  assign m_axis_dl_cad_tvalid = tx_hwm_cad_tvalid && tx_phy_fifo_wr_ready;
+  // External parallel CADU monitor tap (unconditionally reflects CADU byte availability in clk_tx_sym;
+  // internal RF path u_tx_hwm_cdc_fifo -> u_tx_phy_cdc_fifo is decoupled so tying m_axis_dl_cad_tready=0 cannot stall RF TX)
+  assign m_axis_dl_cad_tvalid = tx_hwm_cad_tvalid;
+  assign tx_hwm_rd_ready      = tx_phy_fifo_wr_ready && (m_axis_dl_cad_tready || 1'b1);
 
   ccsds_cdc_fifo_ecc #(
     .DATA_WIDTH    (8),
@@ -1491,7 +1495,7 @@ module ccsds_sat_ttc_top
     .m_axis_tdata             (m_axis_dl_cad_tdata),
     .m_axis_tkeep             (tx_hwm_tkeep_unused),
     .m_axis_tvalid            (tx_hwm_cad_tvalid),
-    .m_axis_tready            (m_axis_dl_cad_tready && tx_phy_fifo_wr_ready),
+    .m_axis_tready            (tx_hwm_rd_ready),
     .m_axis_tlast             (m_axis_dl_cad_tlast),
     .m_axis_tuser             (tx_hwm_tuser_unused),
     .committed_count          (tx_hwm_comm_cnt_unused),
@@ -1569,7 +1573,7 @@ module ccsds_sat_ttc_top
     .seu_inject_bit           (6'd0),
     .s_axis_tdata             (m_axis_dl_cad_tdata),
     .s_axis_tkeep             (1'b1),
-    .s_axis_tvalid            (m_axis_dl_cad_tvalid && m_axis_dl_cad_tready),
+    .s_axis_tvalid            (tx_hwm_cad_tvalid),
     .s_axis_tready            (tx_phy_fifo_wr_ready),
     .s_axis_tlast             (m_axis_dl_cad_tlast),
     .s_axis_tuser             ('0),
@@ -1583,7 +1587,7 @@ module ccsds_sat_ttc_top
     .speculative_count        (tx_phy_fifo_spec_cnt_unused),
     .ecc_single_err_corrected (tx_phy_fifo_secded_single),
     .ecc_double_err_uncorr    (tx_phy_fifo_secded_double),
-    .rollback_overflow_err    (tx_phy_fifo_ovf_unused)
+    .rollback_overflow_err    (tx_phy_fifo_ovf_pulse)
   );
 
   // 1-Stage AXI4-Stream Pipeline Slice in clk_adc_iq feeding u_phy_modem
@@ -2154,11 +2158,11 @@ module ccsds_sat_ttc_top
         egse_dl_tm_pn_b   = b_val;
 
         if (ROLE_MODE == 1) begin
-          egse_rs_in_tvalid = egse_dl_sync_q && egse_dl_fifo_tvalid && egse_rs_in_ready;
+          egse_rs_in_tvalid = egse_dl_sync_q && egse_dl_fifo_tvalid;
           egse_rs_in_tdata  = csr_tm_rand_en ? (egse_dl_fifo_tdata ^ egse_dl_tm_pn_b) : egse_dl_fifo_tdata;
           egse_rs_in_tlast  = (egse_dl_rem_cnt_q == 16'd1);
         end else begin
-          egse_rs_in_tvalid = tm_scram_tvalid && tm_scram_tready;
+          egse_rs_in_tvalid = tm_scram_tvalid;
           egse_rs_in_tdata  = tm_scram_tdata;
           egse_rs_in_tlast  = tm_scram_tlast;
         end

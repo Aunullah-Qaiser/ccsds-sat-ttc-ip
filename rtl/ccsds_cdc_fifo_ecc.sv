@@ -60,7 +60,9 @@ module ccsds_cdc_fifo_ecc
   output logic                     m_axis_tlast,
   output ccsds_tuser_t             m_axis_tuser,
 
-  // Radiation SEU Fault-Injection & EDAC Telemetry Port (Read Domain: clk_rd)
+  // Radiation SEU Fault-Injection & EDAC Telemetry Ports
+  // - Read Domain (clk_rd) : seu_inject_*, ecc_single_err_corrected, ecc_double_err_uncorr, committed_count
+  // - Write Domain (clk_wr): rollback_overflow_err, speculative_count
   input  logic                     seu_inject_en,
   input  logic [ADDR_W-1:0]        seu_inject_addr,
   input  logic [5:0]               seu_inject_bit,

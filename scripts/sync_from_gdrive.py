@@ -142,7 +142,12 @@ def main() -> None:
         elif isinstance(content_val, dict):
             enc = content_val.get("encoding", "utf-8")
             c_str = content_val.get("content", "")
-            raw_bytes = base64.b64decode(c_str) if enc == "base64" else c_str.encode("utf-8")
+            if enc == "base64":
+                raw_bytes = base64.b64decode(c_str)
+            elif enc == "zlib_base64":
+                raw_bytes = zlib.decompress(base64.b64decode(c_str))
+            else:
+                raw_bytes = c_str.encode("utf-8")
         else:
             raw_bytes = content_val.encode("utf-8")
         target_path = repo_root / rel_path
