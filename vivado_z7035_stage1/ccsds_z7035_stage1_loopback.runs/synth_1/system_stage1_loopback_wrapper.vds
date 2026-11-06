@@ -1,0 +1,388 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite ENTERPRISE license has been detected. Your current license is active and will expire on 05-jan-2027.
+#-----------------------------------------------------------
+# Vivado v2026.1.1 (64-bit)
+# SW Build 6605303 on Fri Sep 04 12:46:29 BST 2026
+# IP Build 6603865 on Fri Sep 04 05:05:05 MDT 2026
+# SharedData Build 6605217 on Fri Sep 04 02:50:14 MDT 2026
+# Start of session at: Fri Nov  6 10:35:54 2026
+# Process ID         : 11676
+# Current directory  : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1
+# Command line       : vivado.exe -log system_stage1_loopback_wrapper.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source system_stage1_loopback_wrapper.tcl
+# Log file           : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/system_stage1_loopback_wrapper.vds
+# Journal file       : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1\vivado.jou
+# Running On         : Sagittarius
+# Platform           : Windows 11
+# Operating System   : 26300
+# Processor Detail   : AMD Ryzen 5 7640HS w/ Radeon 760M Graphics     
+# CPU Frequency      : 4292 MHz
+# CPU Physical cores : 6
+# CPU Logical cores  : 12
+# Host memory        : 16309 MB
+# Swap memory        : 16106 MB
+# Total Virtual      : 32416 MB
+# Available Virtual  : 18058 MB
+#-----------------------------------------------------------
+source system_stage1_loopback_wrapper.tcl -notrace
+create_project: Time (s): cpu = 00:00:12 ; elapsed = 00:00:09 . Memory (MB): peak = 644.395 ; gain = 283.113
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'C:/AMDDesignTools/2026.1.1/Vivado/data/ip'.
+Command: synth_design -top system_stage1_loopback_wrapper -part xc7z035ifbg676-2L
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z035i'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z035i'
+INFO: [Device 21-403] Loading part xc7z035ifbg676-2L
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 5704
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 1537.969 ; gain = 576.605
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_wrapper' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/hdl/system_stage1_loopback_wrapper.v:13]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:834]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_axi_gpio_straps_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_gpio_straps_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_axi_gpio_straps_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_gpio_straps_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_axi_ic_gp0_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1566]
+INFO: [Synth 8-6157] synthesizing module 'm00_couplers_imp_13VHS0A' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:13]
+INFO: [Synth 8-6155] done synthesizing module 'm00_couplers_imp_13VHS0A' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:13]
+INFO: [Synth 8-6157] synthesizing module 'm01_couplers_imp_Z2SR6O' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:128]
+INFO: [Synth 8-6155] done synthesizing module 'm01_couplers_imp_Z2SR6O' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:128]
+INFO: [Synth 8-6157] synthesizing module 'm02_couplers_imp_1EWFHGF' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:243]
+INFO: [Synth 8-6155] done synthesizing module 'm02_couplers_imp_1EWFHGF' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:243]
+INFO: [Synth 8-6157] synthesizing module 'm03_couplers_imp_JLT7ED' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:358]
+INFO: [Synth 8-6155] done synthesizing module 'm03_couplers_imp_JLT7ED' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:358]
+INFO: [Synth 8-6157] synthesizing module 'm04_couplers_imp_1YJHGKG' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:473]
+INFO: [Synth 8-6155] done synthesizing module 'm04_couplers_imp_1YJHGKG' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:473]
+INFO: [Synth 8-6157] synthesizing module 's00_couplers_imp_13IPBE4' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:588]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 's00_couplers_imp_13IPBE4' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:588]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_axi_ic_gp0_imp_xbar_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_ic_gp0_imp_xbar_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_axi_ic_gp0_imp_xbar_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_axi_ic_gp0_imp_xbar_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axi_awprot' of module 'system_stage1_loopback_axi_ic_gp0_imp_xbar_0' is unconnected for instance 'xbar' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:2341]
+WARNING: [Synth 8-7071] port 'm_axi_arprot' of module 'system_stage1_loopback_axi_ic_gp0_imp_xbar_0' is unconnected for instance 'xbar' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:2341]
+WARNING: [Synth 8-7023] instance 'xbar' of module 'system_stage1_loopback_axi_ic_gp0_imp_xbar_0' has 40 connections declared, but only 38 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:2341]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_axi_ic_gp0_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1566]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_valid' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_data' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_last' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'hcpd_obc_reset_pulse' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'hcpd_safe_mode_force' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'hcpd_rf_chain_select' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'pn_ranging_locked_out' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'fault_irq_out' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7071] port 'edac_scrub_req_out' of module 'system_stage1_loopback_ccsds_gnd_egse_0' is unconnected for instance 'ccsds_gnd_egse' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+WARNING: [Synth 8-7023] instance 'ccsds_gnd_egse' of module 'system_stage1_loopback_ccsds_gnd_egse_0' has 58 connections declared, but only 49 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1256]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axis_tkeep' of module 'system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0' is unconnected for instance 'ccsds_gnd_egse_dw_32to8' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1306]
+WARNING: [Synth 8-7023] instance 'ccsds_gnd_egse_dw_32to8' of module 'system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0' has 12 connections declared, but only 11 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1306]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axis_tuser' of module 'system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0' is unconnected for instance 'ccsds_gnd_egse_dw_8to32' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1318]
+WARNING: [Synth 8-7023] instance 'ccsds_gnd_egse_dw_8to32' of module 'system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0' has 13 connections declared, but only 12 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1318]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'interrupt' of module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' is unconnected for instance 'ccsds_gnd_egse_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1331]
+WARNING: [Synth 8-7071] port 'mm2s_prmry_reset_out_n' of module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' is unconnected for instance 'ccsds_gnd_egse_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1331]
+WARNING: [Synth 8-7071] port 's2mm_prmry_reset_out_n' of module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' is unconnected for instance 'ccsds_gnd_egse_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1331]
+WARNING: [Synth 8-7023] instance 'ccsds_gnd_egse_pkt_fifo' of module 'system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0' has 32 connections declared, but only 29 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1331]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_sc_flight_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_sc_flight_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_valid' of module 'system_stage1_loopback_ccsds_sc_flight_0' is unconnected for instance 'ccsds_sc_flight' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1361]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_data' of module 'system_stage1_loopback_ccsds_sc_flight_0' is unconnected for instance 'ccsds_sc_flight' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1361]
+WARNING: [Synth 8-7071] port 'dl_cadu_mon_last' of module 'system_stage1_loopback_ccsds_sc_flight_0' is unconnected for instance 'ccsds_sc_flight' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1361]
+WARNING: [Synth 8-7023] instance 'ccsds_sc_flight' of module 'system_stage1_loopback_ccsds_sc_flight_0' has 58 connections declared, but only 55 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1361]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_sc_flight_dw_32to8_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_sc_flight_dw_32to8_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axis_tkeep' of module 'system_stage1_loopback_ccsds_sc_flight_dw_32to8_0' is unconnected for instance 'ccsds_sc_flight_dw_32to8' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1417]
+WARNING: [Synth 8-7023] instance 'ccsds_sc_flight_dw_32to8' of module 'system_stage1_loopback_ccsds_sc_flight_dw_32to8_0' has 12 connections declared, but only 11 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1417]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_sc_flight_dw_8to32_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_sc_flight_dw_8to32_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'm_axis_tuser' of module 'system_stage1_loopback_ccsds_sc_flight_dw_8to32_0' is unconnected for instance 'ccsds_sc_flight_dw_8to32' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1429]
+WARNING: [Synth 8-7023] instance 'ccsds_sc_flight_dw_8to32' of module 'system_stage1_loopback_ccsds_sc_flight_dw_8to32_0' has 13 connections declared, but only 12 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1429]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'interrupt' of module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' is unconnected for instance 'ccsds_sc_flight_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1442]
+WARNING: [Synth 8-7071] port 'mm2s_prmry_reset_out_n' of module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' is unconnected for instance 'ccsds_sc_flight_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1442]
+WARNING: [Synth 8-7071] port 's2mm_prmry_reset_out_n' of module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' is unconnected for instance 'ccsds_sc_flight_pkt_fifo' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1442]
+WARNING: [Synth 8-7023] instance 'ccsds_sc_flight_pkt_fifo' of module 'system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0' has 32 connections declared, but only 29 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1442]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_clk_wiz_ccsds_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_clk_wiz_ccsds_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_clk_wiz_ccsds_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_clk_wiz_ccsds_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_processing_system7_0_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_processing_system7_0_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_processing_system7_0_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_processing_system7_0_0_stub.v:6]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_rst_clk_sys_100M_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_rst_clk_sys_100M_0_stub.v:6]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_rst_clk_sys_100M_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/.Xil/Vivado-11676-Sagittarius/realtime/system_stage1_loopback_rst_clk_sys_100M_0_stub.v:6]
+WARNING: [Synth 8-7071] port 'mb_reset' of module 'system_stage1_loopback_rst_clk_sys_100M_0' is unconnected for instance 'rst_clk_sys_100M' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1545]
+WARNING: [Synth 8-7071] port 'bus_struct_reset' of module 'system_stage1_loopback_rst_clk_sys_100M_0' is unconnected for instance 'rst_clk_sys_100M' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1545]
+WARNING: [Synth 8-7071] port 'peripheral_reset' of module 'system_stage1_loopback_rst_clk_sys_100M_0' is unconnected for instance 'rst_clk_sys_100M' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1545]
+WARNING: [Synth 8-7023] instance 'rst_clk_sys_100M' of module 'system_stage1_loopback_rst_clk_sys_100M_0' has 10 connections declared, but only 7 given [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:1545]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/synth/system_stage1_loopback.v:834]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_wrapper' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/hdl/system_stage1_loopback_wrapper.v:13]
+WARNING: [Synth 8-7129] Port M_ACLK in module s00_couplers_imp_13IPBE4 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module s00_couplers_imp_13IPBE4 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ACLK in module m04_couplers_imp_1YJHGKG is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module m04_couplers_imp_1YJHGKG is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ACLK in module m04_couplers_imp_1YJHGKG is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ARESETN in module m04_couplers_imp_1YJHGKG is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ACLK in module m03_couplers_imp_JLT7ED is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module m03_couplers_imp_JLT7ED is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ACLK in module m03_couplers_imp_JLT7ED is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ARESETN in module m03_couplers_imp_JLT7ED is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ACLK in module m02_couplers_imp_1EWFHGF is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module m02_couplers_imp_1EWFHGF is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ACLK in module m02_couplers_imp_1EWFHGF is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ARESETN in module m02_couplers_imp_1EWFHGF is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ACLK in module m01_couplers_imp_Z2SR6O is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module m01_couplers_imp_Z2SR6O is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ACLK in module m01_couplers_imp_Z2SR6O is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ARESETN in module m01_couplers_imp_Z2SR6O is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ACLK in module m00_couplers_imp_13VHS0A is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M_ARESETN in module m00_couplers_imp_13VHS0A is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ACLK in module m00_couplers_imp_13VHS0A is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S_ARESETN in module m00_couplers_imp_13VHS0A is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.009 . Memory (MB): peak = 1670.590 ; gain = 0.000
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_processing_system7_0_0/system_stage1_loopback_processing_system7_0_0/system_stage1_loopback_processing_system7_0_0_in_context.xdc] for cell 'system_stage1_loopback_i/processing_system7_0'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_processing_system7_0_0/system_stage1_loopback_processing_system7_0_0/system_stage1_loopback_processing_system7_0_0_in_context.xdc] for cell 'system_stage1_loopback_i/processing_system7_0'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0_in_context.xdc] for cell 'system_stage1_loopback_i/clk_wiz_ccsds'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0_in_context.xdc] for cell 'system_stage1_loopback_i/clk_wiz_ccsds'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_rst_clk_sys_100M_0/system_stage1_loopback_rst_clk_sys_100M_0/system_stage1_loopback_rst_clk_sys_100M_0_in_context.xdc] for cell 'system_stage1_loopback_i/rst_clk_sys_100M'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_rst_clk_sys_100M_0/system_stage1_loopback_rst_clk_sys_100M_0/system_stage1_loopback_rst_clk_sys_100M_0_in_context.xdc] for cell 'system_stage1_loopback_i/rst_clk_sys_100M'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_xbar_0/system_stage1_loopback_axi_ic_gp0_imp_xbar_0/system_stage1_loopback_axi_ic_gp0_imp_xbar_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_ic_gp0/xbar'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_xbar_0/system_stage1_loopback_axi_ic_gp0_imp_xbar_0/system_stage1_loopback_axi_ic_gp0_imp_xbar_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_ic_gp0/xbar'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_ic_gp0/s00_couplers/auto_pc'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_ic_gp0/s00_couplers/auto_pc'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_gpio_straps_0/system_stage1_loopback_axi_gpio_straps_0/system_stage1_loopback_axi_gpio_straps_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_gpio_straps'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_axi_gpio_straps_0/system_stage1_loopback_axi_gpio_straps_0/system_stage1_loopback_axi_gpio_straps_0_in_context.xdc] for cell 'system_stage1_loopback_i/axi_gpio_straps'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_0/system_stage1_loopback_ccsds_gnd_egse_0/system_stage1_loopback_ccsds_gnd_egse_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_0/system_stage1_loopback_ccsds_gnd_egse_0/system_stage1_loopback_ccsds_gnd_egse_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_pkt_fifo'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_pkt_fifo'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_dw_32to8'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_dw_32to8'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_dw_8to32'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_gnd_egse_dw_8to32'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_0/system_stage1_loopback_ccsds_sc_flight_0/system_stage1_loopback_ccsds_sc_flight_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_0/system_stage1_loopback_ccsds_sc_flight_0/system_stage1_loopback_ccsds_sc_flight_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_pkt_fifo'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_pkt_fifo'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_dw_32to8'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_dw_32to8'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_dw_8to32'
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0_in_context.xdc] for cell 'system_stage1_loopback_i/ccsds_sc_flight_dw_8to32'
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/constraints/adrv9361_z7035_bob_stage1.xdc]
+WARNING: [Constraints 18-402] set_false_path: 'system_stage1_loopback_i/axi_gpio_straps' is not a valid startpoint. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/constraints/adrv9361_z7035_bob_stage1.xdc:18]
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+CRITICAL WARNING: [Constraints 18-513] set_false_path: list of objects specified for '-from' option contains no valid startpoints. Please check to make sure at least one valid startpoint is specified. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/constraints/adrv9361_z7035_bob_stage1.xdc:18]
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/constraints/adrv9361_z7035_bob_stage1.xdc]
+Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/dont_touch.xdc]
+Finished Parsing XDC File [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/dont_touch.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1670.590 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.016 . Memory (MB): peak = 1670.590 ; gain = 0.000
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z035ifbg676-2L
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 1670.590 ; gain = 709.227
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 900 (col length:140)
+BRAMs: 1000 (col length: RAMB18 140 RAMB36 70)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7129] Port M00_ACLK in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M00_ARESETN in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M01_ACLK in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M01_ARESETN in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M02_ACLK in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M02_ARESETN in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M03_ACLK in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M03_ARESETN in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M04_ACLK in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port M04_ARESETN in module system_stage1_loopback_axi_ic_gp0_0 is either unconnected or has no load
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:21 ; elapsed = 00:00:22 . Memory (MB): peak = 1707.445 ; gain = 746.082
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 1876.113 ; gain = 914.750
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 1877.270 ; gain = 915.906
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 1887.715 ; gain = 926.352
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+--------------------------------------------------+----------+
+|      |BlackBox name                                     |Instances |
++------+--------------------------------------------------+----------+
+|1     |system_stage1_loopback_axi_gpio_straps_0          |         1|
+|2     |system_stage1_loopback_axi_ic_gp0_imp_xbar_0      |         1|
+|3     |system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0   |         1|
+|4     |system_stage1_loopback_ccsds_gnd_egse_0           |         1|
+|5     |system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0  |         1|
+|6     |system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0  |         1|
+|7     |system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0  |         1|
+|8     |system_stage1_loopback_ccsds_sc_flight_0          |         1|
+|9     |system_stage1_loopback_ccsds_sc_flight_dw_32to8_0 |         1|
+|10    |system_stage1_loopback_ccsds_sc_flight_dw_8to32_0 |         1|
+|11    |system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0 |         1|
+|12    |system_stage1_loopback_clk_wiz_ccsds_0            |         1|
+|13    |system_stage1_loopback_processing_system7_0_0     |         1|
+|14    |system_stage1_loopback_rst_clk_sys_100M_0         |         1|
++------+--------------------------------------------------+----------+
+
+Report Cell Usage: 
++------+------------------------------------------------+------+
+|      |Cell                                            |Count |
++------+------------------------------------------------+------+
+|1     |system_stage1_loopback_axi_gpio_straps          |     1|
+|2     |system_stage1_loopback_axi_ic_gp0_imp_auto_pc   |     1|
+|3     |system_stage1_loopback_axi_ic_gp0_imp_xbar      |     1|
+|4     |system_stage1_loopback_ccsds_gnd_egse           |     1|
+|5     |system_stage1_loopback_ccsds_gnd_egse_dw_32to8  |     1|
+|6     |system_stage1_loopback_ccsds_gnd_egse_dw_8to32  |     1|
+|7     |system_stage1_loopback_ccsds_gnd_egse_pkt_fifo  |     1|
+|8     |system_stage1_loopback_ccsds_sc_flight          |     1|
+|9     |system_stage1_loopback_ccsds_sc_flight_dw_32to8 |     1|
+|10    |system_stage1_loopback_ccsds_sc_flight_dw_8to32 |     1|
+|11    |system_stage1_loopback_ccsds_sc_flight_pkt_fifo |     1|
+|12    |system_stage1_loopback_clk_wiz_ccsds            |     1|
+|13    |system_stage1_loopback_processing_system7_0     |     1|
+|14    |system_stage1_loopback_rst_clk_sys_100M         |     1|
++------+------------------------------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:30 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 10 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:20 ; elapsed = 00:00:28 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+Synthesis Optimization Complete : Time (s): cpu = 00:00:31 ; elapsed = 00:00:32 . Memory (MB): peak = 2162.059 ; gain = 1200.695
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.006 . Memory (MB): peak = 2162.059 ; gain = 0.000
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2180.551 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 3959e4b
+INFO: [Common 17-83] Releasing license: Synthesis
+62 Infos, 70 Warnings, 1 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:37 ; elapsed = 00:00:42 . Memory (MB): peak = 2184.527 ; gain = 1525.312
+INFO: [runtcl-6] Synthesis results are not added to the cache due to CRITICAL_WARNING
+INFO: [Common 17-1381] The checkpoint 'c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/synth_1/system_stage1_loopback_wrapper.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file system_stage1_loopback_wrapper_utilization_synth.rpt -pb system_stage1_loopback_wrapper_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Fri Nov  6 10:36:52 2026...

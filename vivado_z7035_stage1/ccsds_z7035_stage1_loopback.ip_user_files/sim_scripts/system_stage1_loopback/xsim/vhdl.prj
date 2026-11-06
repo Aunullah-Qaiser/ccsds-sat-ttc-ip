@@ -1,0 +1,8 @@
+vhdl xil_defaultlib  \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_rst_clk_sys_100M_0/sim/system_stage1_loopback_rst_clk_sys_100M_0.vhd" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_axi_gpio_straps_0/sim/system_stage1_loopback_axi_gpio_straps_0.vhd" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0/sim/system_stage1_loopback_ccsds_gnd_egse_pkt_fifo_0.vhd" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0/sim/system_stage1_loopback_ccsds_sc_flight_pkt_fifo_0.vhd" \
+
+# Do not sort compile order
+nosort

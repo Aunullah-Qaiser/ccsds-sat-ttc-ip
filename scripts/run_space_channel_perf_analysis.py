@@ -3,7 +3,7 @@
 ===============================================================================
 File Name   : run_space_channel_perf_analysis.py
 Project     : CCSDS-SAT-TTC-IP (Spacecraft Flight TT&C & Hardware EGSE IP)
-Version     : v2.31.0 (Stage 12 Multi-Configuration Space Flight Qualification)
+Version     : v2.40.3 (Stage 12 Multi-Configuration Space Flight Qualification)
 Description : Comprehensive Multi-Configuration Space Flight Channel & Top-to-Top
               (ROLE_MODE=1 Ground EGSE <-> Space Channel <-> ROLE_MODE=0
               Spacecraft Flight Transceiver) Performance Analysis Engine.
@@ -397,7 +397,7 @@ def generate_plots(
     t_s = np.array(ts["t_sec"])
     fig, axes = plt.subplots(2, 2, figsize=(14, 9.5), dpi=180)
     fig.suptitle(
-        "CCSDS-SAT-TTC-IP (v2.31.0) — 550 km LEO Flight Pass Loopback Performance (ROLE_MODE=1 EGSE <-> ROLE_MODE=0 Spacecraft)",
+        "CCSDS-SAT-TTC-IP (v2.40.3) — 550 km LEO Flight Pass Loopback Performance (ROLE_MODE=1 EGSE <-> ROLE_MODE=0 Spacecraft)",
         fontsize=12.5,
         fontweight="bold",
     )
@@ -454,7 +454,7 @@ def generate_plots(
     ebn0 = np.array([r["ebn0_db"] for r in wf])
     fig2, axes2 = plt.subplots(2, 2, figsize=(14, 9.5), dpi=180)
     fig2.suptitle(
-        "CCSDS-SAT-TTC-IP (v2.31.0) — Multi-Configuration PHY, FEC, Protocol & PN Ranging Performance Curves",
+        "CCSDS-SAT-TTC-IP (v2.40.3) — Multi-Configuration PHY, FEC, Protocol & PN Ranging Performance Curves",
         fontsize=12.5,
         fontweight="bold",
     )
@@ -532,7 +532,7 @@ def main() -> None:
 
     full_report = {
         "project": "CCSDS-SAT-TTC-IP",
-        "version": "v2.31.0",
+        "version": "v2.40.3",
         "stage": "Stage 12 Multi-Configuration Space Flight Channel & Top-to-Top Loopback Analysis",
         "fpga_target": "Xilinx Zynq-7000 XC7Z010-1CLG225I (Defense-Grade -1L)",
         "verified_true_fmax_mhz": {

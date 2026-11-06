@@ -526,16 +526,13 @@ Before committing any AXI4-Lite register writes to `0x04..0x0C`, `ccsds_ttc_hal_
 | Rule # | HAL Status Code | Gated Parameter Combination | Governing CCSDS Standard & Rationale |
 | :---: | :--- | :--- | :--- |
 | **1** | `CCSDS_HAL_ERR_MOD_LINE_INCOMPAT` (`-10`) | `MOD_QPSK` or `MOD_OQPSK` paired with `LINE_BIPHI_L` | [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf): Manchester (`Bi-Phi-L`) split-phase coding is valid only for 1-bit/symbol BPSK or residual-carrier PCM/PSK/PM. Only **10 of the 12** `(Modulation x Line-Code)` combinations are flight-valid. |
-| **2** | `CCSDS_HAL_ERR_SRRC_BIPHI_INCOMPAT` (`-11`) | `srrc_4sps_en = true` paired with `LINE_BIPHI_L` | [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf): 4-SPS Square-Root Raised-Cosine ($lpha=0.35$) baseband pulse shaping applies only to `NRZ-L` and `NRZ-M` waveforms. |
+| **2** | `CCSDS_HAL_ERR_SRRC_BIPHI_INCOMPAT` (`-11`) | `srrc_4sps_en = true` paired with `LINE_BIPHI_L` | [CCSDS 401.0-B-32](https://ccsds.org/Pubs/401x0b32.pdf): 4-SPS Square-Root Raised-Cosine ($\alpha = 0.35$) baseband pulse shaping applies only to `NRZ-L` and `NRZ-M` waveforms. |
 | **3** | `CCSDS_HAL_ERR_GARDNER_REQUIRES_4SPS` (`-12`) | `gardner_ted_en = true` when `srrc_4sps_en = false` | Closed-loop 4-SPS Gardner / Nyquist Zero-ISI symbol timing recovery requires 4-SPS SRRC matched filter samples (`mf_i_q`/`mf_q_q`). |
 | **4** | `CCSDS_HAL_ERR_PROTO_FEC_INCOMPAT` (`-13`) | • `PROTO_TC` with `RS(255,223)` / `Turbo` / `AR4JA`<br>• `PROTO_TM` or `PROTO_AOS` with `BCH(63,56)` / `LDPC_UL`<br>• `PROTO_PROX1` with `BCH` / `RS` / `Turbo` | [CCSDS 231.0-B-4](https://ccsds.org/Pubs/231x0b4.pdf) & [131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf): Uplink telecommand uses `BCH(63,56)` or `Short-LDPC(128,64)/(512,256)`; Downlink TM/AOS uses `RS(255,223)`, `Conv(K=7)`, or `Turbo`; `USLP` (`732.1-B-3`) is unified bidirectional. |
 | **5** | `CCSDS_HAL_ERR_CRC32_PROTO_INCOMPAT` (`-14`) | • `fecf_crc32 = true` on `PROTO_TM`, `PROTO_AOS`, or `PROTO_TC`<br>• `fecf_crc32 = false` on `PROTO_PROX1` (`fecf_en=1`) | [CCSDS 211.0-B-6](https://ccsds.org/Pubs/211x0b6.pdf): 32-bit FECF (`0x00A00805`) is mandatory on Proximity-1 and optional on USLP; TM, AOS, and TC strictly mandate 16-bit CRC-16-CCITT (`0x1021`). |
 | **6** | `CCSDS_HAL_ERR_AOS_FHEC_INCOMPAT` (`-15`) | `aos_fhec_en = true` when `proto_mode` is not `PROTO_AOS` or `PROTO_USLP` | [CCSDS 732.0-B-4](https://ccsds.org/Pubs/732x0b4.pdf): 16-bit $GF(2^4)$ RS(10,6) Frame Header Error Control (FHEC) exists only in the AOS header. |
-| **7** | `CCSDS_HAL_ERR_RS_PARAM_RANGE` (`-16`) | `rs_interleave_i` $
-otin \{1,2,3,4,5,8\}$ or `rs_virt_fill_q > 215` | [CCSDS 131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf): Dual-basis RS(255,223) supports interleaving depths $I \in \{1,2,3,4,5,8\}$ and requires at least 8 information octets ($223 - Q \ge 8$). |
-| **8** | `CCSDS_HAL_ERR_FRAME_LEN_RANGE` (`-17`) | `tfdf_byte_len` $
-otin [1..1024]$ or `window_half_w` $
-otin [1..128]$ | Hardware buffer & COP-1 sliding-window bounds check. |
+| **7** | `CCSDS_HAL_ERR_RS_PARAM_RANGE` (`-16`) | `rs_interleave_i` $\notin \{1,2,3,4,5,8\}$ or `rs_virt_fill_q > 215` | [CCSDS 131.0-B-5](https://ccsds.org/Pubs/131x0b5.pdf): Dual-basis RS(255,223) supports interleaving depths $I \in \{1,2,3,4,5,8\}$ and requires at least 8 information octets ($223 - Q \ge 8$). |
+| **8** | `CCSDS_HAL_ERR_FRAME_LEN_RANGE` (`-17`) | `tfdf_byte_len` $\notin [1..1024]$ or `window_half_w` $\notin [1..128]$ | Hardware buffer & COP-1 sliding-window bounds check. |
 
 ### 6.4 Stage 11 12-Thread Parallel 480-Configuration Valid RF Matrix (`scripts/run_stage11_matrix_parallel.py`)
 
@@ -543,10 +540,7 @@ All **480 valid end-to-end chip-to-chip RF configurations** across `u_ground_egs
 
 * **10 Valid `(Modulation x Line-Code)` Waveforms**: `BPSK+{NRZ-L, NRZ-M, Bi-Phi-L}`, `QPSK+{NRZ-L, NRZ-M}`, `OQPSK+{NRZ-L, NRZ-M}`, and `PCM/PM+{NRZ-L, NRZ-M, Bi-Phi-L}` (`QPSK/OQPSK + Bi-Phi-L` excluded & firmware-gated).
 * **4 Coherent Turnaround Bands**: **S-Band ($240/221$)**, **X-Band ($880/749$)**, **Ka-Band Deep-Space Cat-B ($3344/749$)**, and **Ka-Band Near-Earth Cat-A ($3360/749$)**.
-* **3 Variable Uplink Telecommand Packet/Frame Sizes**: **Short (`8B` Space Packet $
-ightarrow$ `3` BCH codeblocks, `320` RF I/Q samples)**, **Medium (`14B` Space Packet $
-ightarrow$ `4` BCH codeblocks, `384` RF I/Q samples)**, and **Long (`28B` Space Packet $
-ightarrow$ `6` BCH codeblocks, `512` RF I/Q samples)**.
+* **3 Variable Uplink Telecommand Packet/Frame Sizes**: **Short (`8B` Space Packet $\rightarrow$ `3` BCH codeblocks, `320` RF I/Q samples)**, **Medium (`14B` Space Packet $\rightarrow$ `4` BCH codeblocks, `384` RF I/Q samples)**, **Long (`28B` Space Packet $\rightarrow$ `6` BCH codeblocks, `512` RF I/Q samples)**.
 * **4 Variable Downlink Telemetry Frame/OBT/Randomizer Modes**: **Short (`10B` Packet, `58B` CADU, `Q=201`, Rand OFF)**, **Medium (`16B` Packet, `64B` CADU, `Q=195`, Rand ON)**, **Medium + 48-Bit CUC OBT Secondary Header (`16B` Packet + `8B` OBT, `72B` CADU, `Q=187`, Rand ON)**, and **Long (`32B` Packet, `80B` CADU, `Q=179`, Rand ON)**.
 
 ```powershell

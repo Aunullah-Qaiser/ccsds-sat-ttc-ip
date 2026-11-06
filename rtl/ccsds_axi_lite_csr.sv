@@ -202,7 +202,7 @@ module ccsds_axi_lite_csr
     fault_irq_out          = voted_cop1_tfdf[24] && ((cnt_uncorr_err_q != 16'd0) || (cnt_sdls_mac_err_q != 16'd0));
   end
 
-  localparam logic [31:0] RESET_SCID_PROTO = 32'h0131_5155; // SCID=0x155,FEC=RS,OCF=1,FECF=1,TC_SEG=1
+  localparam logic [31:0] RESET_SCID_PROTO = 32'h0130_0155; // SCID=0x155,FEC=0(Uncoded),PROTO=0(TM),OCF=1,FECF=1,TC_SEG=1
   localparam logic [31:0] RESET_USLP_RS    = 32'h0001_4255; // USLP_SCID=0x4255, RS_I=1, RS_Q=0, TM_RAND=0
   localparam logic [31:0] RESET_COP1_TFDF  = 32'h010D_F010; // WIN_W=16, TFDF_LEN=223, IRQ_EN=1
 

@@ -1,0 +1,28 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite ENTERPRISE license has been detected. Your current license is active and will expire on 05-jan-2027.
+#-----------------------------------------------------------
+# Vivado v2026.1.1 (64-bit)
+# SW Build 6605303 on Fri Sep 04 12:46:29 BST 2026
+# IP Build 6603865 on Fri Sep 04 05:05:05 MDT 2026
+# SharedData Build 6605217 on Fri Sep 04 02:50:14 MDT 2026
+# Start of session at: Fri Nov  6 10:18:19 2026
+# Process ID         : 13684
+# Current directory  : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0_synth_1
+# Command line       : vivado.exe -log system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0.tcl
+# Log file           : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0_synth_1/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0.vds
+# Journal file       : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0_synth_1\vivado.jou
+# Running On         : Sagittarius
+# Platform           : Windows 11
+# Operating System   : 26300
+# Processor Detail   : AMD Ryzen 5 7640HS w/ Radeon 760M Graphics     
+# CPU Frequency      : 4292 MHz
+# CPU Physical cores : 6
+# CPU Logical cores  : 12
+# Host memory        : 16309 MB
+# Swap memory        : 16106 MB
+# Total Virtual      : 32416 MB
+# Available Virtual  : 7468 MB
+#-----------------------------------------------------------
+source system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0.tcl -notrace
+create_project: Time (s): cpu = 00:00:17 ; elapsed = 00:00:12 . Memory (MB): peak = 643.559 ; gain = 282.602
+INFO: [IP_Flow 19-4838] Using cached IP synthesis design for IP system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0, cache-ID = d6e48d982865d828.
+INFO: [Common 17-206] Exiting Vivado at Fri Nov  6 10:18:39 2026...

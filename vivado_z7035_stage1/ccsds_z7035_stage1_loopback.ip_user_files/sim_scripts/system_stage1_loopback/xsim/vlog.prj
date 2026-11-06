@@ -1,0 +1,18 @@
+verilog xil_defaultlib -i "../../../../../../../../../AMDDesignTools/2026.1.1/Vivado/data/rsb/busdef" --include "C:/AMDDesignTools/2026.1.1/Vivado/data/xilinx_vip/include" --include "../../../../ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ipshared/ec67/hdl" --include "../../../../ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ipshared/df05/hdl" --include "../../../../ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ipshared/ee6d" --include "../../../../ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ipshared/434f/hdl" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_processing_system7_0_0/sim/system_stage1_loopback_processing_system7_0_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0_clk_wiz.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_clk_wiz_ccsds_0/system_stage1_loopback_clk_wiz_ccsds_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_xbar_0/sim/system_stage1_loopback_axi_ic_gp0_imp_xbar_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_0/sim/system_stage1_loopback_ccsds_gnd_egse_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0/sim/system_stage1_loopback_ccsds_gnd_egse_dw_32to8_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0/sim/system_stage1_loopback_ccsds_gnd_egse_dw_8to32_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_0/sim/system_stage1_loopback_ccsds_sc_flight_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0/sim/system_stage1_loopback_ccsds_sc_flight_dw_32to8_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0/sim/system_stage1_loopback_ccsds_sc_flight_dw_8to32_0.v" \
+"../../../bd/system_stage1_loopback/ip/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0/sim/system_stage1_loopback_axi_ic_gp0_imp_auto_pc_0.v" \
+"../../../bd/system_stage1_loopback/sim/system_stage1_loopback.v" \
+
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

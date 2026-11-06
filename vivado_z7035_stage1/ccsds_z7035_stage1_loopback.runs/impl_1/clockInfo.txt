@@ -1,0 +1,10 @@
+-------------------------------------
+| Tool Version : Vivado v.2026.1.1
+| Date         : Fri Nov  6 10:39:43 2026
+| Host         : Sagittarius
+| Design       : design_1
+| Device       : xc7z035i-fbg676-2L-I-
+-------------------------------------
+
+For more information on clockInfo.txt clock routing debug file see https://support.xilinx.com/s/article/000035660?language=en_US
+

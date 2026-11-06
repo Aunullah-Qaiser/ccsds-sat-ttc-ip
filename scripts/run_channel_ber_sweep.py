@@ -232,7 +232,7 @@ def run_ebn0_sweep_and_plots(csv_path: Path, json_path: Path, plot1_path: Path, 
     })
     fig, axes = plt.subplots(2, 2, figsize=(15, 11), dpi=180)
     fig.suptitle(
-        "CCSDS-SAT-TTC-IP (v2.13): Best-to-Worst-Case Channel Sweep Across All 4 CCSDS Protocols & FEC Modes",
+        "CCSDS-SAT-TTC-IP (v2.40.3): Best-to-Worst-Case Channel Sweep Across All 4 CCSDS Protocols & FEC Modes",
         fontsize=14,
         fontweight="bold",
         y=0.98,

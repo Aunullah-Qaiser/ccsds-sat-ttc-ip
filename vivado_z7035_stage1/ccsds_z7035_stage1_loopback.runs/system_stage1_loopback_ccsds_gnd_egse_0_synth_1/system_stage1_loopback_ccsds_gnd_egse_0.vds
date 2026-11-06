@@ -1,0 +1,1668 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite ENTERPRISE license has been detected. Your current license is active and will expire on 05-jan-2027.
+#-----------------------------------------------------------
+# Vivado v2026.1.1 (64-bit)
+# SW Build 6605303 on Fri Sep 04 12:46:29 BST 2026
+# IP Build 6603865 on Fri Sep 04 05:05:05 MDT 2026
+# SharedData Build 6605217 on Fri Sep 04 02:50:14 MDT 2026
+# Start of session at: Fri Nov  6 10:27:39 2026
+# Process ID         : 25840
+# Current directory  : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_0_synth_1
+# Command line       : vivado.exe -log system_stage1_loopback_ccsds_gnd_egse_0.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source system_stage1_loopback_ccsds_gnd_egse_0.tcl
+# Log file           : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_0_synth_1/system_stage1_loopback_ccsds_gnd_egse_0.vds
+# Journal file       : c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_0_synth_1\vivado.jou
+# Running On         : Sagittarius
+# Platform           : Windows 11
+# Operating System   : 26300
+# Processor Detail   : AMD Ryzen 5 7640HS w/ Radeon 760M Graphics     
+# CPU Frequency      : 4292 MHz
+# CPU Physical cores : 6
+# CPU Logical cores  : 12
+# Host memory        : 16309 MB
+# Swap memory        : 16106 MB
+# Total Virtual      : 32416 MB
+# Available Virtual  : 15614 MB
+#-----------------------------------------------------------
+source system_stage1_loopback_ccsds_gnd_egse_0.tcl -notrace
+create_project: Time (s): cpu = 00:00:19 ; elapsed = 00:00:13 . Memory (MB): peak = 646.148 ; gain = 285.742
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'C:/AMDDesignTools/2026.1.1/Vivado/data/ip'.
+WARNING: [IP_Flow 19-4995] The host OS only allows 260 characters in a normal path. The IP cache path is more than 80 characters. If you experience issues with IP caching, please consider changing the IP cache to a location with a shorter path. Alternately consider using the OS subst command to map part of the path to a drive letter. 
+Current IP cache path is c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.cache/ip 
+Command: synth_design -top system_stage1_loopback_ccsds_gnd_egse_0 -part xc7z035ifbg676-2L -incremental_mode off -mode out_of_context
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z035i'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z035i'
+INFO: [Device 21-403] Loading part xc7z035ifbg676-2L
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 7948
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 1517.070 ; gain = 575.875
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-11067] parameter 'DEFAULT_DATA_WIDTH' declared inside package 'ccsds_pkg' shall be treated as localparam [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkg.sv:29]
+WARNING: [Synth 8-11067] parameter 'DEFAULT_NUM_VC' declared inside package 'ccsds_pkg' shall be treated as localparam [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkg.sv:30]
+WARNING: [Synth 8-11067] parameter 'DEFAULT_MAX_RX_FRAME_BYTES' declared inside package 'ccsds_pkg' shall be treated as localparam [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkg.sv:31]
+INFO: [Synth 8-6157] synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_0/synth/system_stage1_loopback_ccsds_gnd_egse_0.v:53]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_sat_ttc_bd_wrapper' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_bd_wrapper.v:18]
+	Parameter ROLE_MODE bound to: 1 - type: integer 
+	Parameter ENABLE_SDLS bound to: 1 - type: integer 
+	Parameter ENABLE_UL_LDPC bound to: 1 - type: integer 
+	Parameter IQ_BUS_WIDTH bound to: 16 - type: integer 
+	Parameter RX_MSB_ALIGNED bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'ccsds_sat_ttc_top' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:26]
+	Parameter ROLE_MODE bound to: 1 - type: integer 
+	Parameter ENABLE_SDLS bound to: 1'b1 
+	Parameter ENABLE_UL_LDPC bound to: 1'b1 
+	Parameter IQ_BUS_WIDTH bound to: 16 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'ccsds_ul_short_ldpc_dec' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:23]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:627]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:662]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_ul_short_ldpc_dec' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:23]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_sdls_engine' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:35]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_sdls_engine' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:35]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:1681]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_fop1_engine' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_fop1_engine.sv:15]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_fop1_engine' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_fop1_engine.sv:15]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_tc_cltu_framer' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_cltu_framer.sv:14]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_tc_cltu_framer' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_cltu_framer.sv:14]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_bch6356_enc' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_bch6356_enc.sv:16]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_bch6356_enc' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_bch6356_enc.sv:16]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:1848]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:2008]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:2011]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:2042]
+INFO: [Synth 8-226] default block is never used [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:2042]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_cdc_fifo_ecc' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000001000 
+	Parameter DEPTH_WORDS bound to: 32'b00000000000000000000000010000000 
+	Parameter ROLLBACK_MODE bound to: 1'b0 
+	Parameter WATERMARK_MODE bound to: 1'b0 
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][fecf_crc32]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][rs_interleave]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][rs_virt_fill_q]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][spi]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][crc_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][fec_uncorr_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][sdls_mac_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[0][pkt_len_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][fecf_crc32]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][rs_interleave]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][rs_virt_fill_q]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][spi]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][crc_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][fec_uncorr_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][sdls_mac_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[1][pkt_len_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][fecf_crc32]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][rs_interleave]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][rs_virt_fill_q]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][spi]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][crc_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][fec_uncorr_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][sdls_mac_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[2][pkt_len_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][fecf_crc32]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][rs_interleave]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][rs_virt_fill_q]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][spi]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][crc_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][fec_uncorr_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][sdls_mac_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[3][pkt_len_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][fecf_crc32]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][rs_interleave]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][rs_virt_fill_q]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][spi]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][crc_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][fec_uncorr_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][sdls_mac_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[4][pkt_len_err]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][scid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][vcid]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][map_id]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][proto_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][fec_mode]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][bypass_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][ctrl_cmd_flag]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][sec_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][ocf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+WARNING: [Synth 8-7186] Applying attribute ram_style = "distributed" is ignored, object 'mem_user[5][fecf_en]' is not inferred as ram due to incorrect usage [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:120]
+INFO: [Common 17-14] Message 'Synth 8-7186' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_cdc_fifo_ecc' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_dl_rs255_223_dec' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_dec.sv:25]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_dec.sv:232]
+INFO: [Synth 8-226] default block is never used [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_dec.sv:232]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_dl_rs255_223_dec' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_dec.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_tm_aos_deframer' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_deframer.sv:17]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_tm_aos_deframer' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_deframer.sv:17]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_axi_lite_csr' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_axi_lite_csr.sv:24]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_axi_lite_csr.sv:314]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_axi_lite_csr.sv:372]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_axi_lite_csr' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_axi_lite_csr.sv:24]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_phy_modem' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:37]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:380]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:146]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:185]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:207]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:218]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:241]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:252]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_phy_modem' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:37]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_pn_ranging' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pn_ranging.sv:17]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_pn_ranging' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pn_ranging.sv:17]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_cdc_fifo_ecc__parameterized0' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000001000 
+	Parameter DEPTH_WORDS bound to: 32'b00000000000000000000000100000000 
+	Parameter ROLLBACK_MODE bound to: 1'b0 
+	Parameter WATERMARK_MODE bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_cdc_fifo_ecc__parameterized0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_asm_correlator' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_asm_correlator.sv:17]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_asm_correlator.sv:76]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_asm_correlator' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_asm_correlator.sv:17]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_bch6356_dec' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_bch6356_dec.sv:16]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_bch6356_dec' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_bch6356_dec.sv:16]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_lfsr_scrambler' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_lfsr_scrambler.sv:14]
+	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_lfsr_scrambler' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_lfsr_scrambler.sv:14]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_tc_uslp_deframer' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_uslp_deframer.sv:19]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_uslp_deframer.sv:196]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_tc_uslp_deframer' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_uslp_deframer.sv:19]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_prox1_plcw_ctrl' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_prox1_plcw_ctrl.sv:16]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_prox1_plcw_ctrl' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_prox1_plcw_ctrl.sv:16]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_farm1_tmr' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_farm1_tmr.sv:18]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_farm1_tmr' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_farm1_tmr.sv:18]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_hcpd_ctrl' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_hcpd_ctrl.sv:25]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_hcpd_ctrl' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_hcpd_ctrl.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_cdc_fifo_ecc__parameterized1' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000001000 
+	Parameter DEPTH_WORDS bound to: 32'b00000000000000000000001000000000 
+	Parameter ROLLBACK_MODE bound to: 1'b1 
+	Parameter WATERMARK_MODE bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_cdc_fifo_ecc__parameterized1' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_pkt_reassembler' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkt_reassembler.sv:24]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkt_reassembler.sv:132]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_pkt_reassembler' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_pkt_reassembler.sv:24]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_vc_arbiter_mux' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_vc_arbiter_mux.sv:13]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_vc_arbiter_mux' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_vc_arbiter_mux.sv:13]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_tm_aos_uslp_framer' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_uslp_framer.sv:20]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_uslp_framer.sv:167]
+INFO: [Synth 8-226] default block is never used [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_uslp_framer.sv:167]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_uslp_framer.sv:353]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_tm_aos_uslp_framer' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tm_aos_uslp_framer.sv:20]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_dl_rs255_223_enc' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_enc.sv:18]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_enc.sv:148]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_dl_rs255_223_enc' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_rs255_223_enc.sv:18]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_dl_turbo_ldpc_enc' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_turbo_ldpc_enc.sv:18]
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_turbo_ldpc_enc.sv:158]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_dl_turbo_ldpc_enc' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_dl_turbo_ldpc_enc.sv:18]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_cdc_fifo_ecc__parameterized2' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+	Parameter DATA_WIDTH bound to: 32'b00000000000000000000000000001000 
+	Parameter DEPTH_WORDS bound to: 32'b00000000000000000000001000000000 
+	Parameter ROLLBACK_MODE bound to: 1'b0 
+	Parameter WATERMARK_MODE bound to: 1'b1 
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_cdc_fifo_ecc__parameterized2' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'ccsds_conv_viterbi_codec' [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_conv_viterbi_codec.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_conv_viterbi_codec' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_conv_viterbi_codec.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_sat_ttc_top' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_top.sv:26]
+INFO: [Synth 8-6155] done synthesizing module 'ccsds_sat_ttc_bd_wrapper' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sat_ttc_bd_wrapper.v:18]
+INFO: [Synth 8-6155] done synthesizing module 'system_stage1_loopback_ccsds_gnd_egse_0' (0#1) [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.gen/sources_1/bd/system_stage1_loopback/ip/system_stage1_loopback_ccsds_gnd_egse_0/synth/system_stage1_loopback_ccsds_gnd_egse_0.v:53]
+WARNING: [Synth 8-6014] Unused sequential element first64_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:638]
+WARNING: [Synth 8-6014] Unused sequential element n4_reg[0] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:827]
+WARNING: [Synth 8-6014] Unused sequential element n4_reg[1] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:827]
+WARNING: [Synth 8-6014] Unused sequential element n4_reg[2] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:827]
+WARNING: [Synth 8-6014] Unused sequential element n4_reg[3] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:827]
+WARNING: [Synth 8-6014] Unused sequential element n2_reg[0] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:830]
+WARNING: [Synth 8-6014] Unused sequential element n2_reg[1] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:830]
+WARNING: [Synth 8-6014] Unused sequential element raw_byte_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:859]
+WARNING: [Synth 8-6014] Unused sequential element pn_byte_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_ul_short_ldpc_dec.sv:860]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[0] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[1] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[2] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[3] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[4] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[5] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[6] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[7] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[8] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[9] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[10] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[11] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[12] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[13] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[14] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[15] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[16] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[17] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[18] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[19] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[20] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[21] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[22] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[23] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[24] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[25] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[26] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[27] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[28] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[29] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[30] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[31] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[32] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[33] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[34] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[35] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[36] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[37] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[38] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[39] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[40] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[41] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[42] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[43] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[44] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[45] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[46] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[47] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[48] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[49] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[50] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[51] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[52] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[53] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[54] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[55] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[56] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[57] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[58] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[59] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[60] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[61] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[62] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element sa_spi_ram_reg[63] was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:304]
+WARNING: [Synth 8-6014] Unused sequential element full_seq_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:406]
+WARNING: [Synth 8-6014] Unused sequential element raw_sa_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:408]
+WARNING: [Synth 8-6014] Unused sequential element re_ecc_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:409]
+WARNING: [Synth 8-6014] Unused sequential element syn_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:410]
+WARNING: [Synth 8-6014] Unused sequential element overall_p_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:411]
+WARNING: [Synth 8-6014] Unused sequential element nxt_st_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:446]
+WARNING: [Synth 8-6014] Unused sequential element nxt_rk_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:446]
+WARNING: [Synth 8-6014] Unused sequential element nxt_z_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:481]
+WARNING: [Synth 8-6014] Unused sequential element nxt_v_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:481]
+WARNING: [Synth 8-6014] Unused sequential element tag_match_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:499]
+WARNING: [Synth 8-6014] Unused sequential element ks_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:516]
+WARNING: [Synth 8-6014] Unused sequential element pt_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:517]
+WARNING: [Synth 8-6014] Unused sequential element nxt_idx_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:518]
+WARNING: [Synth 8-6014] Unused sequential element c_byte_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:550]
+WARNING: [Synth 8-6014] Unused sequential element ks_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:551]
+WARNING: [Synth 8-6014] Unused sequential element pt_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:552]
+WARNING: [Synth 8-6014] Unused sequential element nxt_idx_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:553]
+WARNING: [Synth 8-6014] Unused sequential element full_ct_blk_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:566]
+WARNING: [Synth 8-6014] Unused sequential element last_ct_blk_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:578]
+WARNING: [Synth 8-6014] Unused sequential element nxt_z_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:602]
+WARNING: [Synth 8-6014] Unused sequential element nxt_v_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:602]
+WARNING: [Synth 8-6014] Unused sequential element nxt_st_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:608]
+WARNING: [Synth 8-6014] Unused sequential element nxt_rk_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:608]
+WARNING: [Synth 8-6014] Unused sequential element nxt_z_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:626]
+WARNING: [Synth 8-6014] Unused sequential element nxt_v_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:626]
+WARNING: [Synth 8-6014] Unused sequential element nxt_z_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:644]
+WARNING: [Synth 8-6014] Unused sequential element nxt_v_reg was removed.  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_sdls_engine.sv:644]
+INFO: [Common 17-14] Message 'Synth 8-6014' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-3936] Found unconnected internal register 'recalc_ecc_reg' and it is trimmed from '7' to '6' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:297]
+WARNING: [Synth 8-3936] Found unconnected internal register 'rd_corr_32_reg' and it is trimmed from '32' to '8' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:174]
+WARNING: [Synth 8-3936] Found unconnected internal register 'recalc_ecc_reg' and it is trimmed from '7' to '6' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:297]
+WARNING: [Synth 8-3936] Found unconnected internal register 'rd_corr_32_reg' and it is trimmed from '32' to '8' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:174]
+WARNING: [Synth 8-7137] Register m_axis_tvalid_reg in module ccsds_tc_uslp_deframer has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_uslp_deframer.sv:123]
+WARNING: [Synth 8-7137] Register m_axis_tlast_reg in module ccsds_tc_uslp_deframer has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_tc_uslp_deframer.sv:167]
+WARNING: [Synth 8-3936] Found unconnected internal register 'recalc_ecc_reg' and it is trimmed from '7' to '6' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:297]
+WARNING: [Synth 8-3936] Found unconnected internal register 'rd_corr_32_reg' and it is trimmed from '32' to '8' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:174]
+WARNING: [Synth 8-3936] Found unconnected internal register 'recalc_ecc_reg' and it is trimmed from '7' to '6' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:297]
+WARNING: [Synth 8-3936] Found unconnected internal register 'rd_corr_32_reg' and it is trimmed from '32' to '8' bits. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_cdc_fifo_ecc.sv:174]
+INFO: [Synth 8-7129] Port cut_through_en in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[7] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[6] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[5] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[4] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[3] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[2] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[1] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[0] in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port frame_commit_pulse in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port frame_rollback_pulse in module ccsds_cdc_fifo_ecc is either unconnected or has no load
+INFO: [Synth 8-7129] Port cut_through_en in module ccsds_cdc_fifo_ecc__parameterized2 is either unconnected or has no load
+INFO: [Synth 8-7129] Port frame_commit_pulse in module ccsds_cdc_fifo_ecc__parameterized2 is either unconnected or has no load
+INFO: [Synth 8-7129] Port frame_rollback_pulse in module ccsds_cdc_fifo_ecc__parameterized2 is either unconnected or has no load
+INFO: [Synth 8-7129] Port uslp_vcf_cnt_len_cfg[2] in module ccsds_tm_aos_uslp_framer is either unconnected or has no load
+INFO: [Synth 8-7129] Port uslp_vcf_cnt_len_cfg[1] in module ccsds_tm_aos_uslp_framer is either unconnected or has no load
+INFO: [Synth 8-7129] Port uslp_vcf_cnt_len_cfg[0] in module ccsds_tm_aos_uslp_framer is either unconnected or has no load
+INFO: [Synth 8-7129] Port s_axis_tlast in module ccsds_pkt_reassembler is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[9] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[8] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[7] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[6] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[5] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[4] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[3] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[2] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[1] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port watermark_words[0] in module ccsds_cdc_fifo_ecc__parameterized1 is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[tfvn][1] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[tfvn][0] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[ctrl_cmd_flag] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[rsvd_spare][1] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[rsvd_spare][0] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][9] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][8] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][7] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][6] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][5] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][4] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][3] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][2] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][1] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][0] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][9] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][8] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][7] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][6] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][5] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][4] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][3] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][2] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][1] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][0] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][7] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][6] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][5] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][4] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][3] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][2] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][1] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_seq_num][0] in module ccsds_hcpd_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[tfvn][1] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[tfvn][0] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[rsvd_spare][1] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[rsvd_spare][0] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][9] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][8] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][7] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][6] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][5] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][4] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][3] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][2] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][1] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[scid][0] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][9] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][8] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][7] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][6] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][5] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][4] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][3] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][2] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][1] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port tc_hdr_in[frame_len][0] in module ccsds_farm1_tmr is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[dfc_id][1] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[dfc_id][0] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][9] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][8] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][7] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][6] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][5] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][4] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][3] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][2] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][1] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[scid][0] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[src_dst_id] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[frame_len][10] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Synth 8-7129] Port prox1_hdr_in[frame_len][9] in module ccsds_prox1_plcw_ctrl is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:46 ; elapsed = 00:00:48 . Memory (MB): peak = 2660.926 ; gain = 1719.730
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:48 ; elapsed = 00:00:50 . Memory (MB): peak = 2660.926 ; gain = 1719.730
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:48 ; elapsed = 00:00:50 . Memory (MB): peak = 2660.926 ; gain = 1719.730
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2660.926 ; gain = 0.000
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.049 . Memory (MB): peak = 2801.121 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:03 ; elapsed = 00:00:02 . Memory (MB): peak = 2801.918 ; gain = 0.000
+INFO: [Designutils 20-5008] Incremental synthesis strategy off
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:01:27 ; elapsed = 00:01:27 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z035ifbg676-2L
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:01:27 ; elapsed = 00:01:27 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:01:27 ; elapsed = 00:01:27 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_ul_short_ldpc_dec'
+INFO: [Synth 8-802] inferred FSM for state register 'rx_state_q_reg' in module 'ccsds_sdls_engine'
+INFO: [Synth 8-802] inferred FSM for state register 'tx_state_q_reg' in module 'ccsds_sdls_engine'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_tc_cltu_framer'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_bch6356_enc'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_dl_rs255_223_dec'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_tm_aos_deframer'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_pkt_reassembler'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_tm_aos_uslp_framer'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_dl_rs255_223_enc'
+INFO: [Synth 8-802] inferred FSM for state register 'state_q_reg' in module 'ccsds_dl_turbo_ldpc_enc'
+INFO: [Synth 8-802] inferred FSM for state register 'g_ground_egse_endpoints.egse_pkt_state_q_reg' in module 'ccsds_sat_ttc_top'
+INFO: [Synth 8-802] inferred FSM for state register 'g_ground_egse_endpoints.egse_ldpc_state_q_reg' in module 'ccsds_sat_ttc_top'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+         LDPC_COLLECT_CB |                             0000 |                             0000
+       LDPC_OMS_ROW_PASS |                             0001 |                             0001
+           LDPC_EVAL_SYN |                             0010 |                             0010
+         LDPC_CALC_SCORE |                             0011 |                             0011
+         LDPC_EMIT_BYTES |                             0100 |                             1000
+         LDPC_TREE_MAX_1 |                             0101 |                             0100
+         LDPC_TREE_MAX_2 |                             0110 |                             0101
+         LDPC_TREE_MAX_3 |                             0111 |                             0110
+          LDPC_FLIP_BITS |                             1000 |                             0111
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_ul_short_ldpc_dec'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+            RX_SDLS_IDLE |                        000000001 |                             0000
+          RX_SDLS_BYPASS |                        000000010 |                             0001
+             RX_SDLS_HDR |                        000000100 |                             0010
+        RX_SDLS_AES_WAIT |                        000001000 |                             0011
+       RX_SDLS_GHASH_AAD |                        000010000 |                             0100
+            RX_SDLS_BODY |                        000100000 |                             0101
+   RX_SDLS_GCM_BLK_GHASH |                        001000000 |                             0110
+    RX_SDLS_GCM_LEN_INIT |                        010000000 |                             0111
+   RX_SDLS_GCM_LEN_GHASH |                        100000000 |                             1000
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'rx_state_q_reg' using encoding 'one-hot' in module 'ccsds_sdls_engine'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+            TX_SDLS_IDLE |                             0000 |                             0000
+             TX_SDLS_HDR |                             0001 |                             0001
+        TX_SDLS_AES_WAIT |                             0010 |                             0010
+       TX_SDLS_GHASH_AAD |                             0011 |                             0011
+            TX_SDLS_BODY |                             0100 |                             0100
+    TX_SDLS_GCM_LEN_INIT |                             0101 |                             0110
+   TX_SDLS_GCM_LEN_GHASH |                             0110 |                             0111
+             TX_SDLS_TAG |                             0111 |                             1000
+   TX_SDLS_GCM_BLK_GHASH |                             1000 |                             0101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'tx_state_q_reg' using encoding 'sequential' in module 'ccsds_sdls_engine'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             TC_FRM_IDLE |                              000 |                              000
+              TC_FRM_HDR |                              001 |                              001
+          TC_FRM_SEG_HDR |                              010 |                              010
+             TC_FRM_BODY |                              011 |                              011
+           TC_FRM_CRC_HI |                              100 |                              100
+           TC_FRM_CRC_LO |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_tc_cltu_framer'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 ST_IDLE |                              000 |                              000
+              ST_START_1 |                              001 |                              001
+              ST_COLLECT |                              010 |                              010
+             ST_PAD_FILL |                              011 |                              011
+             ST_EMIT_PAR |                              100 |                              100
+                 ST_TAIL |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_bch6356_enc'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             RS_DEC_RECV |                               00 |                               00
+         RS_DEC_SOLVE_BM |                               01 |                               01
+      RS_DEC_SOLVE_OMEGA |                               10 |                               10
+             RS_DEC_EMIT |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_dl_rs255_223_dec'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             DL_DEF_IDLE |                              000 |                              000
+              DL_DEF_HDR |                              001 |                              001
+          DL_DEF_SEC_HDR |                              010 |                              010
+             DL_DEF_TFDF |                              011 |                              011
+              DL_DEF_OCF |                              100 |                              100
+             DL_DEF_FECF |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_tm_aos_deframer'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                 iSTATE0 |                               00 |                               01
+                  iSTATE |                               01 |                               00
+                 iSTATE1 |                               10 |                               10
+                 iSTATE2 |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_pkt_reassembler'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+         FRAMER_SEND_HDR |                               00 |                               00
+        FRAMER_SEND_TFDF |                               01 |                               01
+         FRAMER_SEND_OCF |                               10 |                               10
+        FRAMER_SEND_FECF |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_tm_aos_uslp_framer'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+             RS_SEND_ASM |                              001 |                               00
+          RS_STREAM_DATA |                              010 |                               01
+          RS_SEND_PARITY |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'one-hot' in module 'ccsds_dl_rs255_223_enc'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+          ENC_STREAM_SYS |                                0 |                               00
+            ENC_EMIT_PAR |                                1 |                               01
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_q_reg' using encoding 'sequential' in module 'ccsds_dl_turbo_ldpc_enc'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+          EGSE_LDPC_IDLE |                              000 |                              000
+         EGSE_LDPC_START |                              001 |                              001
+       EGSE_LDPC_COLLECT |                              010 |                              010
+           EGSE_LDPC_PAD |                              011 |                              011
+           EGSE_LDPC_PAR |                              100 |                              100
+          EGSE_LDPC_TAIL |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'g_ground_egse_endpoints.egse_ldpc_state_q_reg' using encoding 'sequential' in module 'ccsds_sat_ttc_top'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+        EGSE_PKT_COLLECT |                              001 |                               00
+          EGSE_PKT_DRAIN |                              010 |                               01
+      EGSE_PKT_WAIT_CLTU |                              100 |                               10
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'g_ground_egse_endpoints.egse_pkt_state_q_reg' using encoding 'one-hot' in module 'ccsds_sat_ttc_top'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:02:42 ; elapsed = 00:02:45 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   64 Bit       Adders := 2     
+	   2 Input   32 Bit       Adders := 3     
+	   2 Input   27 Bit       Adders := 1     
+	   3 Input   25 Bit       Adders := 8     
+	   2 Input   24 Bit       Adders := 1     
+	   5 Input   24 Bit       Adders := 6     
+	   4 Input   24 Bit       Adders := 12    
+	   2 Input   20 Bit       Adders := 1     
+	   2 Input   16 Bit       Adders := 26    
+	   4 Input   16 Bit       Adders := 1     
+	   3 Input   16 Bit       Adders := 3     
+	   2 Input   15 Bit       Adders := 1     
+	   3 Input   15 Bit       Adders := 3     
+	   5 Input   15 Bit       Adders := 1     
+	   4 Input   15 Bit       Adders := 1     
+	   2 Input   13 Bit       Adders := 18    
+	   4 Input   12 Bit       Adders := 3     
+	   3 Input   12 Bit       Adders := 1     
+	   2 Input   12 Bit       Adders := 4     
+	   2 Input   11 Bit       Adders := 13    
+	   3 Input   11 Bit       Adders := 1     
+	   3 Input   10 Bit       Adders := 5     
+	   2 Input   10 Bit       Adders := 6     
+	   4 Input   10 Bit       Adders := 128   
+	   2 Input    9 Bit       Adders := 2     
+	   3 Input    9 Bit       Adders := 2     
+	   2 Input    8 Bit       Adders := 14    
+	   3 Input    8 Bit       Adders := 9     
+	   2 Input    7 Bit       Adders := 5     
+	  64 Input    7 Bit       Adders := 2     
+	  12 Input    6 Bit       Adders := 64    
+	   8 Input    6 Bit       Adders := 64    
+	   2 Input    6 Bit       Adders := 68    
+	   3 Input    6 Bit       Adders := 5     
+	   2 Input    5 Bit       Adders := 12    
+	   2 Input    4 Bit       Adders := 21    
+	   2 Input    3 Bit       Adders := 197   
+	   4 Input    3 Bit       Adders := 64    
+	   3 Input    3 Bit       Adders := 16    
+	   5 Input    3 Bit       Adders := 1     
+	   2 Input    2 Bit       Adders := 20    
+	   2 Input    1 Bit       Adders := 1     
++---XORs : 
+	   2 Input    128 Bit         XORs := 37    
+	   2 Input     64 Bit         XORs := 25    
+	   2 Input     32 Bit         XORs := 61    
+	   2 Input     24 Bit         XORs := 2     
+	   2 Input     16 Bit         XORs := 103   
+	   2 Input     11 Bit         XORs := 1     
+	   2 Input     10 Bit         XORs := 4     
+	   2 Input      9 Bit         XORs := 2     
+	   2 Input      8 Bit         XORs := 3670  
+	   4 Input      8 Bit         XORs := 42    
+	   3 Input      8 Bit         XORs := 13    
+	   5 Input      8 Bit         XORs := 13    
+	   8 Input      8 Bit         XORs := 2     
+	  10 Input      8 Bit         XORs := 1     
+	  11 Input      8 Bit         XORs := 1     
+	  12 Input      8 Bit         XORs := 1     
+	  13 Input      8 Bit         XORs := 1     
+	   6 Input      8 Bit         XORs := 6     
+	  14 Input      8 Bit         XORs := 1     
+	  15 Input      8 Bit         XORs := 1     
+	  16 Input      8 Bit         XORs := 1     
+	   7 Input      8 Bit         XORs := 4     
+	   9 Input      8 Bit         XORs := 1     
+	   2 Input      7 Bit         XORs := 56    
+	   2 Input      6 Bit         XORs := 6     
+	   2 Input      4 Bit         XORs := 18    
+	   3 Input      4 Bit         XORs := 2     
+	   4 Input      4 Bit         XORs := 2     
+	   5 Input      4 Bit         XORs := 2     
+	   2 Input      2 Bit         XORs := 2     
+	   2 Input      1 Bit         XORs := 160   
+	   3 Input      1 Bit         XORs := 16    
++---XORs : 
+	              128 Bit    Wide XORs := 64    
+	               39 Bit    Wide XORs := 6     
+	               38 Bit    Wide XORs := 7     
+	               32 Bit    Wide XORs := 58    
+	               10 Bit    Wide XORs := 36    
+	                9 Bit    Wide XORs := 16    
+	                8 Bit    Wide XORs := 124   
+	                7 Bit    Wide XORs := 50    
++---Registers : 
+	              256 Bit    Registers := 2     
+	              192 Bit    Registers := 4     
+	              128 Bit    Registers := 26    
+	               64 Bit    Registers := 10    
+	               63 Bit    Registers := 1     
+	               56 Bit    Registers := 2     
+	               48 Bit    Registers := 4     
+	               40 Bit    Registers := 3     
+	               39 Bit    Registers := 64    
+	               35 Bit    Registers := 64    
+	               32 Bit    Registers := 27    
+	               27 Bit    Registers := 1     
+	               25 Bit    Registers := 6     
+	               24 Bit    Registers := 28    
+	               20 Bit    Registers := 1     
+	               16 Bit    Registers := 45    
+	               15 Bit    Registers := 3     
+	               14 Bit    Registers := 3     
+	               13 Bit    Registers := 18    
+	               12 Bit    Registers := 36    
+	               11 Bit    Registers := 15    
+	               10 Bit    Registers := 85    
+	                9 Bit    Registers := 8     
+	                8 Bit    Registers := 537   
+	                7 Bit    Registers := 8     
+	                6 Bit    Registers := 23    
+	                5 Bit    Registers := 10    
+	                4 Bit    Registers := 18    
+	                3 Bit    Registers := 38    
+	                2 Bit    Registers := 108   
+	                1 Bit    Registers := 276   
++---Multipliers : 
+	              32x35  Multipliers := 1     
++---Muxes : 
+	   9 Input  384 Bit        Muxes := 1     
+	   2 Input  384 Bit        Muxes := 1     
+	   9 Input  192 Bit        Muxes := 1     
+	   4 Input  192 Bit        Muxes := 1     
+	   9 Input  128 Bit        Muxes := 16    
+	   2 Input  128 Bit        Muxes := 54    
+	   9 Input   64 Bit        Muxes := 3     
+	   2 Input   64 Bit        Muxes := 27    
+	   6 Input   64 Bit        Muxes := 1     
+	   4 Input   64 Bit        Muxes := 2     
+	   2 Input   63 Bit        Muxes := 1     
+	   2 Input   56 Bit        Muxes := 2     
+	   6 Input   56 Bit        Muxes := 1     
+	   6 Input   48 Bit        Muxes := 1     
+	   2 Input   40 Bit        Muxes := 1     
+	   8 Input   40 Bit        Muxes := 1     
+	   2 Input   39 Bit        Muxes := 463   
+	   9 Input   39 Bit        Muxes := 64    
+	   3 Input   35 Bit        Muxes := 1     
+	   2 Input   35 Bit        Muxes := 64    
+	   2 Input   33 Bit        Muxes := 1     
+	   8 Input   32 Bit        Muxes := 3     
+	   9 Input   32 Bit        Muxes := 1     
+	   2 Input   32 Bit        Muxes := 75    
+	   4 Input   32 Bit        Muxes := 2     
+	   2 Input   27 Bit        Muxes := 1     
+	   2 Input   20 Bit        Muxes := 1     
+	   9 Input   16 Bit        Muxes := 4     
+	   4 Input   16 Bit        Muxes := 4     
+	   2 Input   16 Bit        Muxes := 154   
+	   6 Input   16 Bit        Muxes := 3     
+	   3 Input   16 Bit        Muxes := 2     
+	   8 Input   16 Bit        Muxes := 7     
+	   2 Input   15 Bit        Muxes := 11    
+	   2 Input   14 Bit        Muxes := 3     
+	   2 Input   12 Bit        Muxes := 7     
+	   2 Input   11 Bit        Muxes := 9     
+	   3 Input   11 Bit        Muxes := 1     
+	   4 Input   11 Bit        Muxes := 1     
+	   2 Input   10 Bit        Muxes := 293   
+	   8 Input   10 Bit        Muxes := 2     
+	   9 Input    9 Bit        Muxes := 1     
+	   2 Input    9 Bit        Muxes := 13    
+	   9 Input    8 Bit        Muxes := 6     
+	   2 Input    8 Bit        Muxes := 5011  
+	   3 Input    8 Bit        Muxes := 43    
+	   8 Input    8 Bit        Muxes := 1     
+	   4 Input    8 Bit        Muxes := 40    
+	   6 Input    8 Bit        Muxes := 4     
+	   2 Input    7 Bit        Muxes := 61    
+	   3 Input    7 Bit        Muxes := 5     
+	   8 Input    7 Bit        Muxes := 1     
+	   4 Input    7 Bit        Muxes := 1     
+	   2 Input    6 Bit        Muxes := 866   
+	   4 Input    6 Bit        Muxes := 2     
+	   3 Input    6 Bit        Muxes := 1     
+	   8 Input    6 Bit        Muxes := 1     
+	   9 Input    5 Bit        Muxes := 4     
+	   2 Input    5 Bit        Muxes := 37    
+	   4 Input    5 Bit        Muxes := 1     
+	   3 Input    5 Bit        Muxes := 2     
+	   2 Input    4 Bit        Muxes := 66    
+	   9 Input    4 Bit        Muxes := 7     
+	   6 Input    4 Bit        Muxes := 2     
+	   4 Input    4 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 2484  
+	   5 Input    3 Bit        Muxes := 64    
+	   9 Input    3 Bit        Muxes := 2     
+	   4 Input    3 Bit        Muxes := 2     
+	   6 Input    3 Bit        Muxes := 9     
+	   3 Input    3 Bit        Muxes := 4     
+	   8 Input    3 Bit        Muxes := 2     
+	   3 Input    2 Bit        Muxes := 66    
+	   2 Input    2 Bit        Muxes := 348   
+	   9 Input    2 Bit        Muxes := 4     
+	   4 Input    2 Bit        Muxes := 6     
+	   5 Input    2 Bit        Muxes := 2     
+	   8 Input    2 Bit        Muxes := 3     
+	   9 Input    1 Bit        Muxes := 133   
+	   2 Input    1 Bit        Muxes := 1204  
+	   4 Input    1 Bit        Muxes := 57    
+	   3 Input    1 Bit        Muxes := 90    
+	   6 Input    1 Bit        Muxes := 56    
+	  19 Input    1 Bit        Muxes := 13    
+	   8 Input    1 Bit        Muxes := 36    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 900 (col length:140)
+BRAMs: 1000 (col length: RAMB18 140 RAMB36 70)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[63] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[62] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[61] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[60] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[59] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[58] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[57] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[56] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[55] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[54] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[53] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[52] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[51] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[50] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[49] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[48] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[35] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[34] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[33] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[32] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[31] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[30] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[29] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[28] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[27] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[26] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[25] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[24] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[23] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[22] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[21] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[20] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[19] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[18] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[17] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[16] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[15] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[14] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[13] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[12] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[11] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[10] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[9] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[8] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[7] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[6] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[5] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[4] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[2] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port m_axis_rx_pkt_tuser[0] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_i_dac_out[3] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_i_dac_out[2] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_i_dac_out[1] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_i_dac_out[0] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_q_dac_out[3] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_q_dac_out[2] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_q_dac_out[1] driven by constant 0
+INFO: [Synth 8-3917] design system_stage1_loopback_ccsds_gnd_egse_0 has port tx_q_dac_out[0] driven by constant 0
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[239]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[236]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[233]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[230]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[227]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[224]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[221]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[218]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[215]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[212]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[209]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[206]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[203]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[200]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3886] merging instance 'unsat_packed_q_reg[197]' (FDCE) to 'unsat_packed_q_reg[194]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\unsat_packed_q_reg[194] )
+INFO: [Synth 8-5544] ROM "row_w1_packed_q" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "AES_RCON" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "egse_ul_tx_tdata" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_11) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_12) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_13) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_14) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_15) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_16) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_17) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_18) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_19) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_20) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_21) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_22) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_23) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_24) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_25) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_26) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_35) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_36) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /i_37) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_11) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_12) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_13) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_14) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_15) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_16) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_17) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_18) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_19) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_20) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_21) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_22) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_23) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_24) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_25) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_26) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_35) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_36) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_phy_cdc_fifo/i_37) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_14) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_15) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_16) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_17) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_18) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_19) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_20) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_21) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_22) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_23) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_24) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_25) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_26) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_27) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_28) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_30) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_38) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_hwm_cdc_fifo/i_39) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_11) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_12) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_13) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_14) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_15) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_16) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_17) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_18) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_19) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_20) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_21) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_22) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_23) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_24) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_25) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_26) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_35) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_36) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_tx_phy_cdc_fifo/i_37) is optimized away because it doesn't have any load.
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[0]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[1]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[2]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[3]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[4]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[5]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/hdr_shift_q_reg[6]' (FDCE) to 'u_dl_framer/hdr_shift_q_reg[7]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\hdr_shift_q_reg[7] )
+INFO: [Synth 8-3886] merging instance 'u_rx_phy_cdc_fifo/rd_gray_q_reg[8]' (FDC) to 'u_rx_phy_cdc_fifo/rd_ptr_q_reg[8]'
+INFO: [Synth 8-3886] merging instance 'g_ground_egse_endpoints.u_egse_dl_cdc_fifo/wr_eff_gray_q_reg[7]' (FDC) to 'g_ground_egse_endpoints.u_egse_dl_cdc_fifo/wr_spec_ptr_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_tx_phy_cdc_fifo/wr_eff_gray_q_reg[7]' (FDC) to 'u_tx_phy_cdc_fifo/wr_spec_ptr_q_reg[7]'
+INFO: [Synth 8-3886] merging instance 'u_tx_hwm_cdc_fifo/wr_eff_gray_q_reg[9]' (FDC) to 'u_tx_hwm_cdc_fifo/wr_spec_ptr_q_reg[9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][15]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][15]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][15]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][15] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][14]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][14]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][14]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][14] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][13]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][13]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][13]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][13] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][12]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][12]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][12]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][12] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][11]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][11]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][11]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][11] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][10]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][10]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][10]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][10] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][9]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][9]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][9]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][9] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][8]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][8]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][8] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][7]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][7]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][7]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][7] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[3][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[2][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][6]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[1][6]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[0][6]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][6] )
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[7][5]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[6][5]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[6][5]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][5]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[5][5]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[4][5]'
+INFO: [Synth 8-3886] merging instance 'u_dl_framer/vc_cnt_q_reg[4][5]' (FDCE) to 'u_dl_framer/vc_cnt_q_reg[2][5]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][4] )
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_ground_egse_endpoints.u_egse_tc_framer /\hdr_word_q_reg[17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][16] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][17] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\active_vcid_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][18] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\active_vcid_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][19] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\active_vcid_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][21] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][22] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\vc_cnt_q_reg[0][23] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/mc_cnt_q0_inferred/\mc_cnt_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\wr_commit_ptr_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\hdr_total_bytes_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\hdr_total_bytes_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/\hdr_total_bytes_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 1 across sequential element (u_dl_framer/\hdr_total_bytes_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 1 across sequential element (u_dl_framer/\hdr_total_bytes_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/wr_spec_ptr_q_inferred__0/\wr_spec_ptr_q_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/\hdr_expected_len_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[11] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[12] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[14] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[15] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/i_0/\cur_pkt_byte_cnt_q_reg[0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_rx_phy_cdc_fifo/seu_valid_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_rx_phy_cdc_fifo/\seu_addr_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/use_ocf_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_dl_framer/use_crc32_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_vc_arb/irq_obc_pkt_len_err_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /seu_valid_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\g_ground_egse_endpoints.u_egse_dl_cdc_fifo /\seu_addr_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_tx_phy_cdc_fifo/seu_valid_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_tx_phy_cdc_fifo/\seu_addr_q_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_tx_hwm_cdc_fifo/seu_valid_q_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_tx_hwm_cdc_fifo/\seu_addr_q_reg[2] )
+INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_0_63_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_0_63_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_64_127_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_128_191_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_192_255_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_256_319_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_320_383_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_384_447_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_448_511_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_512_575_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_576_639_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_640_703_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_704_767_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_768_831_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_832_895_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_896_959_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_960_1023_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1024_1087_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1088_1151_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1152_1215_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1216_1279_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1280_1343_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1344_1407_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1408_1471_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1472_1535_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1536_1599_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1600_1663_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1664_1727_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1728_1791_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1792_1855_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1856_1919_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1920_1983_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r1_1984_2047_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_64_127_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_128_191_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_192_255_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_256_319_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_320_383_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_384_447_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_448_511_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_512_575_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_576_639_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_640_703_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_704_767_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_768_831_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_832_895_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_896_959_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_960_1023_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1024_1087_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1088_1151_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1152_1215_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1216_1279_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1280_1343_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1344_1407_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1408_1471_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1472_1535_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1536_1599_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1600_1663_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1664_1727_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1728_1791_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1792_1855_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1856_1919_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1920_1983_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1984_2047_0_2 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_0_63_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_64_127_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_128_191_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_192_255_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_256_319_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_320_383_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_384_447_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_448_511_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_512_575_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_576_639_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_640_703_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_704_767_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_768_831_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_832_895_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_896_959_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_960_1023_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1024_1087_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1088_1151_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1152_1215_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1216_1279_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1280_1343_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1344_1407_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1408_1471_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1472_1535_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1536_1599_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1600_1663_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1664_1727_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1728_1791_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1792_1855_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1856_1919_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1920_1983_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_1984_2047_3_5 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_0_63_6_7 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_64_127_6_7 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_128_191_6_7 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Synth 8-7067] Removed DRAM instance u_vc_arb/i_1/pkt_buf_reg_r2_192_255_6_7 from module ccsds_vc_arbiter_mux due to constant propagation
+INFO: [Common 17-14] Message 'Synth 8-7067' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Common 17-14] Message 'Synth 8-7067' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-5544] ROM "TURBO_PRIMES" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "dec_uncorr_abort2" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "dec_uncorr_abort2" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "req_bits" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_13) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_15) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_16) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_17) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_18) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_19) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_20) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_21) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_22) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_23) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_24) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_25) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_26) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_27) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_28) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_37) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_38) is optimized away because it doesn't have any load.
+WARNING: [Synth 8-13161] RAM (u_rx_commit_cdc_fifo/i_39) is optimized away because it doesn't have any load.
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 0. Recommended levels of pipeline registers is 4. [c:/Users/abc12/Documents/ccsds_sat_ttc_ip/rtl/ccsds_phy_modem.sv:385]
+INFO: [Synth 8-5544] ROM "v4" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v4" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v2" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v3" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v1" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "tx_tap0_lut4" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v2" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v3" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "v1" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "tx_tap0_lut4" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+DSP Report: Generating DSP tx_nco_fcw_q0, operation Mode is: A*B.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: Generating DSP tx_nco_fcw_q0, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: Generating DSP tx_nco_fcw_q0, operation Mode is: A*B.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: Generating DSP tx_nco_fcw_q0, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+DSP Report: operator tx_nco_fcw_q0 is absorbed into DSP tx_nco_fcw_q0.
+WARNING: [Synth 8-13373] Removed Macro Instance : u_phy_modem/tx_nco_fcw_q0/tx_nco_fcw_q0, of type : DSP48E1 in constant propagation
+WARNING: [Synth 8-13373] Removed Macro Instance : u_phy_modem/tx_nco_fcw_q0__0/tx_nco_fcw_q0, of type : DSP48E1 in constant propagation
+WARNING: [Synth 8-13373] Removed Macro Instance : u_phy_modem/tx_nco_fcw_q0__1/tx_nco_fcw_q0, of type : DSP48E1 in constant propagation
+WARNING: [Synth 8-13373] Removed Macro Instance : u_phy_modem/tx_nco_fcw_q0__2/tx_nco_fcw_q0, of type : DSP48E1 in constant propagation
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:06:12 ; elapsed = 00:06:19 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+ Sort Area is ccsds_sat_ttc_top__GCB3 tx_nco_fcw_q0_0 : 0 0 : 3101 6290 : Used 1 time 0
+ Sort Area is ccsds_sat_ttc_top__GCB3 tx_nco_fcw_q0_0 : 0 1 : 3189 6290 : Used 1 time 0
+ Sort Area is ccsds_sat_ttc_top__GCB3 tx_nco_fcw_q0_3 : 0 0 : 2759 5594 : Used 1 time 0
+ Sort Area is ccsds_sat_ttc_top__GCB3 tx_nco_fcw_q0_3 : 0 1 : 2835 5594 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+ROM: Preliminary Mapping Report
++----------------------------------------+--------------------------------------------+---------------+----------------+
+|Module Name                             | RTL Object                                 | Depth x Width | Implemented As | 
++----------------------------------------+--------------------------------------------+---------------+----------------+
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_sdls_engine                       | AES_SBOX                                   | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | Z_INV_POW_LUT                              | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | GF_INV_LUT                                 | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | GF_INV_LUT                                 | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | GF_INV_LUT                                 | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | GF_INV_LUT                                 | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | R0_INV_POW_LUT                             | 256x8         | LUT            | 
+|ccsds_dl_rs255_223_dec                  | GF_INV_LUT                                 | 256x8         | LUT            | 
+|ccsds_phy_modem                         | COS_LUT_Q3                                 | 64x5          | LUT            | 
+|ccsds_phy_modem                         | SIN_LUT_Q3                                 | 64x5          | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_dl_turbo_ldpc_enc                 | LDPC128_W_ROW_MASK                         | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|ccsds_sat_ttc_top                       | g_ground_egse_endpoints.EGSE_LDPC128_W_ROW | 64x64         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | AES_SBOX                                   | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | GF_INV_LUT                                 | 256x8         | LUT            | 
+|system_stage1_loopback_ccsds_gnd_egse_0 | GF_INV_LUT                                 | 256x8         | LUT            | 
++----------------------------------------+--------------------------------------------+---------------+----------------+
+
+
+Distributed RAM: Preliminary Mapping Report (see note below)
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+|Module Name                                  | RTL Object   | Inference      | Size (Depth x Width) | Primitives     | 
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+|ccsds_dl_rs255_223_dec__GB4                  | info_buf_reg | User Attribute | 256 x 8              | RAM64M x 12    | 
+|\g_ground_egse_endpoints.u_egse_dl_cdc_fifo  | mem_data_reg | User Attribute | 128 x 8              | RAM64M x 6     | 
+|\g_ground_egse_endpoints.u_egse_dl_cdc_fifo  | mem_ecc_reg  | User Attribute | 128 x 7              | RAM64M x 6     | 
+|u_rx_phy_cdc_fifo                            | mem_data_reg | User Attribute | 256 x 8              | RAM64M x 12    | 
+|u_rx_phy_cdc_fifo                            | mem_ecc_reg  | User Attribute | 256 x 7              | RAM64M x 12    | 
+|u_tx_hwm_cdc_fifo                            | mem_last_reg | User Attribute | 512 x 1              | RAM128X1D x 4  | 
+|u_tx_hwm_cdc_fifo                            | mem_data_reg | User Attribute | 512 x 8              | RAM64M x 24    | 
+|u_tx_hwm_cdc_fifo                            | mem_ecc_reg  | User Attribute | 512 x 7              | RAM64M x 24    | 
+|u_tx_phy_cdc_fifo                            | mem_data_reg | User Attribute | 128 x 8              | RAM64M x 6     | 
+|u_tx_phy_cdc_fifo                            | mem_ecc_reg  | User Attribute | 128 x 7              | RAM64M x 6     | 
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+
+Note: The table above is a preliminary report that shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once.
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++----------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name     | DSP Mapping    | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++----------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|ccsds_phy_modem | A*B            | 18     | 16     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|ccsds_phy_modem | (PCIN>>17)+A*B | 19     | 16     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|ccsds_phy_modem | A*B            | 18     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|ccsds_phy_modem | (PCIN>>17)+A*B | 19     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++----------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:06:20 ; elapsed = 00:06:27 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Distributed RAM: Final Mapping Report
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+|Module Name                                  | RTL Object   | Inference      | Size (Depth x Width) | Primitives     | 
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+|ccsds_dl_rs255_223_dec__GB4                  | info_buf_reg | User Attribute | 256 x 8              | RAM64M x 12    | 
+|\g_ground_egse_endpoints.u_egse_dl_cdc_fifo  | mem_data_reg | User Attribute | 128 x 8              | RAM64M x 6     | 
+|\g_ground_egse_endpoints.u_egse_dl_cdc_fifo  | mem_ecc_reg  | User Attribute | 128 x 7              | RAM64M x 6     | 
+|u_rx_phy_cdc_fifo                            | mem_data_reg | User Attribute | 256 x 8              | RAM64M x 12    | 
+|u_rx_phy_cdc_fifo                            | mem_ecc_reg  | User Attribute | 256 x 7              | RAM64M x 12    | 
+|u_tx_hwm_cdc_fifo                            | mem_last_reg | User Attribute | 512 x 1              | RAM128X1D x 4  | 
+|u_tx_hwm_cdc_fifo                            | mem_data_reg | User Attribute | 512 x 8              | RAM64M x 24    | 
+|u_tx_hwm_cdc_fifo                            | mem_ecc_reg  | User Attribute | 512 x 7              | RAM64M x 24    | 
+|u_tx_phy_cdc_fifo                            | mem_data_reg | User Attribute | 128 x 8              | RAM64M x 6     | 
+|u_tx_phy_cdc_fifo                            | mem_ecc_reg  | User Attribute | 128 x 7              | RAM64M x 6     | 
++---------------------------------------------+--------------+----------------+----------------------+----------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:06:34 ; elapsed = 00:06:47 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_dl_framer/FSM_sequential_state_q_reg[1]) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_dl_framer/FSM_sequential_state_q_reg[0]) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_turbo_ldpc_enc/FSM_sequential_state_q_reg) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_rs_enc/FSM_onehot_state_q_reg[2]) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_rs_enc/FSM_onehot_state_q_reg[1]) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+INFO: [Synth 8-3332] Sequential element (inst/u_ccsds_sat_ttc_top/u_rs_enc/FSM_onehot_state_q_reg[0]) is unused and will be removed from module system_stage1_loopback_ccsds_gnd_egse_0.
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:06:47 ; elapsed = 00:07:00 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:06:48 ; elapsed = 00:07:01 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:06:52 ; elapsed = 00:07:05 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:06:52 ; elapsed = 00:07:05 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:06:59 ; elapsed = 00:07:13 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:06:59 ; elapsed = 00:07:13 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+----------+------+
+|      |Cell      |Count |
++------+----------+------+
+|1     |CARRY4    |   872|
+|2     |LUT1      |   245|
+|3     |LUT2      |  3909|
+|4     |LUT3      |  6729|
+|5     |LUT4      | 10061|
+|6     |LUT5      | 11235|
+|7     |LUT6      | 38778|
+|8     |MUXF7     |  2603|
+|9     |MUXF8     |   553|
+|10    |RAM128X1D |     4|
+|11    |RAM64M    |    76|
+|12    |RAM64X1D  |    16|
+|13    |FDCE      | 14111|
+|14    |FDPE      |   456|
++------+----------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:07:00 ; elapsed = 00:07:13 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 342 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:05:47 ; elapsed = 00:06:51 . Memory (MB): peak = 2801.918 ; gain = 1719.730
+Synthesis Optimization Complete : Time (s): cpu = 00:07:00 ; elapsed = 00:07:14 . Memory (MB): peak = 2801.918 ; gain = 1860.723
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.718 . Memory (MB): peak = 2801.918 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 4124 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.046 . Memory (MB): peak = 2801.918 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 96 instances were transformed.
+  RAM128X1D => RAM128X1D (MUXF7(x2), RAMD64E(x4)): 4 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 76 instances
+  RAM64X1D => RAM64X1D (RAMD64E(x2)): 16 instances
+
+Synth Design complete | Checksum: 6eeec2ea
+INFO: [Common 17-83] Releasing license: Synthesis
+623 Infos, 311 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:07:18 ; elapsed = 00:07:35 . Memory (MB): peak = 2801.918 ; gain = 2136.707
+INFO: [Coretcl 2-1174] Renamed 24 cell refs.
+Write ShapeDB Complete: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.129 . Memory (MB): peak = 2801.918 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'c:/Users/abc12/Documents/ccsds_sat_ttc_ip/vivado_z7035_stage1/ccsds_z7035_stage1_loopback.runs/system_stage1_loopback_ccsds_gnd_egse_0_synth_1/system_stage1_loopback_ccsds_gnd_egse_0.dcp' has been generated.
+INFO: [Vivado 12-24828] Executing command : report_utilization -file system_stage1_loopback_ccsds_gnd_egse_0_utilization_synth.rpt -pb system_stage1_loopback_ccsds_gnd_egse_0_utilization_synth.pb
+write_vhdl: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2801.918 ; gain = 0.000
+INFO: [Common 17-206] Exiting Vivado at Fri Nov  6 10:35:50 2026...

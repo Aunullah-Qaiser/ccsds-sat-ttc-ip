@@ -1,6 +1,6 @@
 {
   "project": "CCSDS-SAT-TTC-IP",
-  "version": "v2.31.0",
+  "version": "v2.40.3",
   "stage": "Stage 12 Multi-Configuration Space Flight Channel & Top-to-Top Loopback Analysis",
   "fpga_target": "Xilinx Zynq-7000 XC7Z010-1CLG225I (Defense-Grade -1L)",
   "verified_true_fmax_mhz": {
